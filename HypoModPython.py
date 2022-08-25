@@ -36,7 +36,7 @@ class DiagBox(ToolBox):
 
 class MainFrame(wx.Frame):
     def __init__(self, title, pos, size):
-        wx.Frame.__init__(self, None, wx.ID_ANY, title, pos, size)
+        super(MainFrame, self).__init__(None, wx.ID_ANY, title, pos, size)
         self.ostype = GetSystem()
         self.statusbar = self.CreateStatusBar()
         self.diagbox = DiagBox(self, "Diagnostic", wx.DefaultPosition, wx.Size(400,500))
@@ -60,7 +60,7 @@ class MainFrame(wx.Frame):
 
 class HypoMain(MainFrame):
     def __init__(self, title, pos, size):
-        MainFrame.__init__(self, title, pos, size)
+        super(HypoMain, self).__init__(title, pos, size)
         self.diagbox.Show(True);
         
 
@@ -75,9 +75,9 @@ class MyFrame(wx.Frame):
         
 def GetSystem():
     oslabel = wx.GetOsDescription()
-    if oslabel.startswith('Windows'): return 1
-    if oslabel.startswith('Mac') or oslabel.StartsWith('mac'): return 2
-    if oslabel.startswith('Linux'): return 3
+    if oslabel.startswith("Windows"): return 1
+    if oslabel.startswith("Mac") or oslabel.startswith("mac"): return 2
+    if oslabel.startswith("Linux"): return 3
     return 0
 
 
@@ -85,7 +85,7 @@ def GetSystem():
 app = wx.App(False)
 pos = wx.DefaultPosition
 size = wx.Size(500, 500)
-mainwin = HypoMain('HypoMod', pos, size)
+mainwin = HypoMain("HypoMod", pos, size)
 mainwin.Show()
 app.MainLoop()
 
