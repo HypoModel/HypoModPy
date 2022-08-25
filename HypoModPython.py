@@ -8,6 +8,7 @@
 
 
 import wx
+import os
 from pathlib import Path
 
      
@@ -55,7 +56,8 @@ class MainFrame(wx.Frame):
 
         respath = rpath;  # defaults to "" for Windows, bundle resource path for OSX
         self.diagbox.Write("MainFrame respath " + respath + "\n")
-        self.mainpath = mpath
+        #self.mainpath = mpath
+        self.mainpath = os.getcwd()
         self.modpath = ""
         
         self.colourpen = {}
@@ -75,28 +77,60 @@ class MainFrame(wx.Frame):
 
     def MainStore(self):
 	    # TextFile outfile, opfile;
-        initpath = self.mainpath + "/Init/"
-        if not wx.DirExists(initpath): 
-            wx.Mkdir(initpath)
+        self.initpath = self.mainpath + "/Init/"
+        if os.path.exists(self.mainpath) == False: 
+            os.mkdir(self.initpath)
 
 	    # box store
         filename = "mainbox.ini"
-        outfile = TextFile(initpath + filename)
-        outfile.Open()
+        outfile = TextFile(self.initpath + filename)
+        outfile.Open('w')
         
-        for box in self.toolset:
+        for box in self.toolset.boxset:
             outfile.WriteLine("{} {} {} {} {}".format(box.mpos.x, box.mpos.y, box.size.x, box.size.y, box.IsVisible()))
         
         outfile.Close()
 
+    def MainLoad(self):
+        # Box Load
+        filepath = self.initpath + "/mainbox.ini"
+        infile = TextFile(filepath)
+        check = infile.Open('r')
+        if check == False: return
+        filetext = infile.ReadLines()
+        for line in filetext:
+            linedata = line.split(' ')
+            boxtag = linedata[0]
+            if self.toolset.Exists(boxtag) == False: continue            
+            pos = wx.Point(linedata[1], linedata[2])
+            size = wx.Size(linedata[3], linedata[4])
+            self.toolset.boxset[boxtag].visible = linedata[5]
+            self.toolset.boxset[boxtag].mpos = pos
+            self.toolset.boxset[boxtag].boxsixe = size
+        infile.Close()
 
+        for box in self.toolset:
+            box.ReSize()
+            box.Show(box.visible)
+	
 
 
 class HypoMain(MainFrame):
     def __init__(self, title, pos, size, respath, mainpath):
         super(HypoMain, self).__init__(title, pos, size, respath, mainpath)
         self.diagbox.Show(True)
+
+        self.Bind(wx.EVT_CLOSE, self.OnClose)
         
+    def OnClose(self, event):
+        #OptionStore()
+        MainFrame.MainStore(self)
+        #if(project.mod): 
+        #    project.Store()
+        #if(mod):
+        #    mod.Close()
+        #    mod.Store()
+
 
 
 class MyFrame(wx.Frame):
@@ -124,7 +158,7 @@ class TextFile():
         return self.filepath.is_file()
 
     def Open(self, mode):
-        if mode == 'r' & self.Exists() == False:
+        if mode == 'r' and self.Exists() == False: 
             return False
         self.file = open(self.filepath, mode)
         self.unread = True
@@ -132,6 +166,9 @@ class TextFile():
 
     def WriteLine(self, text):
         self.file.write(text + '\n')
+
+    def ReadLines(self):
+        return self.file.readlines()
 
     def Close(self):
         self.file.close()
@@ -149,7 +186,7 @@ class TextFile():
 
 app = wx.App(False)
 pos = wx.DefaultPosition
-size = wx.Size(800, 1000)
+size = wx.Size(400, 500)
 mainpath = ""
 respath = ""
 mainwin = HypoMain("HypoMod", pos, size, respath, mainpath)
