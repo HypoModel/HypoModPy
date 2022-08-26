@@ -10,17 +10,11 @@
 import wx
 import os
 from pathlib import Path
-
+from hypobase import *
+from hypocontrols import *
      
         
-class ToolBox(wx.Frame):
-    def __init__(self, parent, tag, title, pos, size, 
-    style = wx.FRAME_FLOAT_ON_PARENT | wx.FRAME_TOOL_WINDOW | wx.RESIZE_BORDER | wx.SYSTEM_MENU | wx.CAPTION | wx.CLOSE_BOX):
-        wx.Frame.__init__(self, parent, title = title, pos = pos, size = size, style = style)
-        self.panel = wx.Panel()
-        self.boxtag = tag
 
-# alt style = wx.FRAME_FLOAT_ON_PARENT | wx.FRAME_TOOL_WINDOW | wx.CAPTION | wx.RESIZE_BORDER
 
 
 class ToolSet():
@@ -141,48 +135,6 @@ class MyFrame(wx.Frame):
         self.Show(True)
         
         
-def GetSystem():
-    oslabel = wx.GetOsDescription()
-    if oslabel.startswith("Windows"): return 1
-    if oslabel.startswith("Mac") or oslabel.startswith("mac"): return 2
-    if oslabel.startswith("Linux"): return 3
-    return 0
-
-
-class TextFile():
-    def __init__(self, filepath):
-        self.filepath = Path(filepath)
-        self.readonly = True
-
-    def Exists(self):
-        return self.filepath.is_file()
-
-    def Open(self, mode):
-        if mode == 'r' and self.Exists() == False: 
-            return False
-        self.file = open(self.filepath, mode)
-        self.unread = True
-        return self.file
-
-    def WriteLine(self, text):
-        self.file.write(text + '\n')
-
-    def ReadLines(self):
-        return self.file.readlines()
-
-    def Close(self):
-        self.file.close()
-
-	# Postscript Writing
-	#void MoveTo(double x, double y);
-	#void LineTo(double x, double y);
-	#void DrawLine(double xf, double yf, double xt, double yt);
-	#void DrawText(wxString, double x, double y);
-	#void DrawEllipse(double x, double y, double width, double height);
-	#void SetColour(wxString);
-
-
-
 
 app = wx.App(False)
 pos = wx.DefaultPosition
