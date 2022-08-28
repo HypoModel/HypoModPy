@@ -1,4 +1,5 @@
 
+from math import sqrt
 import wx
 from pathlib import Path
 
@@ -44,3 +45,5 @@ class TextFile():
 	#void SetColour(wxString);
 
 
+def DistXY(p1, p2):
+    return sqrt(pow(p2.x - p1.x) + pow(p2.y - p1.y, 2))

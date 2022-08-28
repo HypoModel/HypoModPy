@@ -17,8 +17,6 @@ from pubsub import pub
      
         
 
-
-
 class ToolSet():
     def __init__(self):
         self.boxset = {}
@@ -89,17 +87,14 @@ class MainFrame(wx.Frame):
 
 
     def status_listener(self, message, arg2=None):
-        
         self.SetStatusText(message)
 
 
     def toolclose_listener(self, boxtag, arg2=None):
-        
         del self.toolset.boxset[boxtag]
 
 
     def MainStore(self):
-	    # TextFile outfile, opfile;
         self.initpath = self.mainpath + "/Init/"
         if os.path.exists(self.mainpath) == False: 
             os.mkdir(self.initpath)
@@ -113,7 +108,6 @@ class MainFrame(wx.Frame):
             outfile.WriteLine("{} {} {} {} {} {}".format(box.boxtag, box.mpos.x, box.mpos.y, box.boxsize.x, box.boxsize.y, box.IsShown()))
         
         outfile.Close()
-
         print('MainStore OK')
 
 
@@ -145,12 +139,10 @@ class MainFrame(wx.Frame):
         infile.Close()
 
         for box in self.toolset.boxset.values():
-            #box.SetSize(box.boxsize)
+            box.SetSize(box.boxsize)
+            box.SetPosition(self.GetPosition(), self.GetSize())
             box.Show(box.visible)
-            print(box.boxtag)
-            print(box.visible)
-            print(box.IsShown())
-
+            
 
     def OnLeftClick(self, event):
         for box in self.toolset.boxset.values():
@@ -159,14 +151,13 @@ class MainFrame(wx.Frame):
            
 	
 
-
 class HypoMain(MainFrame):
     def __init__(self, title, pos, size, respath, mainpath):
         super(HypoMain, self).__init__(title, pos, size, respath, mainpath)
 
         self.Bind(wx.EVT_CLOSE, self.OnClose)
         self.Bind(wx.EVT_MOVE, self.OnMove)
-        #self.Bind(wx.EVT_SIZE, self.OnSize)
+        self.Bind(wx.EVT_SIZE, self.OnSize)
         
         
     def OnClose(self, event):
@@ -181,31 +172,17 @@ class HypoMain(MainFrame):
 
     
     def OnMove(self, event):
-        mainpos = self.GetPosition()
-        mainsize = self.GetSize()
         for box in self.toolset.boxset.values():
-            box.SetPosition(mainpos, mainsize)
+            box.SetPosition(self.GetPosition(), self.GetSize())
         event.Skip()
 
 
     def OnSize(self, event):
-        mainpos = self.GetPosition()
-        mainsize = self.GetSize()
         for box in self.toolset.boxset.values():
-            box.SetPosition(mainpos, mainsize)
+            box.SetPosition(self.GetPosition(), self.GetSize())
         event.Skip()
 
 
-
-
-class MyFrame(wx.Frame):
-    """ We simply derive a new class of Frame. """
-    def __init__(self, parent, title):
-        wx.Frame.__init__(self, parent, title=title, size=(200,100))
-        self.control = wx.TextCtrl(self, style=wx.TE_MULTILINE)
-        self.Show(True)
-        
-        
 
 app = wx.App(False)
 pos = wx.DefaultPosition
