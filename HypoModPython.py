@@ -12,6 +12,8 @@ import os
 from pathlib import Path
 from hypobase import *
 from hypocontrols import *
+
+from pubsub import pub
      
         
 
@@ -34,10 +36,16 @@ class ToolSet():
 
 class DiagBox(ToolBox):
     def __init__(self, parent, title, pos, size):
+
         ToolBox.__init__(self, parent, "DiagBox", title, pos, size)
-        self.textbox = wx.TextCtrl(self, -1, "", wx.DefaultPosition, wx.Size(300, 400), wx.TE_MULTILINE)
+
+        self.textbox = wx.TextCtrl(self.panel, -1, "", wx.DefaultPosition, wx.DefaultSize, wx.TE_MULTILINE)
+        self.mainbox.Add(self.textbox, 1, wx.EXPAND)
+
+
     def Write(self, text):
         self.textbox.AppendText(text)    
+
 
 
 class MainFrame(wx.Frame):
@@ -53,6 +61,9 @@ class MainFrame(wx.Frame):
         #self.mainpath = mpath
         self.mainpath = os.getcwd()
         self.modpath = ""
+
+        if mainpath == "": self.initpath = "Init"
+        else: self.initpath = mainpath + "/Init"
         
         self.colourpen = {}
         self.colourpen["black"] = wx.Colour("#000000")
@@ -69,6 +80,24 @@ class MainFrame(wx.Frame):
         self.toolset = ToolSet()
         self.toolset.AddBox(self.diagbox)     
 
+        pub.subscribe(self.status_listener, "status_listener")
+        pub.subscribe(self.toolclose_listener, "toolclose_listener")
+
+        self.Bind(wx.EVT_LEFT_UP, self.OnLeftClick)
+
+        self.MainLoad()
+
+
+    def status_listener(self, message, arg2=None):
+        
+        self.SetStatusText(message)
+
+
+    def toolclose_listener(self, boxtag, arg2=None):
+        
+        del self.toolset.boxset[boxtag]
+
+
     def MainStore(self):
 	    # TextFile outfile, opfile;
         self.initpath = self.mainpath + "/Init/"
@@ -80,10 +109,13 @@ class MainFrame(wx.Frame):
         outfile = TextFile(self.initpath + filename)
         outfile.Open('w')
         
-        for box in self.toolset.boxset:
-            outfile.WriteLine("{} {} {} {} {}".format(box.mpos.x, box.mpos.y, box.size.x, box.size.y, box.IsVisible()))
+        for box in self.toolset.boxset.values():
+            outfile.WriteLine("{} {} {} {} {} {}".format(box.boxtag, box.mpos.x, box.mpos.y, box.boxsize.x, box.boxsize.y, box.IsShown()))
         
         outfile.Close()
+
+        print('MainStore OK')
+
 
     def MainLoad(self):
         # Box Load
@@ -95,26 +127,47 @@ class MainFrame(wx.Frame):
         for line in filetext:
             linedata = line.split(' ')
             boxtag = linedata[0]
-            if self.toolset.Exists(boxtag) == False: continue            
-            pos = wx.Point(linedata[1], linedata[2])
-            size = wx.Size(linedata[3], linedata[4])
-            self.toolset.boxset[boxtag].visible = linedata[5]
-            self.toolset.boxset[boxtag].mpos = pos
-            self.toolset.boxset[boxtag].boxsixe = size
+            #if boxtag in self.toolset.boxset: 
+            check = boxtag in self.toolset.boxset
+            if check: print('boxtag OK')
+            #continue  
+            if check: 
+                print('tag' + ' ' + boxtag + ' ' + 'data1' + ' ' + linedata[1])          
+                pos = wx.Point(int(linedata[1]), int(linedata[2]))
+                size = wx.Size(int(linedata[3]), int(linedata[4]))
+                if linedata[5] == 'True\n': visible = True
+                else: visible = False
+                print(linedata[5])
+                #self.toolset.boxset[boxtag].Show(False)
+                self.toolset.boxset[boxtag].visible = visible
+                self.toolset.boxset[boxtag].mpos = pos
+                self.toolset.boxset[boxtag].boxsize = size
         infile.Close()
 
-        for box in self.toolset:
-            box.ReSize()
+        for box in self.toolset.boxset.values():
+            #box.SetSize(box.boxsize)
             box.Show(box.visible)
+            print(box.boxtag)
+            print(box.visible)
+            print(box.IsShown())
+
+
+    def OnLeftClick(self, event):
+        for box in self.toolset.boxset.values():
+            if box.IsShown(): box.Show(False)
+            else: box.Show(True)
+           
 	
 
 
 class HypoMain(MainFrame):
     def __init__(self, title, pos, size, respath, mainpath):
         super(HypoMain, self).__init__(title, pos, size, respath, mainpath)
-        self.diagbox.Show(True)
 
         self.Bind(wx.EVT_CLOSE, self.OnClose)
+        self.Bind(wx.EVT_MOVE, self.OnMove)
+        #self.Bind(wx.EVT_SIZE, self.OnSize)
+        
         
     def OnClose(self, event):
         #OptionStore()
@@ -124,6 +177,24 @@ class HypoMain(MainFrame):
         #if(mod):
         #    mod.Close()
         #    mod.Store()
+        event.Skip()
+
+    
+    def OnMove(self, event):
+        mainpos = self.GetPosition()
+        mainsize = self.GetSize()
+        for box in self.toolset.boxset.values():
+            box.SetPosition(mainpos, mainsize)
+        event.Skip()
+
+
+    def OnSize(self, event):
+        mainpos = self.GetPosition()
+        mainsize = self.GetSize()
+        for box in self.toolset.boxset.values():
+            box.SetPosition(mainpos, mainsize)
+        event.Skip()
+
 
 
 

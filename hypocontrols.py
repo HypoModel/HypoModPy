@@ -1,6 +1,7 @@
 
 import wx
 from hypobase import *
+from pubsub import pub
 
 
 
@@ -28,23 +29,20 @@ class ToolPanel(wx.Panel):
 
 
 
-
 # alt style = wx.FRAME_FLOAT_ON_PARENT | wx.FRAME_TOOL_WINDOW | wx.CAPTION | wx.RESIZE_BORDER
 
 class ToolBox(wx.Frame):
     def __init__(self, parent, tag, title, pos, size, 
     style = wx.FRAME_FLOAT_ON_PARENT | wx.FRAME_TOOL_WINDOW | wx.RESIZE_BORDER | wx.SYSTEM_MENU | wx.CAPTION | wx.CLOSE_BOX):
+
         wx.Frame.__init__(self, parent, title = title, pos = pos, size = size, style = style)
-        self.panel = wx.Panel()
+
         self.boxtag = tag
-        self.BoxInit()
-        #self.mpos = wx.Point()
-        self.mpos = pos
-        self.mainwin = parent
-
-
-    def BoxInit(self):
+        self.mpos = pos - parent.GetPosition() 
+        self.oldpos = pos
+        self.boxsize = size
         self.status = None
+        self.canclose = False
 
         self.buttonheight = 23
         self.boxfont = wx.Font(wx.FontInfo(8).FaceName("Tahoma"))
@@ -59,53 +57,52 @@ class ToolBox(wx.Frame):
         self.activepanel = self.panel
         #self.paramset.panel = self.panel
 
-        #self.Bind(wx.EVT_CLOSE, self.OnClose)
+        self.Bind(wx.EVT_CLOSE, self.OnClose)
         self.Bind(wx.EVT_MOVE, self.OnMove)
         self.Bind(wx.EVT_SIZE, self.OnSize)
 
-        self.SetPosition()
+        self.SetPosition(parent.GetPosition(), parent.GetSize())
+
+
+    def SetPosition(self, mainpos, mainsize):
+        self.Move(mainpos.x + mainsize.x + self.mpos.x, mainpos.y + self.mpos.y + 5)
+        self.oldpos = self.GetPosition()
+        return wx.Point(mainpos.x + mainsize.x + self.mpos.x, mainpos.y + self.mpos.y + 5)
 
 
     def OnMove(self, event):
-        newpos = self.GetPosition()
-        newsize = self.GetSize()
-        shift = wx.Point()
-
-        shift.x = newpos.x - self.oldpos.x
-        shift.y = newpos.y - self.oldpos.y
+        if self.IsActive():
+            newpos = self.GetPosition()
+            newsize = self.GetSize()
+           
+            shift = newpos - self.oldpos
         
-        self.mpos.x = self.mpos.x + shift.x
-        self.mpos.y = self.mpos.y + shift.y
-        self.oldpos = newpos
+            self.mpos.x = self.mpos.x + shift.x
+            self.mpos.y = self.mpos.y + shift.y
+            self.oldpos = newpos
 
-        snum = "Box x {} y {} x {} y {}".format(self.mpos.x, self.mpos.y, newpos.x, newpos.y)
-        self.mainwin.SetStatus(snum)
+            snum = "Box mpos x {} y {} shift x {} y {}".format(self.mpos.x, self.mpos.y, shift.x, shift.y)
+            pub.sendMessage("status_listener", message=snum)
 
 
     def OnSize(self, event):
+        event.Skip()
         newsize = self.GetSize()
         pos = self.GetPosition()
 
         snum = "Box Size X {} Y {}".format(newsize.x, newsize.y)
-        self.mainwin.SetStatus(snum)
+        pub.sendMessage("status_listener", message=snum)
 
         self.boxsize = newsize
-        wx.Frame.OnSize(event)
 
 
-    def SetPosition(self):
-        if(self.mainwin):
-            mainpos = self.mainwin.GetPosition()
-            mainsize = self.mainwin.GetSize()
+    def OnClose(self, event):
+        if self.canclose == False:
+            self.Show(False)
         else:
-            mainpos = wx.Point(0, 0)
-            mainsize = wx.Size(0, 0)
-
-        self.Move(mainpos.x + mainsize.x + self.mpos.x, mainpos.y + self.mpos.y + 5)
-        self.oldpos = self.GetPosition()
-        
-        return wx.Point(mainpos.x + mainsize.x + self.mpos.x, mainpos.y + self.mpos.y + 5)
-
+            pub.sendMessage("toolclose_listener", message=self.boxtag)
+            event.Skip()
+    
 
 
 class ParamSet:
