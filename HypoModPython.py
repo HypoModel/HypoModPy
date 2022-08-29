@@ -60,8 +60,11 @@ class MainFrame(wx.Frame):
         self.mainpath = os.getcwd()
         self.modpath = ""
 
-        if mainpath == "": self.initpath = "Init"
-        else: self.initpath = mainpath + "/Init"
+        if self.mainpath == "": self.initpath = "Init"
+        else: self.initpath = self.mainpath + "/Init"
+
+        if os.path.exists(self.mainpath) == False: 
+            os.mkdir(self.initpath)
         
         self.colourpen = {}
         self.colourpen["black"] = wx.Colour("#000000")
@@ -82,8 +85,10 @@ class MainFrame(wx.Frame):
         pub.subscribe(self.toolclose_listener, "toolclose_listener")
 
         self.Bind(wx.EVT_LEFT_UP, self.OnLeftClick)
+        self.Bind(wx.EVT_MOVE, self.OnMove)
+        self.Bind(wx.EVT_SIZE, self.OnSize)
 
-        self.MainLoad()
+        self.ToolLoad()    # main window tool configuration
 
 
     def status_listener(self, message, arg2=None):
@@ -94,48 +99,38 @@ class MainFrame(wx.Frame):
         del self.toolset.boxset[boxtag]
 
 
-    def MainStore(self):
-        self.initpath = self.mainpath + "/Init/"
-        if os.path.exists(self.mainpath) == False: 
-            os.mkdir(self.initpath)
-
-	    # box store
-        filename = "mainbox.ini"
-        outfile = TextFile(self.initpath + filename)
+    def ToolStore(self):
+        outfile = TextFile(self.initpath + "/maintools.ini")
         outfile.Open('w')
         
         for box in self.toolset.boxset.values():
             outfile.WriteLine("{} {} {} {} {} {}".format(box.boxtag, box.mpos.x, box.mpos.y, box.boxsize.x, box.boxsize.y, box.IsShown()))
         
         outfile.Close()
-        print('MainStore OK')
+        print('ToolStore OK')
 
 
-    def MainLoad(self):
-        # Box Load
-        filepath = self.initpath + "/mainbox.ini"
+    def ToolLoad(self):
+        filepath = self.initpath + "/maintools.ini"
         infile = TextFile(filepath)
         check = infile.Open('r')
         if check == False: return
         filetext = infile.ReadLines()
+
         for line in filetext:
             linedata = line.split(' ')
             boxtag = linedata[0]
-            #if boxtag in self.toolset.boxset: 
-            check = boxtag in self.toolset.boxset
-            if check: print('boxtag OK')
-            #continue  
-            if check: 
-                print('tag' + ' ' + boxtag + ' ' + 'data1' + ' ' + linedata[1])          
+            if boxtag in self.toolset.boxset:
+                #print('boxtag OK')
+                #print('tag' + ' ' + boxtag + ' ' + 'data1' + ' ' + linedata[1])          
                 pos = wx.Point(int(linedata[1]), int(linedata[2]))
                 size = wx.Size(int(linedata[3]), int(linedata[4]))
                 if linedata[5] == 'True\n': visible = True
                 else: visible = False
-                print(linedata[5])
-                #self.toolset.boxset[boxtag].Show(False)
                 self.toolset.boxset[boxtag].visible = visible
                 self.toolset.boxset[boxtag].mpos = pos
                 self.toolset.boxset[boxtag].boxsize = size
+
         infile.Close()
 
         for box in self.toolset.boxset.values():
@@ -148,6 +143,26 @@ class MainFrame(wx.Frame):
         for box in self.toolset.boxset.values():
             if box.IsShown(): box.Show(False)
             else: box.Show(True)
+
+
+    def OnMove(self, event):
+        for box in self.toolset.boxset.values():
+            box.SetPosition(self.GetPosition(), self.GetSize())
+
+        event.Skip()
+
+
+    def OnSize(self, event):
+        newsize = self.GetSize()
+        for box in self.toolset.boxset.values():
+            box.SetPosition(self.GetPosition(), newsize)
+
+        self.prefs['viewwidth'] = newsize.x
+        self.prefs['viewheight'] = newsize.y
+        snum = "Main Size X {} Y {}".format(newsize.x, newsize.y)
+        self.SetStatusText(snum)
+
+        event.Skip()
            
 	
 
@@ -155,14 +170,24 @@ class HypoMain(MainFrame):
     def __init__(self, title, pos, size, respath, mainpath):
         super(HypoMain, self).__init__(title, pos, size, respath, mainpath)
 
+        # Default Prefs
+        self.prefs = {}
+        self.prefs['numdraw'] = 3
+        self.prefs['numgraphs'] = 8
+        self.prefs['startmod'] = 0
+        self.prefs['viewwidth'] = 400
+        self.prefs['viewheight'] = 600
+
+        # Load Prefs
+        self.HypoLoad()
+        self.SetSize(self.prefs['viewwidth'], self.prefs['viewheight'])
+
         self.Bind(wx.EVT_CLOSE, self.OnClose)
-        self.Bind(wx.EVT_MOVE, self.OnMove)
-        self.Bind(wx.EVT_SIZE, self.OnSize)
         
         
     def OnClose(self, event):
-        #OptionStore()
-        MainFrame.MainStore(self)
+        self.HypoStore()
+        MainFrame.ToolStore(self)
         #if(project.mod): 
         #    project.Store()
         #if(mod):
@@ -170,17 +195,31 @@ class HypoMain(MainFrame):
         #    mod.Store()
         event.Skip()
 
-    
-    def OnMove(self, event):
-        for box in self.toolset.boxset.values():
-            box.SetPosition(self.GetPosition(), self.GetSize())
-        event.Skip()
+
+    def HypoStore(self):
+        outfile = TextFile(self.initpath + "/hypoprefs.ini")
+        outfile.Open('w')
+        
+        for preftag in self.prefs:
+            outfile.WriteLine("{} {}".format(preftag, self.prefs[preftag]))
+
+        outfile.Close()
+        print('HypoPrefs OK')
 
 
-    def OnSize(self, event):
-        for box in self.toolset.boxset.values():
-            box.SetPosition(self.GetPosition(), self.GetSize())
-        event.Skip()
+    def HypoLoad(self):
+        infile = TextFile(self.initpath + "/hypoprefs.ini")
+        check = infile.Open('r')
+        if check == False: return
+        filetext = infile.ReadLines()
+
+        for line in filetext:
+            linedata = line.split(' ')
+            tag = linedata[0]
+            if tag in self.prefs:
+                self.prefs[tag] = int(linedata[1]) 
+
+        infile.Close()
 
 
 
