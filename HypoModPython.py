@@ -12,6 +12,7 @@ import os
 from pathlib import Path
 from hypobase import *
 from hypocontrols import *
+from hypograph import *
 
 from pubsub import pub
      
@@ -60,11 +61,18 @@ class MainFrame(wx.Frame):
         self.mainpath = os.getcwd()
         self.modpath = ""
 
+        # Set up store paths and folders
         if self.mainpath == "": self.initpath = "Init"
         else: self.initpath = self.mainpath + "/Init"
 
-        if os.path.exists(self.mainpath) == False: 
+        if self.mainpath == "": self.toolpath = "Tools"
+        else: self.toolpath = self.mainpath + "/Tools"
+
+        if os.path.exists(self.initpath) == False: 
             os.mkdir(self.initpath)
+
+        if os.path.exists(self.toolpath) == False: 
+            os.mkdir(self.toolpath)
         
         self.colourpen = {}
         self.colourpen["black"] = wx.Colour("#000000")
@@ -77,7 +85,9 @@ class MainFrame(wx.Frame):
         self.colourpen["lightgreen"] = wx.Colour("#80FF80")
         self.colourpen["lightblue"] = wx.Colour("#8080FF")
         self.colourpen["custom"] = wx.Colour("#000000")
-         
+
+        self.fontset = ['Helvetica', 'Arial', 'Myriad', 'Times', 'Courier', 'Calibri']
+        
         self.toolset = ToolSet()
         self.toolset.AddBox(self.diagbox)     
 
@@ -181,6 +191,31 @@ class HypoMain(MainFrame):
         # Load Prefs
         self.HypoLoad()
         self.SetSize(self.prefs['viewwidth'], self.prefs['viewheight'])
+
+        # Layout Sizers
+        mainsizer = wx.BoxSizer(wx.HORIZONTAL)
+        graphsizer = wx.BoxSizer(wx.VERTICAL)
+
+        # Graph Panels
+        self.panelset = []
+        self.dispset = []
+
+        for graph in range(self.prefs['numdraw']):
+            graphdisp = GraphDisp()
+            self.dispset.append(graphdisp)
+            graphpanel = GraphPanel(self)
+            graphpanel.FrontGraph(graphdisp)
+            self.panelset.append(graphpanel)
+            graphsizer.Add(graphpanel, 1, wx.EXPAND)
+
+        self.scalebox = ScaleBox(self)
+
+        graphsizer.AddSpacer(5)
+        mainsizer.Add(self.scalebox, 0, wx.EXPAND)
+        mainsizer.Add(graphsizer, 0, wx.EXPAND)
+
+        self.SetSizer(mainsizer)
+        self.Layout()
 
         self.Bind(wx.EVT_CLOSE, self.OnClose)
         
