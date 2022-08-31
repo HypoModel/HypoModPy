@@ -196,6 +196,10 @@ class HypoMain(MainFrame):
         mainsizer = wx.BoxSizer(wx.HORIZONTAL)
         graphsizer = wx.BoxSizer(wx.VERTICAL)
 
+        # Menu Bar
+        self.UserMenu()
+        self.SetTitle('HypoMod')
+
         # Graph Panels
         self.panelset = []
         self.dispset = []
@@ -218,6 +222,46 @@ class HypoMain(MainFrame):
         self.Layout()
 
         self.Bind(wx.EVT_CLOSE, self.OnClose)
+
+
+    def UserMenu(self):
+        
+        menuFile = wx.Menu()
+        menuAnalysis = wx.Menu()
+        menuTools = wx.Menu()
+        menuSystem = wx.Menu()
+        
+        menuFile.Append(wx.ID_ABOUT, "&About...")
+        menuFile.AppendSeparator()
+        menuFile.Append(wx.ID_EXIT, "E&xit")
+        
+        #SetMenuFlag(ID_XYPos, "xypos", "XY Pos", 1, menuAnalysis)
+        #SetMenuFlag(ID_Zoom, "zoom", "Graph Zoom", 0, menuAnalysis) 
+
+        ID_Diag = wx.NewId()
+        ID_Grid = wx.NewId()
+        
+        menuTools.Append(ID_Diag, "Diagnostic Box")
+        menuTools.Append(ID_Grid, "Data Grid")
+        #menuTools.Append(ID_Neuro, "Neuro Box")
+        #menuTools.Append(ID_Plot, "Plot Box")
+        #menuTools.Append(ID_Sound, "Sound Box")
+        #menuTools.Append(ID_Mod, "Mod Box")
+        #menuTools.Append(ID_Burst, "Burst Box")
+
+        ID_Options = wx.NewId()
+        
+        menuSystem.Append(ID_Options, "Options")
+        
+        menuBar = wx.MenuBar()
+        menuBar.Append(menuFile, "&File")
+        #menuBar.Append(menuAnalysis, "Analysis")
+        menuBar.Append(menuTools, "Tools")
+        #menuBar.Append(menuSystem, "System")
+        
+        self.SetMenuBar(menuBar)
+
+        
         
         
     def OnClose(self, event):
