@@ -9,6 +9,7 @@ class ToolPanel(wx.Panel):
     def __init__(self, toolbox, pos, size):
         wx.Panel.__init__(self, toolbox, wx.ID_ANY, pos, size)
         self.toolbox = toolbox
+        #self.mainwin = toolbox.mainwin
         self.PanelInit()
 
     def PanelInit(self):
@@ -42,6 +43,7 @@ class ToolBox(wx.Frame):
         self.boxsize = size
         self.status = None
         self.canclose = False
+        self.visible = True
 
         self.buttonheight = 23
         self.boxfont = wx.Font(wx.FontInfo(8).FaceName("Tahoma"))
@@ -64,17 +66,15 @@ class ToolBox(wx.Frame):
 
 
     def SetPosition(self, mainpos, mainsize):
-        newpos = wx.Point(mainpos.x + mainsize.x + self.mpos.x, mainpos.y + self.mpos.y + 5)
-        #if DistXY(newpos.x, newpos.y, self.oldpos.x, self.oldpos.y) > 10: 
-        self.Move(newpos)
-        #self.oldpos = self.GetPosition()
-        self.oldpos = newpos
-        #return wx.Point(mainpos.x + mainsize.x + self.mpos.x, mainpos.y + self.mpos.y + 5)
+        self.Move(mainpos.x + mainsize.x + self.mpos.x, mainpos.y + self.mpos.y + 5)
+        self.oldpos = self.GetPosition()
+        return wx.Point(mainpos.x + mainsize.x + self.mpos.x, mainpos.y + self.mpos.y + 5)
 
 
     def OnMove(self, event):
         if self.IsActive():
             newpos = self.GetPosition()
+            newsize = self.GetSize()
            
             shift = newpos - self.oldpos
         
@@ -89,6 +89,7 @@ class ToolBox(wx.Frame):
     def OnSize(self, event):
         event.Skip()
         newsize = self.GetSize()
+        pos = self.GetPosition()
 
         snum = "Box Size X {} Y {}".format(newsize.x, newsize.y)
         pub.sendMessage("status_listener", message=snum)

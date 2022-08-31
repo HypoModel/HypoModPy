@@ -52,8 +52,11 @@ class MainFrame(wx.Frame):
         super(MainFrame, self).__init__(None, wx.ID_ANY, title, pos, size)
         self.ostype = GetSystem()
         self.statusbar = self.CreateStatusBar()
+
+        # Initialise ToolBoxes
         self.diagbox = DiagBox(self, "Diagnostic", wx.Point(0, 0), wx.Size(400, 500))
         self.diagbox.Write('Diagnostic Box OK\n')
+        self.gridbox = None
 
         respath = rpath;  # defaults to "" for Windows, bundle resource path for OSX
         self.diagbox.Write("MainFrame respath " + respath + "\n")
@@ -192,9 +195,12 @@ class HypoMain(MainFrame):
         self.HypoLoad()
         self.SetSize(self.prefs['viewwidth'], self.prefs['viewheight'])
 
-        # Layout Sizers
+        # Layout
         mainsizer = wx.BoxSizer(wx.HORIZONTAL)
-        graphsizer = wx.BoxSizer(wx.VERTICAL)
+        self.graphsizer = wx.BoxSizer(wx.VERTICAL)
+        self.xstretch = 50
+        self.numdraw = self.prefs['numdraw']
+        self.scalewidth = 50
 
         # Menu Bar
         self.UserMenu()
@@ -210,19 +216,40 @@ class HypoMain(MainFrame):
             graphpanel = GraphPanel(self)
             graphpanel.FrontGraph(graphdisp)
             self.panelset.append(graphpanel)
-            graphsizer.Add(graphpanel, 1, wx.EXPAND)
+            self.graphsizer.Add(graphpanel, 1, wx.EXPAND)
 
-        self.scalebox = ScaleBox(self)
+        self.scalebox = ScaleBox(self, wx.Size(self.scalewidth, -1), self.numdraw)
 
-        graphsizer.AddSpacer(5)
+        self.graphsizer.AddSpacer(5)
         mainsizer.Add(self.scalebox, 0, wx.EXPAND)
-        mainsizer.Add(graphsizer, 1, wx.EXPAND)
+        mainsizer.Add(self.graphsizer, 1, wx.EXPAND)
 
         self.SetSizer(mainsizer)
         self.Layout()
 
         self.Bind(wx.EVT_CLOSE, self.OnClose)
+        #self.Bind(wx.EVT_SIZE, self.OnSize)
 
+
+    def OnSize(self, event):
+        self.SizeUpdate()
+        super(HypoMain, self).OnSize(event)
+
+    
+    def SizeUpdate(self):
+        newsize = self.GetSize()
+        graphsize = self.graphsizer.GetSize()
+        scalewidth = 155
+
+        gspacex = newsize.x - scalewidth
+        xplot = gspacex - 15
+        
+        gspacey = graphsize.y - self.numdraw * 55 - 5
+        yplot = gspacey / self.numdraw
+
+        for graphpanel in self.panelset:
+            graphpanel.ReSize(xplot, yplot)
+	
 
     def UserMenu(self):
         
@@ -231,27 +258,22 @@ class HypoMain(MainFrame):
         menuTools = wx.Menu()
         menuSystem = wx.Menu()
         
-        menuFile.Append(wx.ID_ABOUT, "&About...")
+        itemAbout = menuFile.Append(wx.ID_ABOUT, "&About...")
         menuFile.AppendSeparator()
-        menuFile.Append(wx.ID_EXIT, "E&xit")
+        itemQuit = menuFile.Append(wx.ID_EXIT, "E&xit")
         
         #SetMenuFlag(ID_XYPos, "xypos", "XY Pos", 1, menuAnalysis)
         #SetMenuFlag(ID_Zoom, "zoom", "Graph Zoom", 0, menuAnalysis) 
 
-        ID_Diag = wx.NewId()
-        ID_Grid = wx.NewId()
-        
-        menuTools.Append(ID_Diag, "Diagnostic Box")
-        menuTools.Append(ID_Grid, "Data Grid")
+        itemDiag = menuTools.Append(wx.ID_ANY, "Diagnostic Box")
+        itemGrid = menuTools.Append(wx.ID_ANY, "Data Grid")
         #menuTools.Append(ID_Neuro, "Neuro Box")
         #menuTools.Append(ID_Plot, "Plot Box")
         #menuTools.Append(ID_Sound, "Sound Box")
         #menuTools.Append(ID_Mod, "Mod Box")
         #menuTools.Append(ID_Burst, "Burst Box")
 
-        ID_Options = wx.NewId()
-        
-        menuSystem.Append(ID_Options, "Options")
+        menuSystem.Append(wx.ID_ANY, "Options")
         
         menuBar = wx.MenuBar()
         menuBar.Append(menuFile, "&File")
@@ -261,8 +283,29 @@ class HypoMain(MainFrame):
         
         self.SetMenuBar(menuBar)
 
+        self.Bind(wx.EVT_MENU, self.OnQuit, itemQuit)
+        self.Bind(wx.EVT_MENU, self.OnAbout, itemAbout)
+        self.Bind(wx.EVT_MENU, self.OnGridBox, itemGrid)
+        self.Bind(wx.EVT_MENU, self.OnDiagBox, itemDiag)
+
+
+    def OnQuit(self, event):
+        self.Close()
+
+
+    def OnAbout(self, event):
+        message = "HypoMod Modelling Toolkit\n\nDuncan MacGregor 2010-2022\n\nSystem: {}".format(wx.GetOsDescription())
+        wx.MessageBox(message, "About HypoMod", wx.OK | wx.ICON_INFORMATION, self)
+
         
-        
+    def OnDiagBox(self, event):
+        if(self.diagbox): self.diagbox.Show()   
+
+
+    def OnGridBox(self, event):
+        if(self.gridbox): self.gridbox.Show()  
+        else: self.SetStatusText('No Data Grid available')  
+
         
     def OnClose(self, event):
         self.HypoStore()
