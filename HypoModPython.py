@@ -212,7 +212,7 @@ class HypoMain(MainFrame):
 
         graphsizer.AddSpacer(5)
         mainsizer.Add(self.scalebox, 0, wx.EXPAND)
-        mainsizer.Add(graphsizer, 0, wx.EXPAND)
+        mainsizer.Add(graphsizer, 1, wx.EXPAND)
 
         self.SetSizer(mainsizer)
         self.Layout()

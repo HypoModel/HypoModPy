@@ -15,6 +15,7 @@ class GraphPanel(wx.Panel):
         self.frontdisp = 0
         self.dispset = []
         wx.StaticText(self, label='GraphPanel')
+        self.SetBackgroundColour(wx.WHITE)
 
 
     def FrontGraph(self, graphdisp):
