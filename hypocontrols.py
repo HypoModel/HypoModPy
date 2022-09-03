@@ -6,8 +6,8 @@ from pubsub import pub
 
 
 class ToolPanel(wx.Panel):
-    def __init__(self, toolbox, pos, size):
-        wx.Panel.__init__(self, toolbox, wx.ID_ANY, pos, size)
+    def __init__(self, toolbox, pos, size, style = wx.TAB_TRAVERSAL | wx.NO_BORDER):
+        wx.Panel.__init__(self, toolbox, wx.ID_ANY, pos, size, style)
         self.toolbox = toolbox
         #self.mainwin = toolbox.mainwin
         self.PanelInit()
@@ -109,3 +109,10 @@ class ToolBox(wx.Frame):
 class ParamSet:
     con = {}
     paramstore = {}
+
+
+
+class TextBox(wx.TextCtrl):
+    def __init__(self, parent, id, value, pos, size, style):
+        wx.TextCtrl.__init__(self, parent, id, value, pos, size, style)
+        self.val = 0

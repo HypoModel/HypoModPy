@@ -101,11 +101,10 @@ class GraphPanel(wx.Panel):
 
 class ScaleBox(ToolPanel):
     def __init__(self, parent, size, numdraw):
-        wx.Panel.__init__(self, parent, wx.ID_ANY, wx.DefaultPosition, size, wx.BORDER_SIMPLE)
+        ToolPanel.__init__(self, parent, wx.DefaultPosition, size, wx.BORDER_SIMPLE)
 
         iconpath = parent.initpath
         self.numdraw = numdraw
-        self.boxfont = wx.Font(wx.FontInfo(8).FaceName("Tahoma"))
         self.SetFont(self.boxfont)
 
         # Load Icons
@@ -155,23 +154,23 @@ class ScaleBox(ToolPanel):
 
 
     def AddScaleParam(self, label, initval, psetbox, index):
-            boxwidth = 45
-            boxheight = -1
-            boxgap = 2
+        boxwidth = 45
+        boxheight = -1
+        boxgap = 2
 
-            snum = "{}".format(initval)
-            confont = wx.Font(wx.FontInfo(8).FaceName("Tahoma"))
-            pbox = wx.BoxSizer(wx.HORIZONTAL)
-            label = wx.StaticText(self.panel, wx.ID_STATIC, label, wx.DefaultPosition, wx.Size(-1, -1), 0)
+        snum = "{}".format(initval)
+        confont = wx.Font(wx.FontInfo(8).FaceName("Tahoma"))
+        pbox = wx.BoxSizer(wx.HORIZONTAL)
+        label = wx.StaticText(self, wx.ID_STATIC, label, wx.DefaultPosition, wx.Size(-1, -1), 0)
 
-            numbox = TextBox(self.panel, wx.ID_ANY, snum, wx.DefaultPosition, wx.Size(boxwidth, boxheight), wx.TE_PROCESS_ENTER)
-            label.SetFont(confont)
-            numbox.SetFont(confont)
-            pbox.Add(label, 0, wx.ALIGN_CENTER_VERTICAL|wx.RIGHT, 2)
-            pbox.Add(numbox, 0, wx.ALIGN_CENTER_VERTICAL, 0)
+        numbox = TextBox(self, wx.ID_ANY, snum, wx.DefaultPosition, wx.Size(boxwidth, boxheight), wx.TE_PROCESS_ENTER)
+        label.SetFont(confont)
+        numbox.SetFont(confont)
+        pbox.Add(label, 0, wx.ALIGN_CENTER_VERTICAL|wx.RIGHT, 2)
+        pbox.Add(numbox, 0, wx.ALIGN_CENTER_VERTICAL, 0)
 
-            psetbox.Add(pbox, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, boxgap)
-            numbox.Bind(wx.EVT_SET_FOCUS, self.OnConFocus, self)
-            numbox.val = gpos
+        psetbox.Add(pbox, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, boxgap)
+        #numbox.Bind(wx.EVT_SET_FOCUS, self.OnConFocus, self)
+        numbox.val = index
             
-            return numbox
+        return numbox
