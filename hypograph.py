@@ -1,5 +1,6 @@
 
 import wx
+from hypocontrols import *
 
 
 
@@ -98,9 +99,20 @@ class GraphPanel(wx.Panel):
             
         
 
-class ScaleBox(wx.Panel):
+class ScaleBox(ToolPanel):
     def __init__(self, parent, size, numdraw):
         wx.Panel.__init__(self, parent, wx.ID_ANY, wx.DefaultPosition, size, wx.BORDER_SIMPLE)
 
+        iconpath = parent.initpath
         self.numdraw = numdraw
+        self.boxfont = wx.Font(wx.FontInfo(8).FaceName("Tahoma"))
+        self.SetFont(self.boxfont)
+
+        # Load Icons
+        wx.Image.AddHandler(wx.PNGHandler())
+        self.rightarrow = wx.Bitmap(iconpath + "/rightarrow.png", wx.BITMAP_TYPE_PNG)
+        self.leftarrow = wx.Bitmap(iconpath + "/leftarrow.png", wx.BITMAP_TYPE_PNG)
+        self.uparrow = wx.Bitmap(iconpath + "/uparrow.png", wx.BITMAP_TYPE_PNG)
+        self.downarrow = wx.Bitmap(iconpath + "/downarrow.png", wx.BITMAP_TYPE_PNG)
+
         wx.StaticText(self, label='ScaleBox')

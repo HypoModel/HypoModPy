@@ -228,12 +228,12 @@ class HypoMain(MainFrame):
         self.Layout()
 
         self.Bind(wx.EVT_CLOSE, self.OnClose)
-        #self.Bind(wx.EVT_SIZE, self.OnSize)
+        self.Bind(wx.EVT_SIZE, self.OnHypoSize)
 
 
-    def OnSize(self, event):
-        self.SizeUpdate()
+    def OnHypoSize(self, event):
         super(HypoMain, self).OnSize(event)
+        self.SizeUpdate()
 
     
     def SizeUpdate(self):
