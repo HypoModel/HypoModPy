@@ -15,8 +15,8 @@ from hypocontrols import *
 from hypograph import *
 
 from pubsub import pub
-     
-        
+
+
 
 class ToolSet():
     def __init__(self):
@@ -96,12 +96,17 @@ class MainFrame(wx.Frame):
 
         pub.subscribe(self.status_listener, "status_listener")
         pub.subscribe(self.toolclose_listener, "toolclose_listener")
+        pub.subscribe(self.diag_listener, "diag_listener")
 
         self.Bind(wx.EVT_LEFT_UP, self.OnLeftClick)
         self.Bind(wx.EVT_MOVE, self.OnMove)
         self.Bind(wx.EVT_SIZE, self.OnSize)
 
         self.ToolLoad()    # main window tool configuration
+
+
+    def diag_listener(self, message, arg2=None):
+        self.diagbox.Write(message)
 
 
     def status_listener(self, message, arg2=None):
@@ -173,7 +178,7 @@ class MainFrame(wx.Frame):
         self.prefs['viewwidth'] = newsize.x
         self.prefs['viewheight'] = newsize.y
         snum = "Main Size X {} Y {}".format(newsize.x, newsize.y)
-        self.SetStatusText(snum)
+        #self.SetStatusText(snum)
 
         event.Skip()
            
@@ -198,9 +203,9 @@ class HypoMain(MainFrame):
         # Layout
         mainsizer = wx.BoxSizer(wx.HORIZONTAL)
         self.graphsizer = wx.BoxSizer(wx.VERTICAL)
-        self.xstretch = 50
+        self.xstretch = 0
         self.numdraw = self.prefs['numdraw']
-        self.scalewidth = 50
+        self.scalewidth = -1
 
         # Menu Bar
         self.UserMenu()
@@ -240,10 +245,12 @@ class HypoMain(MainFrame):
     def SizeUpdate(self):
         newsize = self.GetSize()
         graphsize = self.graphsizer.GetSize()
-        scalewidth = 155
 
-        gspacex = newsize.x - scalewidth
-        xplot = gspacex - 15
+        snum = "newsize X {} graphsize X {}".format(newsize.x, graphsize.x)
+        self.SetStatusText(snum)
+
+        gspacex = graphsize.x
+        xplot = gspacex - 50
         
         gspacey = graphsize.y - self.numdraw * 55 - 5
         yplot = gspacey / self.numdraw

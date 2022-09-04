@@ -5,3 +5,5 @@ Init/hypoprefs.ini
 __pycache__/hypograph.cpython-310.pyc
 *.pyc
 *.ini
+*.pyc
+*.ini

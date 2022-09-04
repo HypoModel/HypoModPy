@@ -47,3 +47,15 @@ class TextFile():
 
 def DistXY(p1, p2):
     return sqrt(pow(p2.x - p1.x) + pow(p2.y - p1.y, 2))
+
+
+# Paths
+mainpath = ''
+projectpath = ''
+
+# Control IDs
+ID_Sync = wx.NewIdRef()
+ID_Store = wx.NewIdRef()
+ID_Load = wx.NewIdRef()
+
+
