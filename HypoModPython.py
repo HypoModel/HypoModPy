@@ -13,6 +13,7 @@ from pathlib import Path
 from hypobase import *
 from hypocontrols import *
 from hypograph import *
+from hyposcale import *
 
 from pubsub import pub
 
@@ -250,7 +251,7 @@ class HypoMain(MainFrame):
         self.SetStatusText(snum)
 
         gspacex = graphsize.x
-        xplot = gspacex - 50
+        xplot = gspacex - 55
         
         gspacey = graphsize.y - self.numdraw * 55 - 5
         yplot = gspacey / self.numdraw
