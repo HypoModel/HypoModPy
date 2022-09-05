@@ -53,6 +53,7 @@ class MainFrame(wx.Frame):
         super(MainFrame, self).__init__(None, wx.ID_ANY, title, pos, size)
         self.ostype = GetSystem()
         self.statusbar = self.CreateStatusBar()
+        #self.SetBackgroundColour(wx.WHITE)
 
         # Initialise ToolBoxes
         self.diagbox = DiagBox(self, "Diagnostic", wx.Point(0, 0), wx.Size(400, 500))
@@ -207,6 +208,7 @@ class HypoMain(MainFrame):
         self.xstretch = 0
         self.numdraw = self.prefs['numdraw']
         self.scalewidth = -1
+        
 
         # Menu Bar
         self.UserMenu()

@@ -69,7 +69,7 @@ class GraphPanel(wx.Panel):
             self.textfont = wx.Font(wx.FontInfo(8).FaceName("Tahoma"))
             self.smallfont = wx.Font(wx.FontInfo(6).FaceName("Tahoma"))
 
-        self.scrollbar = wx.ScrollBar(self, wx.ID_ANY, wx.Point(30, self.yplot + 35), wx.Size(self.xplot + 50, 15))
+        self.scrollbar = wx.ScrollBar(self, wx.ID_ANY, wx.Point(30, self.yplot + 35), wx.Size(self.xplot + 50, -1))
         self.scrollbar.SetScrollbar(0, 40, self.xplot, 40)
 
         self.Bind(wx.EVT_PAINT, self.OnPaint)
@@ -80,8 +80,9 @@ class GraphPanel(wx.Panel):
         self.yplot = newyplot
 
         #self.scrollbar.SetSize(self.xplot + self.xstretch + 30, -1)
+        self.scrollbar.SetSize(self.xplot + 50, -1)
         #self.scrollbar.SetScrollbar(0, 40, self.xplot, 40)
-        #self.scrollbar.Move(30, self.yplot + 35)
+        self.scrollbar.Move(30, self.yplot + 35)
 
         #self.Layout()
         #self.UpdateScroll()
