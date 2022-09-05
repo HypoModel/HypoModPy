@@ -17,7 +17,7 @@ class ScaleBox(ToolPanel):
 
         # Load Icons
         #wx.Image.AddHandler(wx.PNGHandler())
-        if self.ostype == 'Mac':
+        if self.ostype == 'Mac' or self.ostype == 'Windows':
             self.rightarrow = wx.Bitmap(iconpath + "/rightarrow12.png", wx.BITMAP_TYPE_PNG)
             self.leftarrow = wx.Bitmap(iconpath + "/leftarrow12.png", wx.BITMAP_TYPE_PNG)
             self.uparrow = wx.Bitmap(iconpath + "/uparrow12.png", wx.BITMAP_TYPE_PNG)
