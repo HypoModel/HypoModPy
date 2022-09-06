@@ -55,6 +55,12 @@ class ScaleBox(ToolPanel):
 
         self.SetSizer(vbox)
 
+        pub.subscribe(self.Scroll_Listener, "scroll_listener")
+
+
+    def Scroll_Listener(self, index, xpos):
+        self.ScrollUpdate(index, xpos)
+
 
     def StoreBox(self):
         label = 'gtest1'

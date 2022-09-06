@@ -183,9 +183,9 @@ class MainFrame(wx.Frame):
         #self.SetStatusText(snum)
 
         event.Skip()
-           
-	
-
+        
+        
+        
 class HypoMain(MainFrame):
     def __init__(self, title, pos, size, respath, mainpath):
         super(HypoMain, self).__init__(title, pos, size, respath, mainpath)
@@ -207,37 +207,43 @@ class HypoMain(MainFrame):
         self.graphsizer = wx.BoxSizer(wx.VERTICAL)
         self.xstretch = 0
         self.numdraw = self.prefs['numdraw']
+        self.numgraphs = self.prefs['numgraphs']
         self.scalewidth = -1
         
-
         # Menu Bar
         self.UserMenu()
         self.SetTitle('HypoMod')
 
-        # Graph Panels
-        self.panelset = []
+        # Graphs
         self.dispset = []
+        for i in range(self.numgraphs):
+            self.dispset.append(GraphDisp())
+            self.dispset[i].Add(PlotDat())   # Test Plot
+            
+         # Graph Panels
+        self.panelset = []
 
         for graph in range(self.prefs['numdraw']):
-            graphdisp = GraphDisp()
-            self.dispset.append(graphdisp)
+            graphdisp = self.dispset[graph]
             graphpanel = GraphPanel(self)
             graphpanel.index = graph
             graphpanel.FrontGraph(graphdisp)
             self.panelset.append(graphpanel)
             self.graphsizer.Add(graphpanel, 1, wx.EXPAND)
 
+        # Scale Box
         self.scalebox = ScaleBox(self, wx.Size(self.scalewidth, -1), self.numdraw)
 
+        # Sizers
         self.graphsizer.AddSpacer(5)
         mainsizer.Add(self.scalebox, 0, wx.EXPAND)
         mainsizer.Add(self.graphsizer, 1, wx.EXPAND)
-
         self.SetSizer(mainsizer)
         self.Layout()
 
         self.Bind(wx.EVT_CLOSE, self.OnClose)
         self.Bind(wx.EVT_SIZE, self.OnHypoSize)
+
 
 
     def OnHypoSize(self, event):
