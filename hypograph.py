@@ -14,7 +14,7 @@ class PlotDat():
         self.xdis = 0
 
         self.yfrom = 0
-        self.yto = 20
+        self.yto = 10000
         self.yscale = 1
 
         self.xtickmode = 1
@@ -36,6 +36,9 @@ class PlotDat():
         self.ylabelplaces = -1
         self.xscalemode = 0 
         self.yscalemode = 0
+
+        self.xticklength = 5
+        self.yticklength = 5
 
 
 
@@ -82,11 +85,32 @@ class GraphPanel(wx.Panel):
             self.smallfont = wx.Font(wx.FontInfo(6).FaceName("Tahoma"))
 
         self.scrollbar = wx.ScrollBar(self, wx.ID_ANY, wx.Point(self.xbase, self.yplot + 35), wx.Size(self.xplot + 50, -1))
-        self.scrollbar.SetScrollbar(0, 40, self.xplot, 40)
+        self.scrollbar.SetScrollbar(0, 40, self.xplot + 40, 50)
 
         self.Bind(wx.EVT_PAINT, self.OnPaint)
         self.Bind(wx.EVT_SCROLL, self.OnScroll)
 
+
+    def ScrollUpdate(self, pos):
+        max = 1440
+        plot = self.GetFrontPlot()
+        if not plot: return
+        if not plot.data:
+            #mod->diagbox->Write("plot " + graph->gname + " no data\n")
+            return
+        else: max = plot.data.max / plot.xscale
+        if plot.type == 2 and plot.datax: max = plot.gdatax.max
+
+        xdiff = plot.xto - plot.xfrom
+        scrollxto = max * plot.binsize
+        section = xdiff
+        if section > scrollxto:
+            plot.scrollpos = 0
+		
+        self.scrollbar.SetScrollbar(plot.scrollpos, section, scrollxto, section)
+
+        self.Refresh()
+        #overlay.Reset()
 
 
     def OnScroll(self, event):
@@ -127,6 +151,10 @@ class GraphPanel(wx.Panel):
 	
         self.Refresh()
 
+
+    def GetFrontPlot(self):
+        return self.dispset[0].plot[0]
+
     
     def FrontGraph(self, graphdisp):
         if len(self.dispset) == 0: 
@@ -155,7 +183,7 @@ class GraphPanel(wx.Panel):
 
         xlabels = 10
         ylabels = 5
-        xylab = 5
+        xylab = 2
 
         for graphdisp in self.dispset:
             for plot in graphdisp.plots:
@@ -200,7 +228,7 @@ class GraphPanel(wx.Panel):
                     if plot.xtickmode == 2: xcoord = (int(xplotstep * i) + xtickstart)
                     else: xcoord = int(i * self.xplot / xlabels)
                     if plot.xtickmode and xcoord <= xaxislength:
-                        gc.StrokeLine(self.xbase + xcoord, self.ybase + self.yplot, self.xbase + xcoord, self.ybase + self.yplot + 5)
+                        gc.StrokeLine(self.xbase + xcoord, self.ybase + self.yplot, self.xbase + xcoord, self.ybase + self.yplot + plot.xticklength)
 
                     # Labels
                     if not plot.xlabelmode or xcoord > xaxislength or plot.xlabelmode == 2 and i > 0 and i < xlabels: continue
@@ -236,7 +264,7 @@ class GraphPanel(wx.Panel):
                     if plot.ytickmode == 2: ycoord = int(yplotstep * i)
                     else: ycoord = int(i * self.yplot / ylabels)
                     if plot.ytickmode:
-                        gc.StrokeLine(self.xbase, self.ybase + self.yplot - ycoord, self.xbase - 5, self.ybase + self.yplot - ycoord)
+                        gc.StrokeLine(self.xbase, self.ybase + self.yplot - ycoord, self.xbase - plot.yticklength, self.ybase + self.yplot - ycoord)
 
                     # Labels
                     if not plot.ylabelmode or plot.ylabelmode == 2 and i > 0 and i < ylabels: continue
@@ -255,7 +283,7 @@ class GraphPanel(wx.Panel):
 
                     if GetSystem() == 'Mac':
                         textsize = gc.GetFullTextExtent(snum)
-                        gc.DrawText(snum, self.xbase - xylab - textsize[0], self.ybase + self.yplot - ycoord - textsize[1] / 2)
+                        gc.DrawText(snum, self.xbase - xylab - plot.yticklength - textsize[0], self.ybase + self.yplot - ycoord - textsize[1] / 2)
                     else:
                         textsize = gc.GetFullTextExtent(snum)
                         gc.DrawText(snum, self.xbase - xylab - textsize[0], self.ybase + self.yplot - ycoord - 7)

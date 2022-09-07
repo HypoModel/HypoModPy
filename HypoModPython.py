@@ -233,6 +233,7 @@ class HypoMain(MainFrame):
 
         # Scale Box
         self.scalebox = ScaleBox(self, wx.Size(self.scalewidth, -1), self.numdraw)
+        self.scalebox.PanelUpdate()
 
         # Sizers
         self.graphsizer.AddSpacer(5)

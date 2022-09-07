@@ -11,6 +11,8 @@ class ScaleBox(ToolPanel):
         iconpath = parent.initpath
         self.ostype = GetSystem()
         self.numdraw = numdraw
+        self.panelset = parent.panelset
+
         self.SetFont(self.boxfont)
         if self.ostype == 'Mac': self.buttonheight = 20
         else: self.buttonheight = 23
@@ -32,7 +34,7 @@ class ScaleBox(ToolPanel):
         vbox.AddSpacer(5)
         self.vconbox = wx.BoxSizer(wx.VERTICAL)
 
-        for graphpanel in parent.panelset:
+        for graphpanel in self.panelset:
             self.AddGraphConsole(graphpanel)
             #gsync[i] = NULL;
             
@@ -56,6 +58,53 @@ class ScaleBox(ToolPanel):
         self.SetSizer(vbox)
 
         pub.subscribe(self.Scroll_Listener, "scroll_listener")
+
+
+    def ScrollUpdate(self):
+        for graphpanel in self.panelset:
+            graphpanel.ScrollUpdate()
+
+
+    # PanelUpdate() - update scale panel after changing plot scale parameters
+    def PanelUpdate(self):
+        for graphpanel in self.panelset:
+            if len(graphpanel.dispset) > 0:
+                plot = graphpanel.dispset[0].plots[0]
+                if not plot: continue
+
+            if abs(plot.yto - plot.yfrom) < 10:
+                graphpanel.yf.SetValue("{:.2f}".format(plot.yfrom))
+                graphpanel.yt.SetValue("{:.2f}".format(plot.yto))
+            elif abs(plot.yto - plot.yfrom) < 100:
+                graphpanel.yf.SetValue("{:.1f}".format(plot.yfrom))
+                graphpanel.yt.SetValue("{:.1f}".format(plot.yto))
+            else:
+                graphpanel.yf.SetValue("{:.0f}".format(plot.yfrom))
+                graphpanel.yt.SetValue("{:.0f}".format(plot.yto))
+
+
+            if abs(plot.xto - plot.xfrom) < 1:
+                graphpanel.xf.SetValue("{:.3f}".format(plot.xfrom))
+                graphpanel.xt.SetValue("{:.3f}".format(plot.xto))
+            elif abs(plot.xto - plot.xfrom) < 10:
+                graphpanel.xf.SetValue("{:.2f}".format(plot.xfrom))
+                graphpanel.xt.SetValue("{:.2f}".format(plot.xto))
+            elif abs(plot.xto - plot.xfrom) < 100:
+                graphpanel.xf.SetValue("{:.1f}".format(plot.xfrom))
+                graphpanel.xt.SetValue("{:.1f}".format(plot.xto))
+            else:
+                graphpanel.xf.SetValue("{:.0f}".format(plot.xfrom))
+                graphpanel.xt.SetValue("{:.0f}".format(plot.xto))
+
+
+            # overlay sync
+            for i in range(1, len(graphpanel.dispset)):
+                overplot = graphpanel.dispset[i].plot[0]
+                if overplot.oversync:
+                    overplot.yfrom = plot.yfrom
+                    overplot.yto = plot.yto
+                    plot.xfrom = plot.xfrom
+                    plot.xto = plot.xto
 
 
     def Scroll_Listener(self, index, xpos):
