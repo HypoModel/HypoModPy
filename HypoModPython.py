@@ -227,7 +227,7 @@ class HypoMain(MainFrame):
             graphdisp = self.dispset[graph]
             graphpanel = GraphPanel(self)
             graphpanel.index = graph
-            graphpanel.FrontGraph(graphdisp)
+            graphpanel.SetFront(graphdisp)
             self.panelset.append(graphpanel)
             self.graphsizer.Add(graphpanel, 1, wx.EXPAND)
 

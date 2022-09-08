@@ -141,7 +141,22 @@ class ParamSet:
 class TextBox(wx.TextCtrl):
     def __init__(self, parent, id, value, pos, size, style):
         wx.TextCtrl.__init__(self, parent, id, value, pos, size, style)
-        self.val = 0
+        
+    
+    def GetNumValue(self):
+        return float(self.GetValue())
+
+
+    def SetNumValue(self, value, valrange=None):
+        if valrange == None: valrange = value
+        if valrange < 1:
+            self.SetValue("{:.3f}".format(value))
+        elif valrange < 10:
+            self.SetValue("{:.2f}".format(value))
+        elif valrange < 100:
+            self.SetValue("{:.1f}".format(value))
+        else:
+            self.SetValue("{:.0f}".format(value))  
 
 
 

@@ -40,6 +40,11 @@ class PlotDat():
         self.xticklength = 5
         self.yticklength = 5
 
+        self.data = None
+        self.xdata = None
+        self.binsize = 1
+        self.scrollpos = 0
+
 
 
 class GraphDisp():
@@ -54,6 +59,16 @@ class GraphDisp():
     def Add(self, plot):
         self.plots.append(plot)
 
+    # XYSynch() - Synchronise X and Y axes for all plots
+    def XYSynch(self, plotzero=None):  
+        if plotzero == None: plotzero = self.plots[0]
+        
+        for plot in self.plots:
+            plot.yfrom = plotzero.yfrom
+            plot.yto = plotzero.yto
+            plot.xfrom = plotzero.xfrom
+            plot.xto = plotzero.xto
+	
 
 
 class GraphPanel(wx.Panel):
@@ -91,25 +106,30 @@ class GraphPanel(wx.Panel):
         self.Bind(wx.EVT_SCROLL, self.OnScroll)
 
 
-    def ScrollUpdate(self, pos):
-        max = 1440
-        plot = self.GetFrontPlot()
+    def XYSynch(self):
+        for graphdisp in self.dispset: 
+            graphdisp.XYSynch()
+
+
+    def ScrollUpdate(self):
+        plot = self.GetFront()
         if not plot: return
         if not plot.data:
             #mod->diagbox->Write("plot " + graph->gname + " no data\n")
-            return
+            #return
+            max = 1000
         else: max = plot.data.max / plot.xscale
-        if plot.type == 2 and plot.datax: max = plot.gdatax.max
+        if plot.xdata: max = plot.gdatax.max
 
         xdiff = plot.xto - plot.xfrom
         scrollxto = max * plot.binsize
-        section = xdiff
+        section = int(xdiff)
         if section > scrollxto:
             plot.scrollpos = 0
 		
         self.scrollbar.SetScrollbar(plot.scrollpos, section, scrollxto, section)
 
-        self.Refresh()
+        #self.Refresh()
         #overlay.Reset()
 
 
@@ -152,11 +172,11 @@ class GraphPanel(wx.Panel):
         self.Refresh()
 
 
-    def GetFrontPlot(self):
-        return self.dispset[0].plot[0]
+    def GetFront(self):
+        return self.dispset[0].plots[0]
 
     
-    def FrontGraph(self, graphdisp):
+    def SetFront(self, graphdisp):
         if len(self.dispset) == 0: 
             self.dispset.append(graphdisp)
         else:

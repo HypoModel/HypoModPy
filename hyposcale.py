@@ -13,6 +13,12 @@ class ScaleBox(ToolPanel):
         self.numdraw = numdraw
         self.panelset = parent.panelset
 
+        # Default scale parameter limits
+        self.xmin = -1000000
+        self.xmax = 10000000  # 1000000, extend for VasoMod long runs
+        self.ymin = -1000000
+        self.ymax = 1000000
+
         self.SetFont(self.boxfont)
         if self.ostype == 'Mac': self.buttonheight = 20
         else: self.buttonheight = 23
@@ -42,7 +48,7 @@ class ScaleBox(ToolPanel):
 
         buttonbox = wx.BoxSizer(wx.HORIZONTAL)
         if self.ostype == 'Mac':
-            self.ScaleButton(wx.ID_OK, "OK", 35, buttonbox)
+            self.ScaleButton(wx.ID_OK, "OK", 35, buttonbox).Bind(wx.EVT_BUTTON, self.OnOK)
             buttonbox.AddSpacer(2)
             self.ScaleButton(ID_Sync, "Sync", 35, buttonbox)
         else:
@@ -59,10 +65,47 @@ class ScaleBox(ToolPanel):
 
         pub.subscribe(self.Scroll_Listener, "scroll_listener")
 
+        self.Bind(wx.EVT_TEXT_ENTER, self.OnOK)
+        
 
-    def ScrollUpdate(self):
+    def ScaleUpdate(self):
+        #self.XSynch()
+        self.GraphUpdate()
+        self.PanelUpdate()
+
+
+    def OnOK(self, event):
+
+        for graphpanel in self.panelset:
+            plot = graphpanel.GetFront()
+            oldxfrom = plot.xfrom
+            oldxto = plot.xto
+
+            plot.yfrom = graphpanel.yf.GetNumValue()
+            plot.yto = graphpanel.yt.GetNumValue()
+            plot.xfrom = graphpanel.xf.GetNumValue()
+            plot.xto = graphpanel.xf.GetNumValue()
+
+            if plot.xfrom < self.xmin or plot.xfrom > self.xmax:
+                pub.sendMessage("status_listener", message="X From, value out of range, max 100000")
+                snum = "ScaleBox X out of range, value %.2f xmin %d\n".format(plot.xfrom, self.xmin)
+                pub.sendMessage("diag_listener", message=snum)
+                plot.xfrom = oldxfrom
+                graphpanel.xfrom.SetNumValue(oldxfrom, plot.xto)
+
+            if plot.xto < self.xmin or plot.xto > self.xmax: 
+                pub.sendMessage("status_listener", message="X To, value out of range, max 100000")
+                plot.xto = oldxto
+                # need panel set here?
+
+        graphpanel.XYSynch()
+        self.ScaleUpdate()
+
+
+    def GraphUpdate(self):
         for graphpanel in self.panelset:
             graphpanel.ScrollUpdate()
+            graphpanel.Refresh()
 
 
     # PanelUpdate() - update scale panel after changing plot scale parameters
@@ -82,20 +125,8 @@ class ScaleBox(ToolPanel):
                 graphpanel.yf.SetValue("{:.0f}".format(plot.yfrom))
                 graphpanel.yt.SetValue("{:.0f}".format(plot.yto))
 
-
-            if abs(plot.xto - plot.xfrom) < 1:
-                graphpanel.xf.SetValue("{:.3f}".format(plot.xfrom))
-                graphpanel.xt.SetValue("{:.3f}".format(plot.xto))
-            elif abs(plot.xto - plot.xfrom) < 10:
-                graphpanel.xf.SetValue("{:.2f}".format(plot.xfrom))
-                graphpanel.xt.SetValue("{:.2f}".format(plot.xto))
-            elif abs(plot.xto - plot.xfrom) < 100:
-                graphpanel.xf.SetValue("{:.1f}".format(plot.xfrom))
-                graphpanel.xt.SetValue("{:.1f}".format(plot.xto))
-            else:
-                graphpanel.xf.SetValue("{:.0f}".format(plot.xfrom))
-                graphpanel.xt.SetValue("{:.0f}".format(plot.xto))
-
+            graphpanel.xf.SetNumValue(plot.xfrom, abs(plot.xto - plot.xfrom))
+            graphpanel.xt.SetNumValue(plot.xto, abs(plot.xto - plot.xfrom))
 
             # overlay sync
             for i in range(1, len(graphpanel.dispset)):
