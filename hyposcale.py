@@ -84,14 +84,14 @@ class ScaleBox(ToolPanel):
             plot.yfrom = graphpanel.yf.GetNumValue()
             plot.yto = graphpanel.yt.GetNumValue()
             plot.xfrom = graphpanel.xf.GetNumValue()
-            plot.xto = graphpanel.xf.GetNumValue()
+            plot.xto = graphpanel.xt.GetNumValue()
 
             if plot.xfrom < self.xmin or plot.xfrom > self.xmax:
                 pub.sendMessage("status_listener", message="X From, value out of range, max 100000")
                 snum = "ScaleBox X out of range, value %.2f xmin %d\n".format(plot.xfrom, self.xmin)
                 pub.sendMessage("diag_listener", message=snum)
                 plot.xfrom = oldxfrom
-                graphpanel.xfrom.SetNumValue(oldxfrom, plot.xto)
+                graphpanel.xfrom.SetNumValue(oldxfrom, plot.xfrom)
 
             if plot.xto < self.xmin or plot.xto > self.xmax: 
                 pub.sendMessage("status_listener", message="X To, value out of range, max 100000")
