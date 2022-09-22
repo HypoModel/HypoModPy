@@ -13,6 +13,9 @@ class PlotDat():
         self.xscale = 1
         self.xdis = 0
 
+        self.xmin = 0
+        self.xmax = 1000
+
         self.yfrom = 0
         self.yto = 10000
         self.yscale = 1
@@ -44,6 +47,7 @@ class PlotDat():
         self.xdata = None
         self.binsize = 1
         self.scrollpos = 0
+        self.xrel = 0
 
 
 
@@ -106,6 +110,68 @@ class GraphPanel(wx.Panel):
         self.Bind(wx.EVT_SCROLL, self.OnScroll)
 
 
+    def OnYZoomIn(self, event):
+        if self.numdisps == 0: return
+        plot = self.GetFront()
+        diff = plot.yto - plot.yfrom
+        if plot.negscale or plot.yfrom < 0:
+            plot.yto = plot.yto - diff / 4
+            plot.yfrom = plot.yfrom + diff / 4
+        else:
+            plot.yto = plot.yto - diff / 2
+
+        #self.XYSynch
+        #synchcon = startgraph + pos;
+        pub.sendMessage("scalebox_listener")
+        print('YZoomIn')
+
+
+    def OnYZoomOut(self, event):
+        if self.numdisps == 0: return
+        plot = self.GetFront()
+        diff = plot.yto - plot.yfrom
+        if plot.negscale or plot.yfrom < 0:
+            plot.yto = plot.yto  + diff / 2
+            plot.yfrom = plot.yfrom - diff / 2
+        else:
+            plot.yto = plot.yto + diff
+
+        #self.XYSynch
+        #synchcon = startgraph + pos;
+        pub.sendMessage("scalebox_listener")
+
+
+    def OnXZoomIn(self, event):
+        if self.numdisps == 0: return
+        plot = self.GetFront()
+        diff = plot.xto - plot.xfrom
+        plot.xto = plot.xto - diff / 2
+
+        #self.XYSynch
+        #synchcon = startgraph + pos;
+        pub.sendMessage("scalebox_listener")
+
+
+    def OnXZoomOut(self, event):
+        if self.numdisps == 0: return
+        plot = self.GetFront()
+        oldxto = plot.xto
+        diff = plot.xto - plot.xfrom
+        plot.xto = plot.xto + diff
+        if plot.xto < plot.xmin or plot.xto > plot.xmax:
+            #mainwin->SetStatusText("X To, out of range, max 100000");
+            plot.xto = oldxto
+            return
+
+        #self.XYSynch
+        #synchcon = startgraph + pos;
+        pub.sendMessage("scalebox_listener")
+
+
+    
+        
+
+
     def XYSynch(self):
         for graphdisp in self.dispset: 
             graphdisp.XYSynch()
@@ -118,15 +184,18 @@ class GraphPanel(wx.Panel):
             #mod->diagbox->Write("plot " + graph->gname + " no data\n")
             #return
             max = 1000
-        else: max = plot.data.max / plot.xscale
-        if plot.xdata: max = plot.gdatax.max
+        else: plot.xmax = plot.data.max / plot.xscale
+        if plot.xdata: plot.xmax = plot.gdatax.max
 
         xdiff = plot.xto - plot.xfrom
-        scrollxto = max * plot.binsize
+        plot.xrel = plot.xfrom - plot.scrollpos     # relative adjustment for non-zero xfrom set from scale panel
+        if plot.xrel < plot.xmin: plot.xrel = plot.xmin
+
+        scrollxto = int((plot.xmax - plot.xrel) * plot.binsize)
         section = int(xdiff)
         if section > scrollxto:
             plot.scrollpos = 0
-		
+
         self.scrollbar.SetScrollbar(plot.scrollpos, section, scrollxto, section)
 
         #self.Refresh()
@@ -143,14 +212,16 @@ class GraphPanel(wx.Panel):
 
         for graphdisp in self.dispset:
             plot = graphdisp.GetFront()
+            xfrom = plot.xfrom
             xdiff = plot.xto - plot.xfrom
-            plot.xfrom = xpos
-            plot.xto = xpos + xdiff
-            snum = "{:.1f}".format(plot.xfrom)
-            self.xf.SetValue(snum)
-            snum = "{:.1f}".format(plot.xto)
-            self.xt.SetValue(snum)
+            plot.xfrom = xpos + plot.xrel
+            plot.xto = xpos + xdiff + plot.xrel
+            self.xf.SetNumValue(plot.xfrom, xdiff)
+            self.xt.SetNumValue(plot.xto, xdiff)
             plot.scrollpos = xpos
+
+        text = "scroll xpos {} xfrom {} xrel {}".format(xpos, xfrom, plot.xrel)
+        pub.sendMessage("status_listener", message=text)
 
         if self.gsynch: pub.sendMessage("scroll_listener", graphdisp.index, xpos)
         else: self.Refresh()
@@ -168,7 +239,7 @@ class GraphPanel(wx.Panel):
         #self.Layout()
         #self.UpdateScroll()
         #overlay.Reset();
-	
+
         self.Refresh()
 
 

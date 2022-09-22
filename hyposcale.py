@@ -64,8 +64,13 @@ class ScaleBox(ToolPanel):
         self.SetSizer(vbox)
 
         pub.subscribe(self.Scroll_Listener, "scroll_listener")
+        pub.subscribe(self.Scale_Listener, "scale_listener")
 
         self.Bind(wx.EVT_TEXT_ENTER, self.OnOK)
+
+
+    def Scale_Listener(self):
+        self.ScaleUpdate()
         
 
     def ScaleUpdate(self):
@@ -86,12 +91,12 @@ class ScaleBox(ToolPanel):
             plot.xfrom = graphpanel.xf.GetNumValue()
             plot.xto = graphpanel.xt.GetNumValue()
 
-            if plot.xfrom < self.xmin or plot.xfrom > self.xmax:
+            if plot.xfrom < plot.xmin or plot.xfrom > self.xmax:
                 pub.sendMessage("status_listener", message="X From, value out of range, max 100000")
-                snum = "ScaleBox X out of range, value %.2f xmin %d\n".format(plot.xfrom, self.xmin)
+                snum = "ScaleBox X out of range, value {} xmin {}\n".format(plot.xfrom, plot.xmin)
                 pub.sendMessage("diag_listener", message=snum)
                 plot.xfrom = oldxfrom
-                graphpanel.xfrom.SetNumValue(oldxfrom, plot.xfrom)
+                graphpanel.xf.SetNumValue(oldxfrom, plot.xfrom)
 
             if plot.xto < self.xmin or plot.xto > self.xmax: 
                 pub.sendMessage("status_listener", message="X To, value out of range, max 100000")
@@ -201,6 +206,11 @@ class ScaleBox(ToolPanel):
         graphpanel.yzoomout = wx.BitmapButton(self, 1010 + graphpanel.index, self.uparrow, wx.DefaultPosition, wx.Size(20, 20))
         graphpanel.xzoomin = wx.BitmapButton(self, 1100 + graphpanel.index, self.leftarrow, wx.DefaultPosition, wx.Size(20, 20))
         graphpanel.xzoomout = wx.BitmapButton(self, 1110 + graphpanel.index, self.rightarrow, wx.DefaultPosition, wx.Size(20, 20))
+
+        graphpanel.yzoomin.Bind(wx.EVT_BUTTON, graphpanel.OnYZoomIn)
+        graphpanel.yzoomout.Bind(wx.EVT_BUTTON, graphpanel.OnYZoomOut)
+        graphpanel.xzoomin.Bind(wx.EVT_BUTTON, graphpanel.OnXZoomIn)
+        graphpanel.xzoomin.Bind(wx.EVT_BUTTON, graphpanel.OnXZoomOut)
 
         zoombox.Add(graphpanel.yzoomin, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 0)
         zoombox.Add(graphpanel.yzoomout, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 0)

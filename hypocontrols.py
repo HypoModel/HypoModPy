@@ -44,7 +44,7 @@ class ToolButton(wx.Button):
         if self.linkID != 0:
             linkpress.SetInt(1)
             self.AddPendingEvent(linkpress)
-		    #diagbox->Write("ToolButton linkpress\n");
+            #diagbox->Write("ToolButton linkpress\n");
         
         event.Skip()
 
