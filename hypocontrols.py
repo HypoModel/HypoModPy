@@ -179,7 +179,7 @@ class TagBox(wx.ComboBox):
         opfile = TextFile(self.tagpath + "/" + boxtag + "op.ini")
         check = opfile.Open('r')
         if check == False:
-            text = "No tagpath found, setting default"
+            text = "No tagpath found, setting default\n"
             pub.sendMessage("diag_listener", message=text)
             self.tagfilename = boxtag + "tags.ini"
         else:

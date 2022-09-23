@@ -49,6 +49,9 @@ class PlotDat():
         self.scrollpos = 0
         self.xrel = 0
 
+        self.negscale = 0   # check purpose
+        self.synchx = 1     # toggle to allow x-axis synchronisation, typically used for common time axis
+
 
 
 class GraphDisp():
@@ -84,7 +87,6 @@ class GraphPanel(wx.Panel):
         self.ostype = GetSystem()
         self.gsynch = 0
 
-        #wx.StaticText(self, label='GraphPanel')
         self.SetBackgroundColour(wx.WHITE)
 
         # Draw Parameters
@@ -108,68 +110,6 @@ class GraphPanel(wx.Panel):
 
         self.Bind(wx.EVT_PAINT, self.OnPaint)
         self.Bind(wx.EVT_SCROLL, self.OnScroll)
-
-
-    def OnYZoomIn(self, event):
-        if self.numdisps == 0: return
-        plot = self.GetFront()
-        diff = plot.yto - plot.yfrom
-        if plot.negscale or plot.yfrom < 0:
-            plot.yto = plot.yto - diff / 4
-            plot.yfrom = plot.yfrom + diff / 4
-        else:
-            plot.yto = plot.yto - diff / 2
-
-        #self.XYSynch
-        #synchcon = startgraph + pos;
-        pub.sendMessage("scalebox_listener")
-        print('YZoomIn')
-
-
-    def OnYZoomOut(self, event):
-        if self.numdisps == 0: return
-        plot = self.GetFront()
-        diff = plot.yto - plot.yfrom
-        if plot.negscale or plot.yfrom < 0:
-            plot.yto = plot.yto  + diff / 2
-            plot.yfrom = plot.yfrom - diff / 2
-        else:
-            plot.yto = plot.yto + diff
-
-        #self.XYSynch
-        #synchcon = startgraph + pos;
-        pub.sendMessage("scalebox_listener")
-
-
-    def OnXZoomIn(self, event):
-        if self.numdisps == 0: return
-        plot = self.GetFront()
-        diff = plot.xto - plot.xfrom
-        plot.xto = plot.xto - diff / 2
-
-        #self.XYSynch
-        #synchcon = startgraph + pos;
-        pub.sendMessage("scalebox_listener")
-
-
-    def OnXZoomOut(self, event):
-        if self.numdisps == 0: return
-        plot = self.GetFront()
-        oldxto = plot.xto
-        diff = plot.xto - plot.xfrom
-        plot.xto = plot.xto + diff
-        if plot.xto < plot.xmin or plot.xto > plot.xmax:
-            #mainwin->SetStatusText("X To, out of range, max 100000");
-            plot.xto = oldxto
-            return
-
-        #self.XYSynch
-        #synchcon = startgraph + pos;
-        pub.sendMessage("scalebox_listener")
-
-
-    
-        
 
 
     def XYSynch(self):
@@ -223,23 +163,19 @@ class GraphPanel(wx.Panel):
         text = "scroll xpos {} xfrom {} xrel {}".format(xpos, xfrom, plot.xrel)
         pub.sendMessage("status_listener", message=text)
 
-        if self.gsynch: pub.sendMessage("scroll_listener", graphdisp.index, xpos)
-        else: self.Refresh()
+        #if self.gsynch: pub.sendMessage("scroll_listener", graphdisp.index, xpos)
+        #else: self.Refresh()
+        pub.sendMessage("scroll_listener", index=self.index, pos=xpos)
 
 
     def ReSize(self, newxplot, newyplot):
         self.xplot = newxplot
         self.yplot = newyplot
 
-        #self.scrollbar.SetSize(self.xplot + self.xstretch + 30, -1)
         self.scrollbar.SetSize(self.xplot, -1)
-        #self.scrollbar.SetScrollbar(0, 40, self.xplot, 40)
         self.scrollbar.Move(self.xbase, int(self.yplot + 35))
-
-        #self.Layout()
-        #self.UpdateScroll()
+        
         #overlay.Reset();
-
         self.Refresh()
 
 

@@ -10,12 +10,14 @@ class ScaleBox(ToolPanel):
 
         iconpath = parent.initpath
         self.ostype = GetSystem()
-        self.numdraw = numdraw
+        self.numdraw = numdraw   # number of graph panels
         self.panelset = parent.panelset
+        self.gsynch = 0    # x-axis synchronisation toggle
+        self.synchcon = 0  # index of graph panel with synch control
 
         # Default scale parameter limits
         self.xmin = -1000000
-        self.xmax = 10000000  # 1000000, extend for VasoMod long runs
+        self.xmax = 10000000  # 1000000, extended for VasoMod long runs
         self.ymin = -1000000
         self.ymax = 1000000
 
@@ -24,7 +26,6 @@ class ScaleBox(ToolPanel):
         else: self.buttonheight = 23
 
         # Load Icons
-        #wx.Image.AddHandler(wx.PNGHandler())
         if self.ostype == 'Mac' or self.ostype == 'Windows':
             self.rightarrow = wx.Bitmap(iconpath + "/rightarrow12.png", wx.BITMAP_TYPE_PNG)
             self.leftarrow = wx.Bitmap(iconpath + "/leftarrow12.png", wx.BITMAP_TYPE_PNG)
@@ -50,11 +51,11 @@ class ScaleBox(ToolPanel):
         if self.ostype == 'Mac':
             self.ScaleButton(wx.ID_OK, "OK", 35, buttonbox).Bind(wx.EVT_BUTTON, self.OnOK)
             buttonbox.AddSpacer(2)
-            self.ScaleButton(ID_Sync, "Sync", 35, buttonbox)
+            self.ScaleButton(ID_Sync, "Sync", 35, buttonbox).Bind(wx.EVT_BUTTON, self.OnSync)
         else:
-            self.ScaleButton(wx.ID_OK, "OK", 35, buttonbox)
+            self.ScaleButton(wx.ID_OK, "OK", 35, buttonbox).Bind(wx.EVT_BUTTON, self.OnOK)
             buttonbox.AddSpacer(2)
-            syncbutton = self.ToggleButton(ID_Sync, "Sync", 35, buttonbox)
+            syncbutton = self.ToggleButton(ID_Sync, "Sync", 35, buttonbox).Bind(wx.EVT_BUTTON, self.OnSync)
 
         vbox.Add(buttonbox, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL)
         vbox.AddSpacer(3)
@@ -66,17 +67,81 @@ class ScaleBox(ToolPanel):
         pub.subscribe(self.Scroll_Listener, "scroll_listener")
         pub.subscribe(self.Scale_Listener, "scale_listener")
 
-        self.Bind(wx.EVT_TEXT_ENTER, self.OnOK)
+        self.Bind(wx.EVT_TEXT_ENTER, self.OnEnter)
+
+
+    def OnEnter(self, event):
+        self.synchcon = event.GetId()
+        self.OnOK(event)
+
+
+    def XSynch(self, pos = -1):
+        if self.gsynch:
+            plotzero = self.panelset[self.synchcon].GetFront()
+            if not plotzero.synchx: return
+            for graphpanel in self.panelset:
+                # sync check box code goes here
+                plot = graphpanel.GetFront()
+                if not plot.synchx: continue
+                if pos >= 0: plot.scrollpos = pos
+                plot.xfrom = plotzero.xfrom
+                plot.xto = plotzero.xto
+
+
+    def OnSync(self, event):
+        pub.sendMessage("diag_listener", message="OnSync\n")
+        self.gsynch = 1 - self.gsynch
+        self.ScaleUpdate()
 
 
     def Scale_Listener(self):
         self.ScaleUpdate()
-        
 
+
+    def Scroll_Listener(self, index, pos):
+        self.ScrollUpdate(index, pos)
+
+        
     def ScaleUpdate(self):
-        #self.XSynch()
-        self.GraphUpdate()
+        self.XSynch()
         self.PanelUpdate()
+        self.GraphUpdate()
+
+
+    def ScrollUpdate(self, index, pos = -1):
+        self.synchcon = index
+        self.XSynch(pos)
+        self.PanelUpdate()
+        self.GraphUpdate()
+
+
+    def GraphUpdate(self):
+        for graphpanel in self.panelset:
+            graphpanel.ScrollUpdate()
+            graphpanel.Refresh()
+
+
+    # PanelUpdate() - update scale panel after changing plot scale parameters
+    def PanelUpdate(self):
+        for graphpanel in self.panelset:
+            if len(graphpanel.dispset) > 0:
+                plot = graphpanel.dispset[0].plots[0]
+                if not plot: continue
+
+            graphpanel.yf.SetNumValue(plot.yfrom, abs(plot.yto - plot.yfrom))
+            graphpanel.yt.SetNumValue(plot.yto, abs(plot.yto - plot.yfrom))
+            graphpanel.xf.SetNumValue(plot.xfrom, abs(plot.xto - plot.xfrom))
+            graphpanel.xt.SetNumValue(plot.xto, abs(plot.xto - plot.xfrom))
+
+            # overlay sync
+            for i in range(1, len(graphpanel.dispset)):
+                overplot = graphpanel.dispset[i].plot[0]
+                if overplot.oversync:
+                    overplot.yfrom = plot.yfrom
+                    overplot.yto = plot.yto
+                    plot.xfrom = plot.xfrom
+                    plot.xto = plot.xto
+
 
 
     def OnOK(self, event):
@@ -105,46 +170,6 @@ class ScaleBox(ToolPanel):
 
         graphpanel.XYSynch()
         self.ScaleUpdate()
-
-
-    def GraphUpdate(self):
-        for graphpanel in self.panelset:
-            graphpanel.ScrollUpdate()
-            graphpanel.Refresh()
-
-
-    # PanelUpdate() - update scale panel after changing plot scale parameters
-    def PanelUpdate(self):
-        for graphpanel in self.panelset:
-            if len(graphpanel.dispset) > 0:
-                plot = graphpanel.dispset[0].plots[0]
-                if not plot: continue
-
-            if abs(plot.yto - plot.yfrom) < 10:
-                graphpanel.yf.SetValue("{:.2f}".format(plot.yfrom))
-                graphpanel.yt.SetValue("{:.2f}".format(plot.yto))
-            elif abs(plot.yto - plot.yfrom) < 100:
-                graphpanel.yf.SetValue("{:.1f}".format(plot.yfrom))
-                graphpanel.yt.SetValue("{:.1f}".format(plot.yto))
-            else:
-                graphpanel.yf.SetValue("{:.0f}".format(plot.yfrom))
-                graphpanel.yt.SetValue("{:.0f}".format(plot.yto))
-
-            graphpanel.xf.SetNumValue(plot.xfrom, abs(plot.xto - plot.xfrom))
-            graphpanel.xt.SetNumValue(plot.xto, abs(plot.xto - plot.xfrom))
-
-            # overlay sync
-            for i in range(1, len(graphpanel.dispset)):
-                overplot = graphpanel.dispset[i].plot[0]
-                if overplot.oversync:
-                    overplot.yfrom = plot.yfrom
-                    overplot.yto = plot.yto
-                    plot.xfrom = plot.xfrom
-                    plot.xto = plot.xto
-
-
-    def Scroll_Listener(self, index, xpos):
-        self.ScrollUpdate(index, xpos)
 
 
     def StoreBox(self):
@@ -207,10 +232,10 @@ class ScaleBox(ToolPanel):
         graphpanel.xzoomin = wx.BitmapButton(self, 1100 + graphpanel.index, self.leftarrow, wx.DefaultPosition, wx.Size(20, 20))
         graphpanel.xzoomout = wx.BitmapButton(self, 1110 + graphpanel.index, self.rightarrow, wx.DefaultPosition, wx.Size(20, 20))
 
-        graphpanel.yzoomin.Bind(wx.EVT_BUTTON, graphpanel.OnYZoomIn)
-        graphpanel.yzoomout.Bind(wx.EVT_BUTTON, graphpanel.OnYZoomOut)
-        graphpanel.xzoomin.Bind(wx.EVT_BUTTON, graphpanel.OnXZoomIn)
-        graphpanel.xzoomin.Bind(wx.EVT_BUTTON, graphpanel.OnXZoomOut)
+        graphpanel.yzoomin.Bind(wx.EVT_BUTTON, self.OnYZoomIn)
+        graphpanel.yzoomout.Bind(wx.EVT_BUTTON, self.OnYZoomOut)
+        graphpanel.xzoomin.Bind(wx.EVT_BUTTON, self.OnXZoomIn)
+        graphpanel.xzoomout.Bind(wx.EVT_BUTTON, self.OnXZoomOut)
 
         zoombox.Add(graphpanel.yzoomin, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 0)
         zoombox.Add(graphpanel.yzoomout, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 0)
@@ -223,6 +248,65 @@ class ScaleBox(ToolPanel):
         self.vconbox.Add(graphpanel.consolebox, 1, wx.ALIGN_CENTRE_HORIZONTAL, 0)
 
 
+    def OnYZoomIn(self, event):
+        graphpanel = self.panelset[event.GetId() - 1000]
+        if len(graphpanel.dispset) == 0: return
+        plot = graphpanel.GetFront()
+        diff = plot.yto - plot.yfrom
+
+        if plot.negscale or plot.yfrom < 0:
+            plot.yto = plot.yto - diff / 4
+            plot.yfrom = plot.yfrom + diff / 4
+        else:
+            plot.yto = plot.yto - diff / 2
+
+        graphpanel.XYSynch
+        self.synchcon = graphpanel.index
+        self.ScaleUpdate()
+        
+    
+    def OnYZoomOut(self, event):
+        graphpanel = self.panelset[event.GetId() - 1010]
+        if len(graphpanel.dispset) == 0: return
+        plot = graphpanel.GetFront()
+        diff = plot.yto - plot.yfrom
+        if plot.negscale or plot.yfrom < 0:
+            plot.yto = plot.yto  + diff / 2
+            plot.yfrom = plot.yfrom - diff / 2
+        else:
+            plot.yto = plot.yto + diff
+        graphpanel.XYSynch
+        self.synchcon = graphpanel.index
+        self.ScaleUpdate()
+
+
+    def OnXZoomIn(self, event):
+        graphpanel = self.panelset[event.GetId() - 1100]
+        if len(graphpanel.dispset) == 0: return
+        plot = graphpanel.GetFront()
+        diff = plot.xto - plot.xfrom
+        plot.xto = plot.xto - diff / 2
+        graphpanel.XYSynch
+        self.synchcon = graphpanel.index
+        self.ScaleUpdate()
+        
+
+    def OnXZoomOut(self, event):
+        graphpanel = self.panelset[event.GetId() - 1110]
+        if len(graphpanel.dispset) == 0: return
+        plot = graphpanel.GetFront()
+        oldxto = plot.xto
+        diff = plot.xto - plot.xfrom
+        plot.xto = plot.xto + diff
+        if plot.xto < plot.xmin or plot.xto > plot.xmax:
+            #mainwin->SetStatusText("X To, out of range, max 100000");
+            plot.xto = oldxto
+            return
+        graphpanel.XYSynch
+        self.synchcon = graphpanel.index
+        self.ScaleUpdate()
+    
+   
     def AddScaleParam(self, label, initval, psetbox, index):
         boxwidth = 45
         boxheight = -1
@@ -232,7 +316,7 @@ class ScaleBox(ToolPanel):
         labeltext = wx.StaticText(self, wx.ID_STATIC, label, wx.DefaultPosition, wx.Size(-1, -1), 0)
 
         snum = "{}".format(initval)
-        numbox = TextBox(self, wx.ID_ANY, snum, wx.DefaultPosition, wx.Size(boxwidth, boxheight), wx.TE_PROCESS_ENTER)
+        numbox = TextBox(self, index, snum, wx.DefaultPosition, wx.Size(boxwidth, boxheight), wx.TE_PROCESS_ENTER)
         labeltext.SetFont(self.confont)
         numbox.SetFont(self.confont)
         pbox.Add(labeltext, 0, wx.ALIGN_CENTER_VERTICAL|wx.RIGHT, 2)
