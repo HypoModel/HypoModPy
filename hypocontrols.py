@@ -132,11 +132,6 @@ class ToolBox(wx.Frame):
     
 
 
-class ParamSet:
-    con = {}
-    paramstore = {}
-
-
 
 class TextBox(wx.TextCtrl):
     def __init__(self, parent, id, value, pos, size, style):
