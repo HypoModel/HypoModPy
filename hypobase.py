@@ -49,6 +49,10 @@ def DistXY(p1, p2):
     return sqrt(pow(p2.x - p1.x) + pow(p2.y - p1.y, 2))
 
 
+def numstring(number, places=0):
+    return f"{number:.{places}f}"
+
+
 # Paths
 mainpath = ''
 projectpath = ''

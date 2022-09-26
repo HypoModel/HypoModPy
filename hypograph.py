@@ -75,7 +75,7 @@ class GraphDisp():
             plot.yto = plotzero.yto
             plot.xfrom = plotzero.xfrom
             plot.xto = plotzero.xto
-	
+
 
 
 class GraphPanel(wx.Panel):

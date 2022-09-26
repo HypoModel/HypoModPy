@@ -6,6 +6,37 @@ from pubsub import pub
 
 
 
+class ToolText(wx.StaticText):
+    def __init__(self, parent, toolbox, tag, label, pos, size, style):
+        wx.StaticText.__init__(parent, wx.ID_ANY, label, pos, size, style)
+        self.toolbox = toolbox
+        self.tag = tag
+
+        self.Bind(wx.EVT_LEFT_UP, self.OnLeftClick)
+        self.Bind(wx.EVT_LEFT_DCLICK, self.OnLeftDClick)
+        self.Bind(wx.EVT_RIGHT_DCLICK, self.OnRightDClick)
+
+
+    def OnLeftDClick(self, event):
+        if self.toolbox: 
+            self.toolbox.pinmode = 1 - self.toolbox.pinmode
+            pub.sendMessage("diagbox", message=f"LDClick pin {self.toolbox.pinmode}\n")
+
+
+    def OnRightDClick(self, event):
+        if self.toolbox:
+            self.toolbox.pinmode = 1 - self.toolbox.pinmode
+            pub.sendMessage("diagbox", message=f"RDClick pin {self.toolbox.pinmode}\n")
+            
+
+    def OnLeftClick(self, event):
+        if self.toolbox:
+            pub.sendMessage("diagbox", message="text click\n")
+            self.toolbox.activepanel.OnClick(event.GetPosition())
+            self.toolbox.TextClick(self.tag)
+
+
+
 class ToolPanel(wx.Panel):
     def __init__(self, toolbox, pos, size, style = wx.TAB_TRAVERSAL | wx.NO_BORDER):
         wx.Panel.__init__(self, toolbox, wx.ID_ANY, pos, size, style)
@@ -174,8 +205,7 @@ class TagBox(wx.ComboBox):
         opfile = TextFile(self.tagpath + "/" + boxtag + "op.ini")
         check = opfile.Open('r')
         if check == False:
-            text = "No tagpath found, setting default\n"
-            pub.sendMessage("diag_listener", message=text)
+            pub.sendMessage("diagbox", message="No tagpath found, setting default\n")
             self.tagfilename = boxtag + "tags.ini"
         else:
             readline = opfile.ReadLine()
@@ -198,8 +228,7 @@ class TagBox(wx.ComboBox):
             else: self.tagpath = projectpath + "/" + self.boxpath + "/Tags"
 
         if self.diagnostic:
-            text = "TagBox PathUpdate() tagpath {}\n".format(self.tagpath)
-            pub.sendMessage("diag_listener", message=text)
+            pub.sendMessage("diagbox", message="TagBox PathUpdate() tagpath {}\n".format(self.tagpath))
 
 
     def HistStore(self):
@@ -217,4 +246,6 @@ class TagBox(wx.ComboBox):
         opfile.Open('w')
         opfile.WriteLine(self.tagfilename)
         opfile.Close()
+
+
 

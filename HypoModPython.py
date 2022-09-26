@@ -98,7 +98,7 @@ class MainFrame(wx.Frame):
 
         pub.subscribe(self.status_listener, "status_listener")
         pub.subscribe(self.toolclose_listener, "toolclose_listener")
-        pub.subscribe(self.diag_listener, "diag_listener")
+        pub.subscribe(self.diag_listener, "diagbox")
 
         self.Bind(wx.EVT_LEFT_UP, self.OnLeftClick)
         self.Bind(wx.EVT_MOVE, self.OnMove)

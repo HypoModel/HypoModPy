@@ -89,7 +89,7 @@ class ScaleBox(ToolPanel):
 
 
     def OnSync(self, event):
-        pub.sendMessage("diag_listener", message="OnSync\n")
+        pub.sendMessage("diagbox", message="OnSync\n")
         self.gsynch = 1 - self.gsynch
         self.ScaleUpdate()
 
@@ -159,7 +159,7 @@ class ScaleBox(ToolPanel):
             if plot.xfrom < plot.xmin or plot.xfrom > self.xmax:
                 pub.sendMessage("status_listener", message="X From, value out of range, max 100000")
                 snum = "ScaleBox X out of range, value {} xmin {}\n".format(plot.xfrom, plot.xmin)
-                pub.sendMessage("diag_listener", message=snum)
+                pub.sendMessage("diagbox", message=snum)
                 plot.xfrom = oldxfrom
                 graphpanel.xf.SetNumValue(oldxfrom, plot.xfrom)
 
