@@ -147,7 +147,7 @@ class ParamCon(wx.Control):
 
 class ParamSet:
     def __init__(self, panel):
-        self.con = {}
+        self.pcons = {}
         self.paramstore = {}
         self.panel = panel
         # currlay = 0;
@@ -158,27 +158,27 @@ class ParamSet:
         self.con_labelwidth = 60
         self.con_numwidth = 60
         self.text_labelwidth = 60
-        self.text_textwidth = 150
+        self.text_numwidth = 150
 
 
     def SetMinMax(self, tag, min, max):
-        self.con[tag].min = min
-        self.con[tag].max = max
+        self.pcons[tag].min = min
+        self.pcons[tag].max = max
 
 
     def GetCon(self, tag):
-        if not tag in self.con:
+        if not tag in self.pcons:
             pub.sendMessage("diagbox", message="ParamSet GetCon " + tag + " not found\n")
             return None
-        else: return self.con[tag]
+        else: return self.pcons[tag]
 
 
     def AddCon(self, tag, label, initval, step, places, labelwidth=-1, numwidth=-1): 
         if labelwidth < 0: labelwidth = self.con_labelwidth
         if numwidth < 0: numwidth = self.con_numwidth
 
-        self.con[tag] = ParamCon(self.panel, 'spincon', tag, label, initval, step, places, labelwidth, numwidth);   # number + spin
-        return self.con[tag]
+        self.pcons[tag] = ParamCon(self.panel, 'spincon', tag, label, initval, step, places, labelwidth, numwidth);   # number + spin
+        return self.pcons[tag]
 
 
     def AddNum(self, tag, label, initval, places, labelwidth=-1, numwidth=-1):
@@ -186,7 +186,7 @@ class ParamSet:
         if numwidth < 0: numwidth = self.num_numwidth
 
         self.con[tag] = ParamCon(self.panel, 'numcon', tag, label, initval, 0, places, labelwidth, numwidth);   # number
-        return self.con[tag]
+        return self.pcons[tag]
 
 
     def AddText(self, tag, label, initval, labelwidth=-1, textwidth=-1):
@@ -194,26 +194,26 @@ class ParamSet:
         if numwidth < 0: numwidth = self.text_numwidth
 
         self.con[tag] = ParamCon(self.panel, 'textcon', tag, label, initval, labelwidth, textwidth)     # text
-        return self.con[tag]
+        return self.pcons[tag]
 
     
     def SetValue(self, tag, value):
-        self.con[tag].SetValue(value)
+        self.pcons[tag].SetValue(value)
 
 
     def GetValue(self, tag):
-        if not tag in self.con: return 0
-        value = self.con[tag].GetValue()
+        if not tag in self.pcons: return 0
+        value = self.pcons[tag].GetValue()
         return float(value)
 
 
     def GetText(self, tag):
-        text = self.con[tag].GetString()
+        text = self.pcons[tag].GetString()
         return text
 
     
     def GetParams(self):
-        for pcon in self.con:
+        for pcon in self.pcons:
             value = pcon.GetValue()
             if value < pcon.min:
                 value = pcon.oldvalue
@@ -248,6 +248,7 @@ class ParamBox(ToolBox):
         self.column = 0     # column mode for parameter controls
         self.buttonwidth = 50
         # modmode = 0;
+        self.vbox = []
 
         # model->mainwin->diagbox->Write("ParamBox init\n");
 
@@ -259,29 +260,45 @@ class ParamBox(ToolBox):
         modflags = {}
         conflags = {}
 
+        if self.boxtype == 0: self.pconbox = wx.BoxSizer(wx.HORIZONTAL)
 
-    def ParamLayout(self, columns = 1):                   # Currently for one or two columns, need to generalise
+        self.Bind(wx.EVT_MENU, self.OnAutorun, ID_AutoRun)
+        self.Bind(wx.EVT_BUTTON, self.OnRun, ID_Run)
+        self.Bind(wx.EVT_BUTTON, self.OnDefault, ID_Default)
+        self.Bind(wx.EVT_TEXT_ENTER, self.OnRun)
+
+        #self.Bind(wx.EVT_MENU, self.OnQuit, fileItem)
+
+
+    def SetStatus(self, text):
+        if self.status != None: self.status.SetLabel(text)
+
+
+    def WriteVDU(self, text):
+        if self.vdu != None: self.vdu.AppendText(text)
+
+
+    def VBox(self, num):
+        for i in range(num):
+            self.vbox[i] = wx.BoxSizer(wx.VERTICAL)
+            self.vbox[i].AddSpacer(5)
+
+
+    def ParamLayout(self, numcols = 1):                  
         colsize = 0
+        numparams = self.paramset.numparams
 
-        if columns == 1: colsize = self.paramset.numparams
-	if(columns == 2) {
-		if(!column) colsize = (paramset.numparams+1) / 2;
-		else colsize = column; 
-	}
+        self.VBox(numcols)
 
-	SetVBox(columns);
+        if numcols == 1: colsize = numparams
+        if(numcols >= 2):
+            colsize = int((numparams + 1) / numcols) 
 
-	for(i=0; i<colsize; i++) {
-		vbox[0]->Add(paramset.con[i], 1, wxALIGN_CENTRE_HORIZONTAL|wxALIGN_CENTRE_VERTICAL|wxRIGHT|wxLEFT, 5);
-		vbox[0]->AddSpacer(5);
-	}
-	parambox->Add(vbox[0], 0);
-
-	if(columns == 2) {
-		for(i=colsize; i<paramset.numparams; i++) {
-			vbox[1]->Add(paramset.con[i], 1, wxALIGN_CENTRE_HORIZONTAL|wxALIGN_CENTRE_VERTICAL|wxRIGHT|wxLEFT, 5);
-			vbox[1]->AddSpacer(5);
-		}
-		parambox->Add(vbox[1], 0);
-	}
-}
+        pstart = 0
+        for col in range(numcols):
+            if col == numcols-1: pstop = numparams
+            else: pstop = colsize * (col+1)
+            for p in range(pstart, pstop):
+                self.vbox[col].Add(self.paramset.con[p], 1, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.RIGHT|wx.LEFT, 5)
+                self.vbox[col].AddSpacer(5)
+            self.pconbox.Add(self.vbox[col], 0)

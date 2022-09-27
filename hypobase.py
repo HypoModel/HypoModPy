@@ -61,5 +61,8 @@ projectpath = ''
 ID_Sync = wx.NewIdRef()
 ID_Store = wx.NewIdRef()
 ID_Load = wx.NewIdRef()
+ID_Run = wx.NewIdRef()
+ID_AutoRun = wx.NewIdRef()
+ID_Default = wx.NewIdRef()
 
 
