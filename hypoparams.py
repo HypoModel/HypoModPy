@@ -249,16 +249,21 @@ class ParamBox(ToolBox):
         self.buttonwidth = 50
         # modmode = 0;
         self.vbox = []
+        self.activepanel = self.panel
 
-        # model->mainwin->diagbox->Write("ParamBox init\n");
+        self.DiagWrite("ParamBox " + self.boxtag + " init\n")
 
-        self.Init()
-
-
-    def Init(self):
+        # Initialise
         modparams = {}
         modflags = {}
         conflags = {}
+
+        self.paramstoretag = None
+        if self.storemode:
+            self.DiagWrite("Store Box initialise " + self.boxtag + "\n")
+            self.paramstoretag = TagBox(self.activepanel, 120, 20, "", self.boxtag, mod.path)
+            self.paramstoretag.Show(False)
+            self.paramstoretag.SetFont(self.confont)
 
         if self.boxtype == 0: self.pconbox = wx.BoxSizer(wx.HORIZONTAL)
 
@@ -302,3 +307,32 @@ class ParamBox(ToolBox):
                 self.vbox[col].Add(self.paramset.con[p], 1, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.RIGHT|wx.LEFT, 5)
                 self.vbox[col].AddSpacer(5)
             self.pconbox.Add(self.vbox[col], 0)
+
+
+    def StoreBoxSync(self, label, storepanel=None):
+        self.synccheck = wx.CheckBox(self.panel, wx.ID_ANY, "Sync")
+        self.synccheck.SetValue(True)
+        storebox = self.StoreBox(label, storepanel)
+        storebox.Add(self.synccheck, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 2)
+        return storebox
+
+
+    def StoreBox(self, label, storepanel=None):
+        paramfilebox = wx.BoxSizer(wx.HORIZONTAL)
+        parambuttons = wx.BoxSizer(wx.HORIZONTAL)
+
+        if storepanel == None: storepanel = self.panel
+        if self.activepanel != self.panel: self.paramstoretag.Reparent(self.activepanel)
+
+        if label != "": self.paramstoretag.SetLabel(label)
+        self.paramstoretag.Show(True)
+
+        self.AddButton(wx.ID_ANY, "Store", 40, parambuttons).Bind(wx.EVT_BUTTON, self.OnParamStore)
+        if self.ostype != 'Mac': parambuttons.AddSpacer(2)
+        self.AddButton(wx.ID_ANY, "Load", 40, parambuttons).Bind(wx.EVT_BUTTON, self.OnParamStore)
+        
+        paramfilebox.Add(self.paramstoretag, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 2)
+        paramfilebox.Add(parambuttons, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 2)
+        return paramfilebox
+
+    

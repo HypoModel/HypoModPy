@@ -122,6 +122,45 @@ class ToolBox(wx.Frame):
         self.SetPosition(parent.GetPosition(), parent.GetSize())
 
 
+    def StatusBar(self):
+        textcon = wx.StaticText(self.activepanel, wx.ID_ANY, "", wx.DefaultPosition, wx.DefaultSize, 
+        wx.ALIGN_CENTRE|wx.BORDER_DOUBLE|wx.ST_NO_AUTORESIZE)
+        textcon.SetFont(self.confont)
+        return textcon
+
+
+    def TextLabel(self, label):
+        textcon = wx.StaticText(self.activepanel, wx.ID_ANY, label)
+        textcon.SetFont(self.confont)
+        return textcon
+
+
+    def TextInput(self, width=80, height=-1, label= "---"):
+        textcon = wx.TextCtrl(self.activepanel, wx.ID_ANY, label, wx.DefaultPosition, wx.Size(width, height))
+        textcon.SetFont(self.confont)
+        return textcon
+
+
+    def NumPanel(self, width=80, align=wx.ALIGN_RIGHT, label="0"):
+        textcon = wx.StaticText(self.activepanel, wx.ID_ANY, label, wx.DefaultPosition, wx.Size(width, -1), 
+        align|wx.BORDER_RAISED|wx.ST_NO_AUTORESIZE)
+        textcon.SetFont(self.confont)
+        return textcon
+
+
+    def AddButton(self, id, label, width, box, pad=1, height=0, panel=None):
+        if panel == None: panel = self.activepanel
+        if height == 0: height = self.buttonheight
+        button = ToolButton(panel, id, label, wx.DefaultPosition, wx.Size(width, height))
+        button.SetFont(self.confont)
+        box.Add(button, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.TOP|wx.BOTTOM, pad)
+        return button
+
+
+    def DiagWrite(self, text):
+        pub.sendMessage("diagbox", message=text)
+
+
     def SetPosition(self, mainpos, mainsize):
         self.Move(mainpos.x + mainsize.x + self.mpos.x, mainpos.y + self.mpos.y + 5)
         self.oldpos = self.GetPosition()
