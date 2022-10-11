@@ -9,6 +9,8 @@
 
 import wx
 import os
+import ctypes
+
 from pathlib import Path
 from hypobase import *
 from hypocontrols import *
@@ -54,6 +56,7 @@ class MainFrame(wx.Frame):
         self.ostype = GetSystem()
         self.statusbar = self.CreateStatusBar()
         #self.SetBackgroundColour(wx.WHITE)
+        #errorCode = ctypes.windll.shcore.SetProcessDpiAwareness(2)
 
         # Initialise ToolBoxes
         self.diagbox = DiagBox(self, "Diagnostic", wx.Point(0, 0), wx.Size(400, 500))
