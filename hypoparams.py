@@ -7,7 +7,7 @@ from hypocontrols import *
 class ParamCon(wx.Control):
     def __init__(self, panel, type, tag, labeltext, initval, step=0, places=0, labelwidth=60, numwidth=45):
         ostype = GetSystem()
-        wx.Control.Create(panel, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.BORDER_NONE)
+        wx.Control.__init__(self, panel, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.BORDER_NONE)
         self.numstep = step
         self.tag = tag
         self.labeltext = labeltext
@@ -31,9 +31,9 @@ class ParamCon(wx.Control):
         self.max = 1000000
 
         if type == 'numcon' or type == 'spincon':
-            if initval < 0: min = -1000000
-            if initval < min: min = initval * 10
-            if initval > max: max = initval * 100
+            if initval < 0: self.min = -1000000
+            if initval < self.min: self.min = initval * 10
+            if initval > self.max: self.max = initval * 100
             oldvalue = initval
             inittext = numstring(initval, places)
         else:
@@ -41,7 +41,7 @@ class ParamCon(wx.Control):
 
         sizer = wx.BoxSizer(wx.HORIZONTAL)
 
-        if label == "":
+        if labeltext == "":
             label = None
             self.labelwidth = 0
         else:
@@ -161,6 +161,10 @@ class ParamSet:
         self.text_numwidth = 150
 
 
+    def NumParams(self):
+        return len(self.pcons)
+
+
     def SetMinMax(self, tag, min, max):
         self.pcons[tag].min = min
         self.pcons[tag].max = max
@@ -231,25 +235,28 @@ class ParamSet:
 
 
 class ParamBox(ToolBox):
-    def __init__(self, mod, title, pos, size, tag, type = 0, storemode = 0):
-        ToolBox.__init__(mod.mainwin, tag, title, pos, size, type)
+    def __init__(self, model, title, pos, size, tag, type = 0, storemode = 0):
+        ToolBox.__init__(self, model.mainwin, tag, title, pos, size, type)
+        #ToolBox.__init__(self, parent, "DiagBox", title, pos, size)
+
         
         self.autorun = 0    # auto run model after parameter change
         self.redtag = ""    # store box overwrite warning tag
         self.histmode = 0
         self.storemode = storemode
-        self.mod = mod   # parent model      
+        self.mod = model   # parent model      
         self.boxtype = type   # 0 - basic panel, 1 - AUI panel
         self.status = None
         #defbutt = 0;
         #defstore = false;
         self.diagmode = 0   # diagnostic mode
-        self.mainwin = mod.mainwin  # main window link
+        self.mainwin = model.mainwin  # main window link
         self.column = 0     # column mode for parameter controls
         self.buttonwidth = 50
         # modmode = 0;
         self.vbox = []
         self.activepanel = self.panel
+        self.paramset = ParamSet(self.panel)
 
         self.DiagWrite("ParamBox " + self.boxtag + " init\n")
 
@@ -257,6 +264,7 @@ class ParamBox(ToolBox):
         modparams = {}
         modflags = {}
         conflags = {}
+
 
         self.paramstoretag = None
         if self.storemode:
@@ -275,6 +283,21 @@ class ParamBox(ToolBox):
         #self.Bind(wx.EVT_MENU, self.OnQuit, fileItem)
 
 
+    def OnDefault(self, event):
+        self.ParamLoad("default")
+        if self.autorun: self.OnRun(event)
+
+
+    def OnRun(self, event):
+        self.countmark = 0
+        self.GetParams()
+        self.mod.RunModel()
+
+
+    def OnAutorun(self, event):
+        self.autorun = 1 - self.autorun
+
+
     def SetStatus(self, text):
         if self.status != None: self.status.SetLabel(text)
 
@@ -291,9 +314,9 @@ class ParamBox(ToolBox):
 
     def ParamLayout(self, numcols = 1):                  
         colsize = 0
-        numparams = self.paramset.numparams
+        numparams = self.paramset.NumParams()
 
-        self.VBox(numcols)
+        #self.VBox(numcols)
 
         if numcols == 1: colsize = numparams
         if(numcols >= 2):
@@ -303,10 +326,12 @@ class ParamBox(ToolBox):
         for col in range(numcols):
             if col == numcols-1: pstop = numparams
             else: pstop = colsize * (col+1)
+            vbox = wx.BoxSizer(wx.VERTICAL)
+            vbox.AddSpacer(5)
             for p in range(pstart, pstop):
-                self.vbox[col].Add(self.paramset.con[p], 1, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.RIGHT|wx.LEFT, 5)
-                self.vbox[col].AddSpacer(5)
-            self.pconbox.Add(self.vbox[col], 0)
+                vbox.Add(list(self.paramset.pcons.values())[p], 1, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.RIGHT|wx.LEFT, 5)
+                vbox.AddSpacer(5)
+            self.pconbox.Add(vbox, 0)
 
 
     def StoreBoxSync(self, label, storepanel=None):

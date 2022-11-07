@@ -16,6 +16,9 @@ from hypobase import *
 from hypocontrols import *
 from hypograph import *
 from hyposcale import *
+from hypoparams import *
+
+from osmomod import *
 
 from pubsub import pub
 
@@ -225,7 +228,6 @@ class HypoMain(MainFrame):
             
          # Graph Panels
         self.panelset = []
-
         for graph in range(self.prefs['numdraw']):
             graphdisp = self.dispset[graph]
             graphpanel = GraphPanel(self)
@@ -238,6 +240,11 @@ class HypoMain(MainFrame):
         self.scalebox = ScaleBox(self, wx.Size(self.scalewidth, -1), self.numdraw)
         self.scalebox.PanelUpdate()
         self.scalebox.GraphUpdate()
+
+
+        # Model Box
+        self.model = OsmoModel(self, "osmomod")
+        #self.osmobox = 
 
         # Sizers
         self.graphsizer.AddSpacer(5)

@@ -8,7 +8,7 @@ from pubsub import pub
 
 class ToolText(wx.StaticText):
     def __init__(self, parent, toolbox, tag, label, pos, size, style):
-        wx.StaticText.__init__(parent, wx.ID_ANY, label, pos, size, style)
+        wx.StaticText.__init__(self, parent, wx.ID_ANY, label, pos, size, style)
         self.toolbox = toolbox
         self.tag = tag
 
@@ -42,6 +42,9 @@ class ToolPanel(wx.Panel):
         wx.Panel.__init__(self, toolbox, wx.ID_ANY, pos, size, style)
         self.toolbox = toolbox
         #self.mainwin = toolbox.mainwin
+
+        self.controlborder = 2
+
         self.PanelInit()
 
     def PanelInit(self):
