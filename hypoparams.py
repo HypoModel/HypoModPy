@@ -239,7 +239,6 @@ class ParamBox(ToolBox):
         ToolBox.__init__(self, model.mainwin, tag, title, pos, size, type)
         #ToolBox.__init__(self, parent, "DiagBox", title, pos, size)
 
-        
         self.autorun = 0    # auto run model after parameter change
         self.redtag = ""    # store box overwrite warning tag
         self.histmode = 0
@@ -265,11 +264,13 @@ class ParamBox(ToolBox):
         modflags = {}
         conflags = {}
 
+        print("ParamBox " + self.mod.path)
+
 
         self.paramstoretag = None
         if self.storemode:
             self.DiagWrite("Store Box initialise " + self.boxtag + "\n")
-            self.paramstoretag = TagBox(self.activepanel, 120, 20, "", self.boxtag, mod.path)
+            self.paramstoretag = TagBox(self.activepanel, "", wx.Size(120, 20), self.boxtag, self.mod.path)
             self.paramstoretag.Show(False)
             self.paramstoretag.SetFont(self.confont)
 
@@ -332,9 +333,10 @@ class ParamBox(ToolBox):
                 vbox.Add(list(self.paramset.pcons.values())[p], 1, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.RIGHT|wx.LEFT, 5)
                 vbox.AddSpacer(5)
             self.pconbox.Add(vbox, 0)
+            pstart = pstop
 
 
-    def StoreBoxSync(self, label, storepanel=None):
+    def StoreBoxSync(self, label="", storepanel=None):
         self.synccheck = wx.CheckBox(self.panel, wx.ID_ANY, "Sync")
         self.synccheck.SetValue(True)
         storebox = self.StoreBox(label, storepanel)
@@ -343,6 +345,7 @@ class ParamBox(ToolBox):
 
 
     def StoreBox(self, label, storepanel=None):
+        if self.paramstoretag == None: return
         paramfilebox = wx.BoxSizer(wx.HORIZONTAL)
         parambuttons = wx.BoxSizer(wx.HORIZONTAL)
 
@@ -353,11 +356,19 @@ class ParamBox(ToolBox):
         self.paramstoretag.Show(True)
 
         self.AddButton(wx.ID_ANY, "Store", 40, parambuttons).Bind(wx.EVT_BUTTON, self.OnParamStore)
-        if self.ostype != 'Mac': parambuttons.AddSpacer(2)
+        if GetSystem() != "Mac": parambuttons.AddSpacer(2)
         self.AddButton(wx.ID_ANY, "Load", 40, parambuttons).Bind(wx.EVT_BUTTON, self.OnParamStore)
         
         paramfilebox.Add(self.paramstoretag, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 2)
         paramfilebox.Add(parambuttons, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 2)
         return paramfilebox
+
+    
+    def OnParamStore(self, event):
+        return
+
+
+    def OnParamLoad(self, event):
+        return
 
     

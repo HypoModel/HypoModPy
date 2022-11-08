@@ -178,7 +178,7 @@ class ScaleBox(ToolPanel):
         filebox = wx.BoxSizer(wx.VERTICAL)
         buttons = wx.BoxSizer(wx.HORIZONTAL)
         
-        storetag = TagBox(self, label, wx.Size(80, -1), "scalebox", projectpath)
+        storetag = TagBox(self, label, wx.Size(80, -1), "scalebox", modpath)
         storetag.SetFont(self.confont)
 
         if self.ostype == 'Mac':

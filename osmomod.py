@@ -7,7 +7,7 @@ from hypoparams import *
 
 class OsmoBox(ParamBox):
     def __init__(self, model, title, position, size):
-        ParamBox.__init__(self, model, title, position, size, "Osmo", 0, 0)
+        ParamBox.__init__(self, model, title, position, size, "Osmo", 0, 1)
 
         # Parameter controls
         #
@@ -31,7 +31,7 @@ class OsmoBox(ParamBox):
         paramfilebox = self.StoreBoxSync()
 
         self.mainbox.AddSpacer(5)
-        self.mainbox.Add(self.parambox, 1, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 0)
+        self.mainbox.Add(self.pconbox, 1, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 0)
         self.mainbox.AddStretchSpacer(5)
         self.mainbox.Add(runbox, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 0)
         self.mainbox.AddSpacer(5)
@@ -46,7 +46,12 @@ class OsmoModel(Model):
     def __init__(self, mainwin, tag):
         Model.__init__(self, mainwin, tag)
 
+        self.path = modpath + "/Osmo"
+
+        if os.path.exists(self.path) == False: 
+            os.mkdir(self.path)
+
         self.osmobox = OsmoBox(self, tag, wx.Point(0, 0), wx.Size(320, 500))
 
-        #mainwin.toolset.AddBox(self.osmobox)  
+        mainwin.toolset.AddBox(self.osmobox)  
 

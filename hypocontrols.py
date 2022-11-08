@@ -234,12 +234,13 @@ class TagBox(wx.ComboBox):
 
         self.boxtag = boxtag
         self.boxpath = path
-        self.redtag = ''
+        self.redtag = ""
         self.diagnostic = False
 
         self.PathUpdate()
 
         #if(diagnostic) mainwin->diagbox->Write(text.Format("TagBox tagpath %s boxpath %s\n", tagpath, boxpath));
+        print("TagBox " + path)
 
         if os.path.exists(self.tagpath) == False: 
             os.mkdir(self.tagpath)
@@ -247,7 +248,7 @@ class TagBox(wx.ComboBox):
         opfile = TextFile(self.tagpath + "/" + boxtag + "op.ini")
         check = opfile.Open('r')
         if check == False:
-            pub.sendMessage("diagbox", message="No tagpath found, setting default\n")
+            pub.sendMessage("diagbox", message = "No tagpath found, setting default\n")
             self.tagfilename = boxtag + "tags.ini"
         else:
             readline = opfile.ReadLine()
@@ -262,12 +263,17 @@ class TagBox(wx.ComboBox):
 
 
     def PathUpdate(self):
-        if self.boxpath == '': 
-            if projectpath == '': self.tagpath = "Tags"
-            else: self.tagpath = projectpath + "/Tags"
-        else:
-            if projectpath == '': self.tagpath = self.boxpath + "/Tags"
-            else: self.tagpath = projectpath + "/" + self.boxpath + "/Tags"
+        #if self.boxpath == "": 
+        #    if projectpath == "": self.tagpath = "Tags"
+        #    else: self.tagpath = projectpath + "/Tags"
+        #else:
+        #    if projectpath == "": self.tagpath = self.boxpath + "/Tags"
+        #    else: self.tagpath = projectpath + "/" + self.boxpath + "/Tags"
+
+        self.tagpath = self.boxpath + "/Tags"
+        if os.path.exists(self.tagpath) == False: 
+            os.mkdir(self.tagpath)
+
 
         if self.diagnostic:
             pub.sendMessage("diagbox", message="TagBox PathUpdate() tagpath {}\n".format(self.tagpath))
