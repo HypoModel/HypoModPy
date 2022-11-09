@@ -1,6 +1,6 @@
 
 import wx
-from hypomod import *
+from hypomods import *
 from hypoparams import *
 
 
@@ -53,5 +53,15 @@ class OsmoModel(Model):
 
         self.osmobox = OsmoBox(self, tag, wx.Point(0, 0), wx.Size(320, 500))
 
+        self.modtools[self.osmobox.boxtag] = self.osmobox
+
+        self.osmobox.Show(True)
+
         mainwin.toolset.AddBox(self.osmobox)  
+
+        #self.ModLoad()
+        #for box in self.modtools.values():
+        #   box.ReSize()
+        #    box.Show(box.visible)
+
 

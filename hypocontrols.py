@@ -92,7 +92,7 @@ class ToolButton(wx.Button):
 # alt style = wx.FRAME_FLOAT_ON_PARENT | wx.FRAME_TOOL_WINDOW | wx.CAPTION | wx.RESIZE_BORDER
 
 class ToolBox(wx.Frame):
-    def __init__(self, parent, tag, title, pos, size, 
+    def __init__(self, parent, tag, title, pos, size, type = 0, 
     style = wx.FRAME_FLOAT_ON_PARENT | wx.FRAME_TOOL_WINDOW | wx.RESIZE_BORDER | wx.SYSTEM_MENU | wx.CAPTION | wx.CLOSE_BOX):
 
         wx.Frame.__init__(self, parent, title = title, pos = pos, size = size, style = style)
@@ -204,6 +204,20 @@ class ToolBox(wx.Frame):
             event.Skip()
     
 
+
+class ToolSet():
+    def __init__(self):
+        self.boxset = {}
+
+    def AddBox(self, newbox):
+        self.boxset[newbox.boxtag] = newbox
+
+    def GetBox(self, tag):
+        if(tag in self.boxset):
+             return self.boxset[tag]
+        else:
+             return False
+             
 
 
 class TextBox(wx.TextCtrl):

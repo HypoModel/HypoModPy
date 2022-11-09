@@ -24,21 +24,6 @@ from pubsub import pub
 
 
 
-class ToolSet():
-    def __init__(self):
-        self.boxset = {}
-
-    def AddBox(self, newbox):
-        self.boxset[newbox.boxtag] = newbox
-
-    def GetBox(self, tag):
-        if(tag in self.boxset):
-             return self.boxset[tag]
-        else:
-             return False
-
-
-
 class DiagBox(ToolBox):
     def __init__(self, parent, title, pos, size):
 
@@ -241,11 +226,9 @@ class HypoMain(MainFrame):
         self.scalebox.PanelUpdate()
         self.scalebox.GraphUpdate()
 
-
         # Model Box
         self.model = OsmoModel(self, "osmomod")
-        #self.osmobox = 
-
+        
         # Sizers
         self.graphsizer.AddSpacer(5)
         mainsizer.Add(self.scalebox, 0, wx.EXPAND)
@@ -318,6 +301,8 @@ class HypoMain(MainFrame):
 
 
     def OnQuit(self, event):
+        print("Closing")
+        self.model.ModStore()
         self.Close()
 
 
@@ -340,9 +325,9 @@ class HypoMain(MainFrame):
         MainFrame.ToolStore(self)
         #if(project.mod): 
         #    project.Store()
-        #if(mod):
+        if(self.model != None):
         #    mod.Close()
-        #    mod.Store()
+            self.model.ModStore()
         event.Skip()
 
 
