@@ -20,6 +20,9 @@ class Model(wx.EvtHandler):
             if self.path != "": fullpath = modpath + "/" + self.path
             else: fullpath = modpath
 
+        print("path " + self.path)
+        print("fullpath " + fullpath)
+
         if os.path.exists(fullpath) == False: 
             os.mkdir(fullpath)
 
@@ -27,14 +30,15 @@ class Model(wx.EvtHandler):
 
 
     def ModStore(self):
-        filepath = self.GetPath()
+        #filepath = self.GetPath()
+        filepath = self.path
         
         # box store
         filename = self.tag + "-box.ini"
         outfile = TextFile(filepath + "/" + filename)
         outfile.Open('w')
 
-        for box in self.toolset.boxset.values():
+        for box in self.modtools.values():
             outfile.WriteLine("{} {} {} {} {} {}".format(box.boxtag, box.mpos.x, box.mpos.y, box.boxsize.x, box.boxsize.y, box.IsShown()))
 
         outfile.Close()
@@ -43,32 +47,38 @@ class Model(wx.EvtHandler):
 
  
     def ModLoad(self):
-        filepath = self.GetPath()
+        #filepath = self.GetPath()
+        filepath = self.path
 
         # box load
-        infile = TextFile(filepath)
+        filename = self.tag + "-box.ini"
+        infile = TextFile(filepath + "/" + filename)
         check = infile.Open('r')
-        if check == False: return
+        if check == False: 
+            print("ModLoad box file not found")
+            return
         filetext = infile.ReadLines()
 
         for line in filetext:
             linedata = line.split(' ')
             boxtag = linedata[0]
-            if boxtag in self.toolset.boxset:      
+            if boxtag in self.modtools.keys():      
                 pos = wx.Point(int(linedata[1]), int(linedata[2]))
                 size = wx.Size(int(linedata[3]), int(linedata[4]))
                 if linedata[5] == 'True\n': visible = True
                 else: visible = False
-                self.toolset.boxset[boxtag].visible = visible
-                self.toolset.boxset[boxtag].mpos = pos
-                self.toolset.boxset[boxtag].boxsize = size
+                self.modtools[boxtag].visible = visible
+                self.modtools[boxtag].mpos = pos
+                self.modtools[boxtag].boxsize = size
 
         infile.Close()
 
-        for box in self.toolset.boxset.values():
+        for box in self.modtools.values():
             box.SetSize(box.boxsize)
-            box.SetPosition(self.GetPosition(), self.GetSize())
+            box.SetPosition(self.mainwin.GetPosition(), self.mainwin.GetSize())
             box.Show(box.visible)
+
+        print("ModLoad OK")
 
 
 	

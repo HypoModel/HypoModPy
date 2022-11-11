@@ -105,9 +105,14 @@ class ToolBox(wx.Frame):
         self.canclose = False
         self.visible = True
 
-        self.buttonheight = 23
-        self.boxfont = wx.Font(wx.FontInfo(8).FaceName("Tahoma"))
-        self.confont = wx.Font(wx.FontInfo(8).FaceName("Tahoma"))
+        if GetSystem() == 'Mac':
+            self.buttonheight = 25
+            self.boxfont = wx.Font(wx.FontInfo(12).FaceName("Tahoma"))
+            self.confont = wx.Font(wx.FontInfo(10).FaceName("Tahoma"))
+        else:
+            self.buttonheight = 23
+            self.boxfont = wx.Font(wx.FontInfo(8).FaceName("Tahoma"))
+            self.confont = wx.Font(wx.FontInfo(8).FaceName("Tahoma"))
 
         self.panel = ToolPanel(self, wx.DefaultPosition, wx.DefaultSize)
         self.panel.SetFont(self.boxfont)
@@ -288,14 +293,13 @@ class TagBox(wx.ComboBox):
         if os.path.exists(self.tagpath) == False: 
             os.mkdir(self.tagpath)
 
-
         if self.diagnostic:
             pub.sendMessage("diagbox", message="TagBox PathUpdate() tagpath {}\n".format(self.tagpath))
 
 
     def HistStore(self):
         # Tag history
-        if self.tagfilename == '': return
+        if self.tagfilename == "": return
         tagfile = TextFile(self.tagpath + "/" + self.tagfilename)
         tagfile.Open('w')
         for i in range(self.GetCount()-1, 0):

@@ -46,7 +46,8 @@ class OsmoModel(Model):
     def __init__(self, mainwin, tag):
         Model.__init__(self, mainwin, tag)
 
-        self.path = modpath + "/Osmo"
+        if modpath != "": self.path = modpath + "/Osmo"
+        else: self.path = "Osmo"
 
         if os.path.exists(self.path) == False: 
             os.mkdir(self.path)
@@ -59,7 +60,9 @@ class OsmoModel(Model):
 
         mainwin.toolset.AddBox(self.osmobox)  
 
-        #self.ModLoad()
+        self.ModLoad()
+
+        print("Osmo Model OK")
         #for box in self.modtools.values():
         #   box.ReSize()
         #    box.Show(box.visible)

@@ -323,6 +323,7 @@ class HypoMain(MainFrame):
     def OnClose(self, event):
         self.HypoStore()
         MainFrame.ToolStore(self)
+        self.scalebox.storetag.HistStore()
         #if(project.mod): 
         #    project.Store()
         if(self.model != None):

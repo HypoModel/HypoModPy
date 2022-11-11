@@ -143,7 +143,6 @@ class ScaleBox(ToolPanel):
                     plot.xto = plot.xto
 
 
-
     def OnOK(self, event):
 
         for graphpanel in self.panelset:
@@ -178,8 +177,8 @@ class ScaleBox(ToolPanel):
         filebox = wx.BoxSizer(wx.VERTICAL)
         buttons = wx.BoxSizer(wx.HORIZONTAL)
         
-        storetag = TagBox(self, label, wx.Size(80, -1), "scalebox", modpath)
-        storetag.SetFont(self.confont)
+        self.storetag = TagBox(self, label, wx.Size(80, -1), "scalebox", modpath)
+        self.storetag.SetFont(self.confont)
 
         if self.ostype == 'Mac':
             self.AddButton(ID_Store, "Store", 35, buttons)
@@ -190,7 +189,7 @@ class ScaleBox(ToolPanel):
             buttons.AddSpacer(2)
             self.AddButton(ID_Load, "Load", 38, buttons)
 
-        filebox.Add(storetag, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 2)
+        filebox.Add(self.storetag, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 2)
         filebox.Add(buttons, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 2)
         return filebox
         
