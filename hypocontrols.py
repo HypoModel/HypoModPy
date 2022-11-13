@@ -51,7 +51,7 @@ class ToolPanel(wx.Panel):
         if GetSystem() == 'Mac':
             self.buttonheight = 25
             self.boxfont = wx.Font(wx.FontInfo(12).FaceName("Tahoma"))
-            self.confont = wx.Font(wx.FontInfo(10).FaceName("Tahoma"))
+            self.confont = wx.Font(wx.FontInfo(11).FaceName("Tahoma"))
         else:
             self.buttonheight = 23
             self.boxfont = wx.Font(wx.FontInfo(8).FaceName("Tahoma"))
@@ -110,7 +110,7 @@ class ToolBox(wx.Frame):
         if GetSystem() == 'Mac':
             self.buttonheight = 25
             self.boxfont = wx.Font(wx.FontInfo(12).FaceName("Tahoma"))
-            self.confont = wx.Font(wx.FontInfo(10).FaceName("Tahoma"))
+            self.confont = wx.Font(wx.FontInfo(12).FaceName("Tahoma"))
         else:
             self.buttonheight = 23
             self.boxfont = wx.Font(wx.FontInfo(8).FaceName("Tahoma"))
@@ -130,6 +130,10 @@ class ToolBox(wx.Frame):
         self.Bind(wx.EVT_SIZE, self.OnSize)
 
         self.SetPosition(parent.GetPosition(), parent.GetSize())
+
+
+    def BoxEnter(self, tag):
+        if self.diagmode: self.DiagWrite("toolbox boxenter " + tag + "\n")
 
 
     def SpinClick(self, tag):

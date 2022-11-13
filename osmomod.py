@@ -2,6 +2,9 @@
 import wx
 from hypomods import *
 from hypoparams import *
+from threading import Thread
+import random
+from datetime import datetime
 
 
 
@@ -22,12 +25,7 @@ class OsmoBox(ParamBox):
 
         # ----------------------------------------------------------------------------------
 
-        runbox = wx.BoxSizer(wx.HORIZONTAL)
-        runcount = self.NumPanel(50, wx.ALIGN_CENTRE, "---")
-        self.AddButton(ID_Run, "RUN", 70, runbox)
-        runbox.AddSpacer(5)
-        runbox.Add(runcount)
-
+        runbox = self.RunBox()
         paramfilebox = self.StoreBoxSync()
 
         self.mainbox.AddSpacer(5)
@@ -42,9 +40,9 @@ class OsmoBox(ParamBox):
 
 
 
-class OsmoModel(Model):
+class OsmoMod(Mod):
     def __init__(self, mainwin, tag):
-        Model.__init__(self, mainwin, tag)
+        Mod.__init__(self, mainwin, tag)
 
         if modpath != "": self.path = modpath + "/Osmo"
         else: self.path = "Osmo"
@@ -59,12 +57,52 @@ class OsmoModel(Model):
         self.osmobox.Show(True)
 
         mainwin.toolset.AddBox(self.osmobox)  
+        self.modbox = self.osmobox
 
         self.ModLoad()
 
         print("Osmo Model OK")
-        #for box in self.modtools.values():
-        #   box.ReSize()
-        #    box.Show(box.visible)
 
 
+    def RunModel(self):
+        self.mainwin.SetStatusText("Osmo Model Run")
+        modthread = OsmoModel(self)
+        modthread.start()
+       
+
+
+class OsmoModel(ModThread):
+    def __init__(self, mod):
+        ModThread.__init__(self, mod.modbox, mod.mainwin)
+
+        self.mod = mod
+        self.osmobox = mod.osmobox
+        #self.osmodata = mod.osmodata
+        self.mainwin = mod.mainwin
+        self.scalebox = mod.mainwin.scalebox
+
+        self.randomflag = True
+
+
+    def run(self):
+        print("OsmoModel thread running")
+
+        if self.randomflag: random.seed(0)
+        else: random.seed(datetime.now())
+
+        self.osmomodel()
+
+        self.scalebox.GraphUpdate()
+
+
+    def osmomodel(self):
+        osmoparams = self.mod.osmobox.GetParams()
+
+        runtime = int(osmoparams["runtime"])
+        waterloss = osmoparams["waterloss"]
+
+        print("runtime {}".format(runtime))
+        print("waterloss {}".format(waterloss))
+
+
+    

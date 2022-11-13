@@ -1,15 +1,17 @@
 
 import wx
 from hypoparams import *
+from threading import Thread
 
 
-class Model(wx.EvtHandler):
+class Mod(wx.EvtHandler):
     def __init__(self, mainwin, tag):
         self.mainwin = mainwin
         self.tag = tag
         self.type = type
 
         self.modtools = {}
+        self.modbox = None
 
 
     def GetPath(self):
@@ -81,5 +83,14 @@ class Model(wx.EvtHandler):
         print("ModLoad OK")
 
 
-	
+
+class ModThread(Thread):
+    def __init__(self, box, mainwin):
+        Thread.__init__(self)
+
+        self.modbox = box
+        self.mainwin = mainwin
+        self.diag = False
+
+    
 

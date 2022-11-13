@@ -181,9 +181,9 @@ class ScaleBox(ToolPanel):
         self.storetag.SetFont(self.confont)
 
         if self.ostype == 'Mac':
-            self.AddButton(ID_Store, "Store", 35, buttons)
+            self.AddButton(ID_Store, "Store", 36, buttons)
             buttons.AddSpacer(2)
-            self.AddButton(ID_Load, "Load", 35, buttons)
+            self.AddButton(ID_Load, "Load", 36, buttons)
         else:
             self.AddButton(ID_Store, "Store", 38, buttons)
             buttons.AddSpacer(2)

@@ -227,7 +227,7 @@ class HypoMain(MainFrame):
         self.scalebox.GraphUpdate()
 
         # Model Box
-        self.model = OsmoModel(self, "osmomod")
+        self.mod = OsmoMod(self, "osmomod")
         
         # Sizers
         self.graphsizer.AddSpacer(5)
@@ -326,9 +326,9 @@ class HypoMain(MainFrame):
         self.scalebox.storetag.HistStore()
         #if(project.mod): 
         #    project.Store()
-        if(self.model != None):
+        if(self.mod != None):
         #    mod.Close()
-            self.model.ModStore()
+            self.mod.ModStore()
         event.Skip()
 
 

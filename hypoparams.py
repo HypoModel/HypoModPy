@@ -239,7 +239,6 @@ class ParamSet:
 class ParamBox(ToolBox):
     def __init__(self, model, title, pos, size, tag, type = 0, storemode = 0):
         ToolBox.__init__(self, model.mainwin, tag, title, pos, size, type)
-        #ToolBox.__init__(self, parent, "DiagBox", title, pos, size)
 
         self.autorun = 0    # auto run model after parameter change
         self.redtag = ""    # store box overwrite warning tag
@@ -252,23 +251,33 @@ class ParamBox(ToolBox):
         #defstore = false;
         self.diagmode = 0   # diagnostic mode
         self.mainwin = model.mainwin  # main window link
-        self.column = 0     # column mode for parameter controls
-        self.buttonwidth = 50
+        
         # modmode = 0;
-        self.vbox = []
+        
         self.activepanel = self.panel
         self.paramset = ParamSet(self.panel)
 
         self.DiagWrite("ParamBox " + self.boxtag + " init\n")
 
+        # Layout
+        self.column = 0     # column mode for parameter controls
+        self.buttonwidth = 50
+        self.vbox = []
+        self.buttonbox = wx.BoxSizer(wx.HORIZONTAL)
+        self.panelbuttoncount = 0
+        if self.boxtype == 0: self.pconbox = wx.BoxSizer(wx.HORIZONTAL)
+        self.defbutt = False
+
         # Initialise
-        modparams = {}
-        modflags = {}
-        conflags = {}
+        self.modparams = {}
+        self.modflags = {}
+        self.conflags = {}
+        self.checkrefs = {}
+        self.flagrefs = {}
 
         print("ParamBox " + self.mod.path)
 
-
+        # Store Tag
         self.paramstoretag = None
         if self.storemode:
             self.DiagWrite("Store Box initialise " + self.boxtag + "\n")
@@ -276,7 +285,7 @@ class ParamBox(ToolBox):
             self.paramstoretag.Show(False)
             self.paramstoretag.SetFont(self.confont)
 
-        if self.boxtype == 0: self.pconbox = wx.BoxSizer(wx.HORIZONTAL)
+        
 
         self.Bind(wx.EVT_MENU, self.OnAutorun, ID_AutoRun)
         self.Bind(wx.EVT_BUTTON, self.OnRun, ID_Run)
@@ -286,14 +295,117 @@ class ParamBox(ToolBox):
         #self.Bind(wx.EVT_MENU, self.OnQuit, fileItem)
 
 
+    # string formatting examples
+    #
+    # Box mpos x {} y {} shift x {} y {}".format(self.mpos.x, self.mpos.y, shift.x, shift.y)
+    # "{:.0f}".format(xval + plot.xdis)
+
+
+    def GetParams(self, pstore = None):
+        if pstore == None: pstore = self.modparams
+        for con in self.paramset.pcons.values():
+            value = con.GetValue()
+            if value < con.min:
+                value = con.oldvalue
+                con.SetValue(value)
+                if con.label != None:
+                    self.SetStatus("Parameter \'{}\' out of range".format(con.label.GetLabel()))
+                    self.DiagWrite("Parameter \'{}\' out of range, min {:.2f} max {:.2f}\n".format(con.label.GetLabel(), con.min, con.max))
+
+            if value > con.max:
+                value = con.oldvalue
+                con.SetValue(value)
+                if con.label != None:
+                    self.SetStatus("Parameter {} out of range".format(con.label.GetLabel()))
+
+            pstore[con.tag] = value
+            con.oldvalue = value
+
+        return pstore
+
+
+    def RunBox(self):
+        runbox = wx.BoxSizer(wx.HORIZONTAL)
+        runcount = self.NumPanel(50, wx.ALIGN_CENTRE, "---")
+        if GetSystem() == "Mac": self.AddButton(ID_Run, "RUN", 50, runbox)
+        else: self.AddButton(ID_Run, "RUN", 70, runbox)
+        runbox.AddSpacer(5)
+        runbox.Add(runcount, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL)
+
+        if self.defbutt:
+            runbox.AddSpacer(5)
+            if GetSystem() == "Mac": self.AddButton(ID_Default, "RESET", 50, runbox)
+            else: self.AddButton(ID_Default, "RESET", 70, runbox)
+	
+        return runbox
+
+
+    def SetCount(self, count):
+        self.runcount.SetLabel("{} %%".format(count))
+       
+
+    def AddPanelButton(self, id, label, toolbox):
+        if self.panelbuttoncount > 0:
+            self.buttonbox.AddSpacer(5)
+            self.buttonbox.AddStretchSpacer()
+        self.panelrefs[id] = toolbox
+        button = self.AddButton(id, label, self.buttonwidth, self.buttonbox)
+        button.Bind(wx.EVT_BUTTON, self.OnPanel)
+
+
+    def OnPanel(self, event):
+        id = event.GetId()
+        toolbox = self.panelrefs[id]
+        if toolbox.IsShown(): toolbox.Show(False)
+        else: toolbox.Show(True)
+
+
+    def AddFlag(self, id, flagtag, flagtext, state, menu):
+        if menu == None: menu = self.menuModel
+        self.modflags[flagtag] = state
+        menu.Append(id, flagtext, "Toggle " + flagtext, wx.ITEM_CHECK)
+        menu.Check(id, state)
+        self.Bind(wx.EVT_MENU, self.OnFlag, id)
+
+
+    def OnFlag(self, event):
+        id = event.GetId()
+        flagtag = self.flagrefs[id]
+        if self.modflags[flagtag] == 0: self.modflags[flagtag] = 1
+        else: self.modflags[flagtag] = 0
+        if self.autorun: self.OnRun(event)
+
+
+    def AddCheck(self, id, checktag, checktext, state):
+        self.modflags[checktag] = state
+        self.checkrefs[id] = checktag
+        newcheck = wx.CheckBox(self.activepanel, id, checktext)
+        newcheck.SetFont(self.confont)
+        newcheck.SetValue(state)
+        newcheck.Bind(wx.EVT_CHECKBOX, self.OnCheck)
+        return newcheck
+        
+
+    def OnCheck(self, event):
+        id = event.GetId()
+        checktag = self.checkrefs[id]
+        if self.modflags[checktag] == 0: self.modflags[checktag] = 1
+        else: self.modflags[checktag] = 0
+    
+
     def OnDefault(self, event):
         self.ParamLoad("default")
         if self.autorun: self.OnRun(event)
 
 
+    def OnSpin(self, event):
+        self.DiagWrite("ParamBox on spin\n") 
+        if self.autorun: self.OnRun(event)
+
+
     def OnRun(self, event):
         self.countmark = 0
-        self.GetParams()
+        #self.GetParams()
         self.mod.RunModel()
 
 
@@ -357,9 +469,10 @@ class ParamBox(ToolBox):
         if label != "": self.paramstoretag.SetLabel(label)
         self.paramstoretag.Show(True)
 
-        self.AddButton(wx.ID_ANY, "Store", 40, parambuttons).Bind(wx.EVT_BUTTON, self.OnParamStore)
-        if GetSystem() != "Mac": parambuttons.AddSpacer(2)
-        self.AddButton(wx.ID_ANY, "Load", 40, parambuttons).Bind(wx.EVT_BUTTON, self.OnParamStore)
+        self.AddButton(wx.ID_ANY, "Store", 38, parambuttons).Bind(wx.EVT_BUTTON, self.OnParamStore)
+        #if GetSystem() != "Mac": 
+        parambuttons.AddSpacer(2)
+        self.AddButton(wx.ID_ANY, "Load", 38, parambuttons).Bind(wx.EVT_BUTTON, self.OnParamStore)
         
         paramfilebox.Add(self.paramstoretag, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 2)
         paramfilebox.Add(parambuttons, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 2)
