@@ -17,7 +17,7 @@ class ParamCon(wx.Control):
         self.numwidth = numwidth
         self.panel = panel
         self.pad = panel.controlborder
-        self.cycle = 0
+        self.cycle = False
 
         if ostype == 'Mac': pad = 0
 
@@ -112,7 +112,7 @@ class ParamCon(wx.Control):
 
     def OnSpin(self, event):
         if not self.panel.toolbox == None:
-            pub.sendMessage("diagbox", message="tool spin click\n")
+            #pub.sendMessage("diagbox", message="tool spin click\n")
             self.panel.toolbox.SpinClick(self.tag)
         event.Skip()
 
@@ -125,21 +125,23 @@ class ParamCon(wx.Control):
 
     
     def OnSpinUp(self, event):
-        value = self.numbox.GetValue()
+        value = float(self.numbox.GetValue())
         newvalue = value + self.numstep
-        if newvalue > max:
-            if self.cycle: newvalue = min + (newvalue - max) - 1
+        if newvalue > self.max:
+            if self.cycle: newvalue = self.min + (newvalue - self.max) - 1
             else: return
         snum = numstring(newvalue, self.decimals)
         self.numbox.SetValue(snum)
 
 
     def OnSpinDown(self, event):
-        value = self.numbox.GetValue()
+        value = float(self.numbox.GetValue())
         newvalue = value - self.numstep
-        if newvalue < min: 
-            if self.cycle: newvalue = max + (newvalue - min) + 1
-        else: return
+        #snum = "SpinDown value {} newvalue {} min {}\n".format(value, newvalue, self.min)
+        #pub.sendMessage("diagbox", message=snum)
+        if newvalue < self.min: 
+            if self.cycle: newvalue = self.max + (newvalue - self.min) + 1
+            else: return
         snum = numstring(newvalue, self.decimals)
         self.numbox.SetValue(snum)
         

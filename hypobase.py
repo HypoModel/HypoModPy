@@ -30,6 +30,9 @@ class TextFile():
     def WriteLine(self, text):
         self.file.write(text + '\n')
 
+    def ReadLine(self):
+        return self.file.readline()
+
     def ReadLines(self):
         return self.file.readlines()
 

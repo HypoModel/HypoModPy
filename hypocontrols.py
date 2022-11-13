@@ -97,6 +97,8 @@ class ToolBox(wx.Frame):
 
         wx.Frame.__init__(self, parent, title = title, pos = pos, size = size, style = style)
 
+        self.diagmode = False
+
         self.boxtag = tag
         self.mpos = pos - parent.GetPosition() 
         self.oldpos = pos
@@ -128,6 +130,10 @@ class ToolBox(wx.Frame):
         self.Bind(wx.EVT_SIZE, self.OnSize)
 
         self.SetPosition(parent.GetPosition(), parent.GetSize())
+
+
+    def SpinClick(self, tag):
+        if self.diagmode: self.DiagWrite("toolbox spinclick  " + tag + "\n")
 
 
     def StatusBar(self):
@@ -264,14 +270,14 @@ class TagBox(wx.ComboBox):
         if os.path.exists(self.tagpath) == False: 
             os.mkdir(self.tagpath)
 
-        opfile = TextFile(self.tagpath + "/" + boxtag + "op.ini")
+        opfile = TextFile(self.tagpath + "/" + boxtag + "-op.ini")
         check = opfile.Open('r')
         if check == False:
             pub.sendMessage("diagbox", message = "No tagpath found, setting default\n")
             self.tagfilename = boxtag + "tags.ini"
         else:
             readline = opfile.ReadLine()
-            if readline == '': self.tagfilename = boxtag + "tags.ini"
+            if readline == "": self.tagfilename = boxtag + "tags.ini"
             else: self.tagfilename = readline
             opfile.Close()
 
@@ -302,9 +308,12 @@ class TagBox(wx.ComboBox):
         if self.tagfilename == "": return
         tagfile = TextFile(self.tagpath + "/" + self.tagfilename)
         tagfile.Open('w')
-        for i in range(self.GetCount()-1, 0):
-            outline = "tag {}".format(self.GetString(i))
-            tagfile.WriteLine(outline)
+        #if(self.IsListEmpty)
+        #for i in range(reversed(list(self.GetStrings))):
+        if self.GetCount() > 0:
+            for i in range(self.GetCount() - 1, 0):
+                outline = "tag {}".format(self.GetString(i))
+                tagfile.WriteLine(outline)
         tagfile.Close()
 
         # Fixed location option file, directs to selectable tagfile location
