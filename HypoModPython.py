@@ -1,4 +1,4 @@
-## HypoModPy
+## HypoModPython
 ##
 ## Started 5/11/18
 ## Continued 24/8/22
@@ -319,7 +319,7 @@ class HypoMain(MainFrame):
         if(self.gridbox): self.gridbox.Show()  
         else: self.SetStatusText('No Data Grid available')  
 
-        
+
     def OnClose(self, event):
         self.HypoStore()
         MainFrame.ToolStore(self)
@@ -329,6 +329,7 @@ class HypoMain(MainFrame):
         if(self.mod != None):
         #    mod.Close()
             self.mod.ModStore()
+
         event.Skip()
 
 

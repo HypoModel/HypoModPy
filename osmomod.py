@@ -1,11 +1,9 @@
 
 import wx
+import random
+
 from hypomods import *
 from hypoparams import *
-from threading import Thread
-import random
-from datetime import datetime
-
 
 
 class OsmoBox(ParamBox):
@@ -60,8 +58,15 @@ class OsmoMod(Mod):
         self.modbox = self.osmobox
 
         self.ModLoad()
-
         print("Osmo Model OK")
+
+
+    def OnModThreadComplete(self, event):
+        #runmute->Lock();
+        #runflag = 0;
+        #runmute->Unlock();
+        self.mainwin.scalebox.GraphUpdate()
+        self.DiagWrite("Model thread OK\n\n")
 
 
     def RunModel(self):
@@ -92,7 +97,9 @@ class OsmoModel(ModThread):
 
         self.osmomodel()
 
-        self.scalebox.GraphUpdate()
+        wx.QueueEvent(self.mod, ModThreadEvent(ModThreadCompleteEvent))
+
+        #self.scalebox.GraphUpdate()
 
 
     def osmomodel(self):

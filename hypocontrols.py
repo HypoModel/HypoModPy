@@ -2,8 +2,6 @@
 import wx
 import os
 from hypobase import *
-from pubsub import pub
-
 
 
 class ToolText(wx.StaticText):
@@ -106,6 +104,7 @@ class ToolBox(wx.Frame):
         self.status = None
         self.canclose = False
         self.visible = True
+        self.storetag = None
 
         if GetSystem() == 'Mac':
             self.buttonheight = 25
@@ -274,19 +273,24 @@ class TagBox(wx.ComboBox):
         if os.path.exists(self.tagpath) == False: 
             os.mkdir(self.tagpath)
 
-        opfile = TextFile(self.tagpath + "/" + boxtag + "-op.ini")
+        print("tagpath " + self.tagpath)
+
+        # Read fixed location option file, directs to selectable tagfile location
+        opfilepath = self.tagpath + "/" + boxtag + "-op.ini"
+        opfile = TextFile(opfilepath)
         check = opfile.Open('r')
         if check == False:
-            pub.sendMessage("diagbox", message = "No tagpath found, setting default\n")
+            pub.sendMessage("diagbox", message = "TagBox opfile " + opfilepath + "\n")
+            pub.sendMessage("diagbox", message = "TagBox " + boxtag + " No tagpath found, setting default\n")
             self.tagfilename = boxtag + "tags.ini"
         else:
             readline = opfile.ReadLine()
             if readline == "": self.tagfilename = boxtag + "tags.ini"
-            else: self.tagfilename = readline
+            else: self.tagfilename = readline.strip()
             opfile.Close()
 
         #mainwin->diagbox->Write("\nTagBox init " + name + "\n");
-        #self.HistLoad()
+        self.HistLoad()
 
         #Connect(wxEVT_RIGHT_UP, wxMouseEventHandler(TagBox::OnRClick));
 
@@ -310,21 +314,51 @@ class TagBox(wx.ComboBox):
     def HistStore(self):
         # Tag history
         if self.tagfilename == "": return
-        tagfile = TextFile(self.tagpath + "/" + self.tagfilename)
+        filepath = self.tagpath + "/" + self.tagfilename
+        tagfile = TextFile(filepath)
         tagfile.Open('w')
-        #if(self.IsListEmpty)
-        #for i in range(reversed(list(self.GetStrings))):
         if self.GetCount() > 0:
-            for i in range(self.GetCount() - 1, 0):
-                outline = "tag {}".format(self.GetString(i))
+            #print("HistStore count {}".format(self.GetCount()))
+            for i in range(0, self.GetCount()):
+                #print("HistStore i {}".format(self.GetCount() - i - 1))
+                outline = "tag {}".format(self.GetString(self.GetCount() - i - 1))
                 tagfile.WriteLine(outline)
         tagfile.Close()
 
         # Fixed location option file, directs to selectable tagfile location
-        opfile = TextFile(self.tagpath + "/" + self.boxtag + "op.ini")
+        opfile = TextFile(self.tagpath + "/" + self.boxtag + "-op.ini")
         opfile.Open('w')
         opfile.WriteLine(self.tagfilename)
         opfile.Close()
 
+        print("HistStore tagfile " + filepath)
 
 
+    def HistLoad(self):
+        tag = ""
+        if self.tagpath == "":
+            DiagWrite("Tag file not set\n")
+            return
+
+        filepath = self.tagpath + "/" + self.tagfilename
+        tagfile = TextFile(filepath)
+        check = tagfile.Open('r')
+        if check == False:
+            DiagWrite("No tag history\n")
+            return
+
+        DiagWrite("HistLoad ")
+        DiagWrite("Reading tag history " + self.tagfilename + "\n")
+        
+        filetext = tagfile.ReadLines()
+        for readline in filetext:
+            readdata = readline.split(' ')
+            tag = readdata[1].strip()
+            # diagbox->Write("Readline " + readline + "\n");
+            self.Insert(tag, 0)
+            # diagbox->Write("Insert " + tag + "\n");
+
+        tagfile.Close()	
+        self.SetLabel(tag)
+        # DiagWrite(name + " " + tag + "\n");
+        if tag != "": self.labelset = True

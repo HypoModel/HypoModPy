@@ -255,11 +255,11 @@ class ParamBox(ToolBox):
         # modmode = 0;
         
         self.activepanel = self.panel
-        self.paramset = ParamSet(self.panel)
+        
 
         self.DiagWrite("ParamBox " + self.boxtag + " init\n")
 
-        # Layout
+        # Initialise Layout
         self.column = 0     # column mode for parameter controls
         self.buttonwidth = 50
         self.vbox = []
@@ -268,7 +268,8 @@ class ParamBox(ToolBox):
         if self.boxtype == 0: self.pconbox = wx.BoxSizer(wx.HORIZONTAL)
         self.defbutt = False
 
-        # Initialise
+        # Initialise Stores
+        self.paramset = ParamSet(self.panel)
         self.modparams = {}
         self.modflags = {}
         self.conflags = {}
@@ -278,14 +279,12 @@ class ParamBox(ToolBox):
         print("ParamBox " + self.mod.path)
 
         # Store Tag
-        self.paramstoretag = None
+        self.storetag = None
         if self.storemode:
             self.DiagWrite("Store Box initialise " + self.boxtag + "\n")
-            self.paramstoretag = TagBox(self.activepanel, "", wx.Size(120, 20), self.boxtag, self.mod.path)
-            self.paramstoretag.Show(False)
-            self.paramstoretag.SetFont(self.confont)
-
-        
+            self.storetag = TagBox(self.activepanel, "", wx.Size(120, 20), self.boxtag, self.mod.path)
+            self.storetag.Show(False)
+            self.storetag.SetFont(self.confont)
 
         self.Bind(wx.EVT_MENU, self.OnAutorun, ID_AutoRun)
         self.Bind(wx.EVT_BUTTON, self.OnRun, ID_Run)
@@ -299,6 +298,77 @@ class ParamBox(ToolBox):
     #
     # Box mpos x {} y {} shift x {} y {}".format(self.mpos.x, self.mpos.y, shift.x, shift.y)
     # "{:.0f}".format(xval + plot.xdis)
+
+
+    def ParamStore(self, filetag = ""):
+        redpen = wx.Colour("#dd0000")
+        blackpen = wx.Colour("#000000")
+
+        newtag = False
+        if filetag == "": newtag = True
+
+        #mainwin->diagbox->Write(text.Format("param store %s\n", boxtag));
+
+        parampath = self.mod.path + "/Params"
+        if os.path.exists(parampath) == False: 
+            os.mkdir(parampath)
+
+        if self.storetag != None:
+            if filetag == "": filetag = self.storetag.GetValue()
+            else: self.storetag.SetValue(filetag)
+
+        # Param data file
+        filepath = parampath + "/" + filetag + "-" + self.boxtag + "param.dat";
+
+        # Param file history
+        if self.storetag != None and filetag != "default": 
+            tagpos = self.storetag.FindString(filetag)
+            if tagpos != wx.NOT_FOUND: self.storetag.Delete(tagpos)
+            self.storetag.Insert(filetag, 0)
+            print("tag inserted " + filetag)
+
+        # Overwrite Warning
+        paramfile = TextFile(filepath)
+        if paramfile.Exists() and newtag and self.redtag != filetag: 
+            if self.storetag != None:
+                self.storetag.SetForegroundColour(redpen)
+                self.storetag.SetValue("")
+                self.storetag.SetValue(filetag)
+            self.redtag = filetag
+            return
+
+        # Clear Overwrite Warning
+        self.redtag = ""
+        if self.storetag != None:
+            self.storetag.SetForegroundColour(blackpen)
+            self.storetag.SetValue("")
+            self.storetag.SetValue(filetag)
+
+        # Open File
+        paramfile.Open('w')
+
+        # Write Parameter Values
+        for con in self.paramset.pcons.values():
+            if con.type != "textcon":
+                outline = "{:.8f}".format(con.GetValue())
+            else: outline = con.GetString()
+            paramfile.WriteLine(con.tag + " " + outline)
+
+        # Write Flag Values
+        paramfile.WriteLine("")
+        for flagtag in self.flagrefs.values():
+            outline = "%.0f".format(self.modflags[flagtag])
+            paramfile.WriteLine(flagtag + " " + outline)
+
+        # Write Check Values
+        paramfile.WriteLine("")
+        for checktag in self.checkrefs.values():
+            outline = "%.0f".format(self.modflags[checktag])
+            paramfile.WriteLine(checktag + " " + outline)
+  
+        # Close File
+        paramfile.Close()
+        self.DiagWrite("Param File OK\n")
 
 
     def GetParams(self, pstore = None):
@@ -363,6 +433,7 @@ class ParamBox(ToolBox):
     def AddFlag(self, id, flagtag, flagtext, state, menu):
         if menu == None: menu = self.menuModel
         self.modflags[flagtag] = state
+        self.flagrefs[id] = flagtag
         menu.Append(id, flagtext, "Toggle " + flagtext, wx.ITEM_CHECK)
         menu.Check(id, state)
         self.Bind(wx.EVT_MENU, self.OnFlag, id)
@@ -459,28 +530,28 @@ class ParamBox(ToolBox):
 
 
     def StoreBox(self, label, storepanel=None):
-        if self.paramstoretag == None: return
+        if self.storetag == None: return
         paramfilebox = wx.BoxSizer(wx.HORIZONTAL)
         parambuttons = wx.BoxSizer(wx.HORIZONTAL)
 
         if storepanel == None: storepanel = self.panel
-        if self.activepanel != self.panel: self.paramstoretag.Reparent(self.activepanel)
+        if self.activepanel != self.panel: self.storetag.Reparent(self.activepanel)
 
-        if label != "": self.paramstoretag.SetLabel(label)
-        self.paramstoretag.Show(True)
+        if label != "": self.storetag.SetLabel(label)
+        self.storetag.Show(True)
 
         self.AddButton(wx.ID_ANY, "Store", 38, parambuttons).Bind(wx.EVT_BUTTON, self.OnParamStore)
         #if GetSystem() != "Mac": 
         parambuttons.AddSpacer(2)
-        self.AddButton(wx.ID_ANY, "Load", 38, parambuttons).Bind(wx.EVT_BUTTON, self.OnParamStore)
+        self.AddButton(wx.ID_ANY, "Load", 38, parambuttons).Bind(wx.EVT_BUTTON, self.OnParamLoad)
         
-        paramfilebox.Add(self.paramstoretag, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 2)
+        paramfilebox.Add(self.storetag, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 2)
         paramfilebox.Add(parambuttons, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 2)
         return paramfilebox
 
     
     def OnParamStore(self, event):
-        return
+        self.ParamStore()
 
 
     def OnParamLoad(self, event):

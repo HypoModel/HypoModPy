@@ -2,10 +2,24 @@
 import wx
 from hypoparams import *
 from threading import Thread
+from datetime import datetime
+import wx.lib.newevent
 
 
+# Custom Thread Event
+ModThreadCompleteEvent = wx.NewEventType()
+EVT_MODTHREAD_COMPLETE = wx.PyEventBinder(ModThreadCompleteEvent, 0)
+
+class ModThreadEvent(wx.PyCommandEvent):
+    def __init__(self, evtType):
+        wx.PyCommandEvent.__init__(self, evtType)
+
+
+# Mod Class
 class Mod(wx.EvtHandler):
     def __init__(self, mainwin, tag):
+        wx.EvtHandler.__init__(self)
+
         self.mainwin = mainwin
         self.tag = tag
         self.type = type
@@ -13,6 +27,12 @@ class Mod(wx.EvtHandler):
         self.modtools = {}
         self.modbox = None
 
+        self.Bind(EVT_MODTHREAD_COMPLETE, self.OnModThreadComplete)
+
+
+    def DiagWrite(self, text):
+        pub.sendMessage("diagbox", message=text)
+    
 
     def GetPath(self):
         if modpath == "": 
@@ -42,6 +62,7 @@ class Mod(wx.EvtHandler):
 
         for box in self.modtools.values():
             outfile.WriteLine("{} {} {} {} {} {}".format(box.boxtag, box.mpos.x, box.mpos.y, box.boxsize.x, box.boxsize.y, box.IsShown()))
+            if box.storetag != None: box.storetag.HistStore()
 
         outfile.Close()
 

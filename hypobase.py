@@ -2,6 +2,7 @@
 from math import sqrt
 import wx
 from pathlib import Path
+from pubsub import pub
 
 
 def GetSystem():
@@ -10,6 +11,10 @@ def GetSystem():
     if oslabel.startswith("Mac") or oslabel.startswith("mac"): return 'Mac'
     if oslabel.startswith("Linux"): return 'Linux'
     return 0
+
+
+def DiagWrite(text):
+    pub.sendMessage("diagbox", message=text)
 
 
 class TextFile():
@@ -68,5 +73,21 @@ ID_Load = wx.NewIdRef()
 ID_Run = wx.NewIdRef()
 ID_AutoRun = wx.NewIdRef()
 ID_Default = wx.NewIdRef()
+
+# Events
+#EVT_MODTHREAD_COMPLETE_ID = wx.NewIdRef()
+
+#def EVT_MODTHREAD_COMPLETE(win, func):
+#    """Define Result Event."""
+ #   win.Connect(-1, -1, EVT_MODTHREAD_COMPLETE_ID, func)
+
+#class ModThreadCompleteEvent(wx.PyEvent):
+#    """Simple event to carry arbitrary result data."""
+#    def __init__(self, data):
+ #       """Init Result Event."""
+#        wx.PyEvent.__init__(self)
+ #       self.SetEventType(EVT_MODTHREAD_COMPLETE_ID)
+#        self.data = data
+
 
 
