@@ -65,6 +65,8 @@ def numstring(number, places=0):
 mainpath = ""
 projectpath = "/Users/duncan/Model"
 modpath = "/Users/duncan/Model"
+#modpathwin  = "C:\Users\Duncan\Model"
+modpathwin = "C:/Users/Duncan/Model"
 
 # Control IDs
 ID_Sync = wx.NewIdRef()

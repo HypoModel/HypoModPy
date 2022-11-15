@@ -19,11 +19,12 @@ class ParamCon(wx.Control):
         self.pad = panel.controlborder
         self.cycle = False
 
-        if ostype == 'Mac': pad = 0
+        if ostype == "Mac": pad = 0
+        else: pad = 0
 
         textfont = wx.Font(wx.FontInfo(8).FaceName("Tahoma"))
 
-        if ostype == 'Mac':
+        if ostype == "Mac":
             textfont = wx.Font(wx.FontInfo(11).FaceName("Tahoma"))
             smalltextfont = wx.Font(wx.FontInfo(9).FaceName("Tahoma"))
 
