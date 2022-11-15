@@ -106,6 +106,11 @@ class ToolBox(wx.Frame):
         self.visible = True
         self.storetag = None
 
+        self.blackpen = wx.Colour("#000000")
+        self.redpen = wx.Colour("#dd0000")
+        self.greenpen = wx.Colour("#009900")
+        self.bluepen = wx.Colour("#0000dd")
+
         if GetSystem() == 'Mac':
             self.buttonheight = 25
             self.boxfont = wx.Font(wx.FontInfo(12).FaceName("Tahoma"))

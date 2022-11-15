@@ -17,6 +17,8 @@ def DiagWrite(text):
     pub.sendMessage("diagbox", message=text)
 
 
+
+
 class TextFile():
     def __init__(self, filepath):
         self.filepath = Path(filepath)

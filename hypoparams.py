@@ -86,6 +86,14 @@ class ParamCon(wx.Control):
         return self.numbox.GetValue()
 
 
+    def SetString(self, text):
+        return self.numbox.SetValue(text)
+
+    
+    def Clear(self):
+        return self.numbox.SetValue("")
+
+
     def SetPen(self, pen):
         self.numbox.SetForegroundColour(pen)
 
@@ -162,6 +170,10 @@ class ParamSet:
         self.con_numwidth = 60
         self.text_labelwidth = 60
         self.text_numwidth = 150
+
+
+    def Check(self, tag):
+        return tag in self.pcons
 
 
     def NumParams(self):
@@ -274,8 +286,13 @@ class ParamBox(ToolBox):
         self.modparams = {}
         self.modflags = {}
         self.conflags = {}
-        self.checkrefs = {}
-        self.flagrefs = {}
+        self.checktags = {}
+        self.checkboxes = {}
+        self.flagtags = {}
+        self.flagIDs = {}
+
+        #self.checkrefs = RefStore()
+        
 
         print("ParamBox " + self.mod.path)
 
@@ -301,15 +318,98 @@ class ParamBox(ToolBox):
     # "{:.0f}".format(xval + plot.xdis)
 
 
-    def ParamStore(self, filetag = ""):
-        redpen = wx.Colour("#dd0000")
-        blackpen = wx.Colour("#000000")
+    def ParamLoad(self, filetag = "", compmode = False):
+        diagmode = False
+        if diagmode: DiagWrite("param load {}\n".format(self.boxtag))
 
+        oldparams = self.GetParams()
+        parampath = self.mod.path + "/Params"
+
+        # Param data file
+        if self.storetag != None:
+            if filetag == "": filetag = self.storetag.GetValue()
+            elif filetag != "default": self.storetag.SetValue(filetag)
+
+        filepath = parampath + "/" + filetag + "-" + self.boxtag + "param.dat"
+        if diagmode: DiagWrite("paramload " + filepath + "\n")
+        paramfile = TextFile(filepath)
+
+        if not paramfile.Exists():
+            if self.storetag: self.storetag.SetValue("Not found")
+            return
+
+        # Param file history
+        if self.storetag != None and filetag != "default": 
+            tagpos = self.storetag.FindString(filetag)
+            if tagpos != wx.NOT_FOUND: self.storetag.Delete(tagpos)
+            self.storetag.Insert(filetag, 0)
+            print("tag inserted " + filetag)
+
+        # Clear Overwrite Warning
+        self.redtag = ""
+        if self.storetag != None:
+            self.storetag.SetForegroundColour(self.blackpen)
+            self.storetag.SetValue("")
+            self.storetag.SetValue(filetag)
+
+        # Open File
+        paramfile.Open('r')
+
+        # Read Parameter Values
+        mode = "param"
+        filetext = paramfile.ReadLines()
+        
+        for readline in filetext:
+
+            # parse line
+            readline = readline.strip()
+            if readline == "":
+                if mode == "param": mode = "flag"
+                elif mode == "flag": mode = "check"
+                continue
+            readdata = readline.split(' ')
+            tag = readdata[0]
+            data = readdata[1].strip()
+
+            # read parameter
+            if mode == "param":
+                if self.paramset.Check(tag):
+                    paramcon = self.paramset.pcons[tag]
+                    if paramcon.type != "textcon":
+                        datval = float(data)
+                        paramcon.SetPen(self.blackpen)
+                        if compmode and datval != oldparams[tag]:
+                            paramcon.SetPen(self.greenpen)
+                            DiagWrite(tag + " param change\n")
+                        paramcon.Clear()
+                        paramcon.SetValue(datval)
+                    else: paramcon.SetValue(data)
+                    if diagmode: DiagWrite("Model Param Tag {}, Value {:.4f}\n".format(tag, datval)) 
+
+            # read flag
+            if mode == "flag":
+                if tag in self.flagIDs:
+                    flagval = int(data)
+                    self.modflags[tag] = flagval
+                    id = self.flagIDs[tag]
+                    self.menuModel.Check(id, flagval)
+                    if diagmode: DiagWrite("Model flag ID {}, Tag {}, Set %d\n".format(id, tag, flagval)) 
+
+            # read check
+            if mode == "check":
+                if tag in self.checkIDs:
+                    checkval = int(data)
+                    self.modflags[tag] = checkval
+                    checkbox = self.checkboxes[tag]
+                    checkbox.SetValue(checkval)
+                    if diagmode: DiagWrite("Model check Tag {}, Set {}\n".format(tag, flagval)) 
+
+        paramfile.Close()
+
+
+    def ParamStore(self, filetag = ""):
         newtag = False
         if filetag == "": newtag = True
-
-        #mainwin->diagbox->Write(text.Format("param store %s\n", boxtag));
-
         parampath = self.mod.path + "/Params"
         if os.path.exists(parampath) == False: 
             os.mkdir(parampath)
@@ -332,7 +432,7 @@ class ParamBox(ToolBox):
         paramfile = TextFile(filepath)
         if paramfile.Exists() and newtag and self.redtag != filetag: 
             if self.storetag != None:
-                self.storetag.SetForegroundColour(redpen)
+                self.storetag.SetForegroundColour(self.redpen)
                 self.storetag.SetValue("")
                 self.storetag.SetValue(filetag)
             self.redtag = filetag
@@ -341,7 +441,7 @@ class ParamBox(ToolBox):
         # Clear Overwrite Warning
         self.redtag = ""
         if self.storetag != None:
-            self.storetag.SetForegroundColour(blackpen)
+            self.storetag.SetForegroundColour(self.blackpen)
             self.storetag.SetValue("")
             self.storetag.SetValue(filetag)
 
@@ -357,13 +457,13 @@ class ParamBox(ToolBox):
 
         # Write Flag Values
         paramfile.WriteLine("")
-        for flagtag in self.flagrefs.values():
+        for flagtag in self.flagtags.values():
             outline = "%.0f".format(self.modflags[flagtag])
             paramfile.WriteLine(flagtag + " " + outline)
 
         # Write Check Values
         paramfile.WriteLine("")
-        for checktag in self.checkrefs.values():
+        for checktag in self.checktags.values():
             outline = "%.0f".format(self.modflags[checktag])
             paramfile.WriteLine(checktag + " " + outline)
   
@@ -434,33 +534,35 @@ class ParamBox(ToolBox):
     def AddFlag(self, id, flagtag, flagtext, state, menu):
         if menu == None: menu = self.menuModel
         self.modflags[flagtag] = state
-        self.flagrefs[id] = flagtag
+        self.flagtags[id] = flagtag
+        self.flagIDs[flagtag] = id
         menu.Append(id, flagtext, "Toggle " + flagtext, wx.ITEM_CHECK)
         menu.Check(id, state)
         self.Bind(wx.EVT_MENU, self.OnFlag, id)
 
 
-    def OnFlag(self, event):
-        id = event.GetId()
-        flagtag = self.flagrefs[id]
-        if self.modflags[flagtag] == 0: self.modflags[flagtag] = 1
-        else: self.modflags[flagtag] = 0
-        if self.autorun: self.OnRun(event)
-
-
     def AddCheck(self, id, checktag, checktext, state):
         self.modflags[checktag] = state
-        self.checkrefs[id] = checktag
+        self.checktags[id] = checktag
         newcheck = wx.CheckBox(self.activepanel, id, checktext)
         newcheck.SetFont(self.confont)
         newcheck.SetValue(state)
         newcheck.Bind(wx.EVT_CHECKBOX, self.OnCheck)
+        self.checkboxes[checktag] = newcheck
         return newcheck
+
+
+    def OnFlag(self, event):
+        id = event.GetId()
+        flagtag = self.flagtags[id]
+        if self.modflags[flagtag] == 0: self.modflags[flagtag] = 1
+        else: self.modflags[flagtag] = 0
+        if self.autorun: self.OnRun(event)
         
 
     def OnCheck(self, event):
         id = event.GetId()
-        checktag = self.checkrefs[id]
+        checktag = self.checktags[id]
         if self.modflags[checktag] == 0: self.modflags[checktag] = 1
         else: self.modflags[checktag] = 0
     
@@ -556,6 +658,6 @@ class ParamBox(ToolBox):
 
 
     def OnParamLoad(self, event):
-        return
+        self.ParamLoad()
 
     
