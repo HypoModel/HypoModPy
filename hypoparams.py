@@ -369,7 +369,7 @@ class ParamBox(ToolBox):
                 continue
             readdata = readline.split(' ')
             tag = readdata[0]
-            data = readdata[1].strip()
+            data = readdata[1]
 
             # read parameter
             if mode == "param":

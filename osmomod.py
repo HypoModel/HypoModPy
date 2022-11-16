@@ -7,8 +7,8 @@ from hypoparams import *
 
 
 class OsmoBox(ParamBox):
-    def __init__(self, model, title, position, size):
-        ParamBox.__init__(self, model, title, position, size, "Osmo", 0, 1)
+    def __init__(self, model, tag, title, position, size):
+        ParamBox.__init__(self, model, title, position, size, tag, 0, 1)
 
         # Parameter controls
         #
@@ -48,7 +48,7 @@ class OsmoMod(Mod):
         if os.path.exists(self.path) == False: 
             os.mkdir(self.path)
 
-        self.osmobox = OsmoBox(self, tag, wx.Point(0, 0), wx.Size(320, 500))
+        self.osmobox = OsmoBox(self, "osmo", "Osmo", wx.Point(0, 0), wx.Size(320, 500))
 
         self.modtools[self.osmobox.boxtag] = self.osmobox
 

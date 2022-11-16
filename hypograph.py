@@ -3,7 +3,6 @@ import wx
 from hypocontrols import *
 
 
-
 class PlotDat():
     def __init__(self):
         self.xaxis = True
@@ -272,7 +271,7 @@ class GraphPanel(wx.Panel):
                         else: snum = "{:.0f}".format(xval + plot.xdis)	
                     else: snum = f"{xval + plot.xdis:.{plot.xlabelplaces}f}"
 
-                    if GetSystem() == 'Mac':
+                    if GetSystem() == "Mac":
                         textsize = gc.GetFullTextExtent(snum)
                         gc.DrawText(snum, self.xbase + xcoord - textsize[0] / 2, self.ybase + self.yplot + 8)
                     else:
@@ -308,7 +307,7 @@ class GraphPanel(wx.Panel):
                         else: snum = "{:.0f}".format(yval)	
                     else: snum = f"{yval + plot.ydis:.{plot.ylabelplaces}f}"
 
-                    if GetSystem() == 'Mac':
+                    if GetSystem() == "Mac":
                         textsize = gc.GetFullTextExtent(snum)
                         gc.DrawText(snum, self.xbase - xylab - plot.yticklength - textsize[0], self.ybase + self.yplot - ycoord - textsize[1] / 2)
                     else:
