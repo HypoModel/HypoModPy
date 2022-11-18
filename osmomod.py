@@ -4,6 +4,78 @@ import random
 
 from hypomods import *
 from hypoparams import *
+from hypodat import *
+
+
+
+class OsmoMod(Mod):
+    def __init__(self, mainwin, tag):
+        Mod.__init__(self, mainwin, tag)
+
+        if modpath != "": self.path = modpath + "/Osmo"
+        else: self.path = "Osmo"
+
+        if os.path.exists(self.path) == False: 
+            os.mkdir(self.path)
+
+        self.osmobox = OsmoBox(self, "osmo", "Osmo", wx.Point(0, 0), wx.Size(320, 500))
+        self.modtools[self.osmobox.boxtag] = self.osmobox
+        self.osmobox.Show(True)
+        mainwin.toolset.AddBox(self.osmobox)  
+        self.modbox = self.osmobox
+
+        self.ModLoad()
+        print("Osmo Model OK")
+
+        self.PlotData()
+
+
+    def PlotData(self):
+
+        ## Data plots
+        ##
+        ## PlotDat(data pointer, xfrom, xto, yfrom, yto, label string, plot type, bin size, colour)
+        ## ----------------------------------------------------------------------------------
+        self.plotbase.Add(PlotDat(self.osmodata.water, 0, 2000, 0, 5000, "water", 4, 1, "blue"), "water")
+        self.plotbase.Add(PlotDat(self.osmodata.salt, 0, 2000, 0, 100, "salt", 4, 1, "red"), "salt")
+        self.plotbase.Add(PlotDat(self.osmodata.osmo, 0, 2000, 0, 100, "osmo", 4, 1, "green"), "osmo")
+        # self.graphbaseAdd(PlotDat(self.osmodata.heat, 0, 2000, 0, 100, "heat", 4, 1, "lightred"), "heat")
+        # self.graphbase.Add(PlotDat(self.osmodata.vaso, 0, 2000, 0, 100, "vaso", 4, 1, "purple"), "vaso")
+
+        # Initial plots
+        self.pcodes[0] = "water"
+        self.pcodes[1] = "salt"
+        self.pcodes[2] = "osmo"
+        # gcodes[3] = "heat";
+        # gcodes[4] = "vaso";
+        # gcodes[5] = "water";
+
+        self.gcount = 3
+        self.gsmode = 1
+
+
+    def OnModThreadComplete(self, event):
+        #runmute->Lock();
+        #runflag = 0;
+        #runmute->Unlock();
+        self.mainwin.scalebox.GraphUpdate()
+        self.DiagWrite("Model thread OK\n\n")
+
+
+    def RunModel(self):
+        self.mainwin.SetStatusText("Osmo Model Run")
+        modthread = OsmoModel(self)
+        modthread.start()
+
+
+
+class OsmoDat():
+    def __init__(self):
+        self.water = []
+        self.salt = []
+        self.osmo = []
+        self.vaso = []
+
 
 
 class OsmoBox(ParamBox):
@@ -36,44 +108,6 @@ class OsmoBox(ParamBox):
 
         self.panel.Layout()
 
-
-
-class OsmoMod(Mod):
-    def __init__(self, mainwin, tag):
-        Mod.__init__(self, mainwin, tag)
-
-        if modpath != "": self.path = modpath + "/Osmo"
-        else: self.path = "Osmo"
-
-        if os.path.exists(self.path) == False: 
-            os.mkdir(self.path)
-
-        self.osmobox = OsmoBox(self, "osmo", "Osmo", wx.Point(0, 0), wx.Size(320, 500))
-
-        self.modtools[self.osmobox.boxtag] = self.osmobox
-
-        self.osmobox.Show(True)
-
-        mainwin.toolset.AddBox(self.osmobox)  
-        self.modbox = self.osmobox
-
-        self.ModLoad()
-        print("Osmo Model OK")
-
-
-    def OnModThreadComplete(self, event):
-        #runmute->Lock();
-        #runflag = 0;
-        #runmute->Unlock();
-        self.mainwin.scalebox.GraphUpdate()
-        self.DiagWrite("Model thread OK\n\n")
-
-
-    def RunModel(self):
-        self.mainwin.SetStatusText("Osmo Model Run")
-        modthread = OsmoModel(self)
-        modthread.start()
-       
 
 
 class OsmoModel(ModThread):
@@ -112,4 +146,4 @@ class OsmoModel(ModThread):
         print("waterloss {}".format(waterloss))
 
 
-    
+

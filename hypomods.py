@@ -1,6 +1,7 @@
 
 import wx
 from hypoparams import *
+from hypodat import *
 from threading import Thread
 from datetime import datetime
 import wx.lib.newevent
@@ -26,6 +27,8 @@ class Mod(wx.EvtHandler):
 
         self.modtools = {}
         self.modbox = None
+
+        self.plotbase = PlotBase(mainwin)
 
         self.Bind(EVT_MODTHREAD_COMPLETE, self.OnModThreadComplete)
 

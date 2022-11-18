@@ -3,55 +3,6 @@ import wx
 from hypocontrols import *
 
 
-class PlotDat():
-    def __init__(self):
-        self.xaxis = True
-        self.yaxis = True
-        self.xfrom = 0
-        self.xto = 500
-        self.xscale = 1
-        self.xdis = 0
-
-        self.xmin = 0
-        self.xmax = 1000
-
-        self.yfrom = 0
-        self.yto = 10000
-        self.yscale = 1
-
-        self.xtickmode = 1
-        self.ytickmode = 1
-
-        self.xshift = 0
-        self.yshift  = 0
-
-        self.xunitscale = 1
-        self.yunitscale = 1
-        self.xunitdscale = 1
-        self.yunitdscale = 1
-
-        self.xlabelmode = 1
-        self.ylabelmode = 1
-        self.xticklength = 5
-        self.yticklength = 5
-        self.xlabelplaces = -1
-        self.ylabelplaces = -1
-        self.xscalemode = 0 
-        self.yscalemode = 0
-
-        self.xticklength = 5
-        self.yticklength = 5
-
-        self.data = None
-        self.xdata = None
-        self.binsize = 1
-        self.scrollpos = 0
-        self.xrel = 0
-
-        self.negscale = 0   # check purpose
-        self.synchx = 1     # toggle to allow x-axis synchronisation, typically used for common time axis
-
-
 
 class GraphDisp():
     def __init__(self):
@@ -59,11 +10,14 @@ class GraphDisp():
         self.currentplot = 0
         self.plots = []
 
+
     def GetFront(self):
         return self.plots[0]
 
+
     def Add(self, plot):
         self.plots.append(plot)
+
 
     # XYSynch() - Synchronise X and Y axes for all plots
     def XYSynch(self, plotzero=None):  
