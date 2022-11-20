@@ -10,8 +10,8 @@ class PlotSet():
         self.pcodes = {}
 
 
-    def Add(self, ptag, pcode): 
-        self.ptags.Append(ptag)
+    def Add(self, ptag, pcode = -1): 
+        self.ptags.append(ptag)
         self.pcodes[ptag] = pcode
         if len(self.ptags) > 1: self.single = False
 
@@ -97,7 +97,7 @@ class PlotBase():
         plotset = None
         diag = True
 
-        if diag: DiagWrite("Plotbase Add {} to set {}, set flag {}  numgraphs {}\n".format(plottag, settag, len(self.plotstore)))
+        if diag: DiagWrite("Plotbase Add {} to set {}, numgraphs {}\n".format(plottag, settag, len(self.plotstore)))
     
         # colour setting is done here since GraphDat doesn't have access to mainwin colour chart
         newplot.strokecolour = self.mainwin.colourpen[newplot.colour]
@@ -118,7 +118,7 @@ class PlotBase():
         if diag: DiagWrite("GraphSet Add OK\n")
 
         # Add the new graph to graphbase
-        self.graphstore[plottag] = newplot
+        self.plotstore[plottag] = newplot
         
         if diag: DiagWrite("GraphBase Add OK\n")
 

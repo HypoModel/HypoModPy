@@ -27,6 +27,7 @@ class OsmoMod(Mod):
         self.ModLoad()
         print("Osmo Model OK")
 
+        self.osmodata = OsmoDat()
         self.PlotData()
 
 
@@ -43,9 +44,9 @@ class OsmoMod(Mod):
         # self.graphbase.Add(PlotDat(self.osmodata.vaso, 0, 2000, 0, 100, "vaso", 4, 1, "purple"), "vaso")
 
         # Initial plots
-        self.pcodes[0] = "water"
-        self.pcodes[1] = "salt"
-        self.pcodes[2] = "osmo"
+        self.pcodes.append("water")
+        self.pcodes.append("salt")
+        self.pcodes.append("osmo")
         # gcodes[3] = "heat";
         # gcodes[4] = "vaso";
         # gcodes[5] = "water";

@@ -29,6 +29,7 @@ class Mod(wx.EvtHandler):
         self.modbox = None
 
         self.plotbase = PlotBase(mainwin)
+        self.pcodes = []
 
         self.Bind(EVT_MODTHREAD_COMPLETE, self.OnModThreadComplete)
 
