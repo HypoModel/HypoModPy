@@ -104,29 +104,39 @@ class ScaleBox(ToolPanel):
         
     def ScaleUpdate(self):
         self.XSynch()
-        self.PanelUpdate()
-        self.GraphUpdate()
-
+        for graphpanel in self.panelset:
+            self.PanelUpdate(graphpanel)
+            self.GraphUpdate(graphpanel)
+      
 
     def ScrollUpdate(self, index, pos = -1):
         self.synchcon = index
         self.XSynch(pos)
-        self.PanelUpdate()
-        self.GraphUpdate()
+        if(pos == -1 or self.gsynch):
+            for graphpanel in self.panelset:
+                self.PanelUpdate(graphpanel)
+                self.GraphUpdate(graphpanel)
+        else:
+            self.PanelUpdate(self.panelset[index])
+            self.GraphUpdate(self.panelset[index])
 
 
-    def GraphUpdate(self):
+    def GraphUpdate(self, graphpanel):
+        graphpanel.ScrollUpdate()
+        graphpanel.Refresh()
+
+
+    def GraphUpdateAll(self):
         for graphpanel in self.panelset:
             graphpanel.ScrollUpdate()
             graphpanel.Refresh()
 
-
+            
     # PanelUpdate() - update scale panel after changing plot scale parameters
-    def PanelUpdate(self):
-        for graphpanel in self.panelset:
+    def PanelUpdate(self, graphpanel):
             if len(graphpanel.dispset) > 0:
                 plot = graphpanel.dispset[0].plots[0]
-                if not plot: continue
+                if not plot: return
 
             graphpanel.yf.SetNumValue(plot.yfrom, abs(plot.yto - plot.yfrom))
             graphpanel.yt.SetNumValue(plot.yto, abs(plot.yto - plot.yfrom))
@@ -143,8 +153,12 @@ class ScaleBox(ToolPanel):
                     plot.xto = plot.xto
 
 
-    def OnOK(self, event):
+    def PanelUpdateAll(self):
+        for graphpanel in self.panelset:
+            self.PanelUpdate(graphpanel)
+        
 
+    def OnOK(self, event):
         for graphpanel in self.panelset:
             plot = graphpanel.GetFront()
             oldxfrom = plot.xfrom
@@ -217,6 +231,7 @@ class ScaleBox(ToolPanel):
 
 
     def AddGraphConsole(self, graphpanel):
+        graphpanel.scalebox = self
         psetbox = wx.BoxSizer(wx.VERTICAL)
         graphpanel.consolebox = wx.BoxSizer(wx.VERTICAL)
         zoombox = wx.BoxSizer(wx.HORIZONTAL)

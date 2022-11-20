@@ -39,6 +39,7 @@ class GraphPanel(wx.Panel):
         self.dispset = []
         self.ostype = GetSystem()
         self.gsynch = 0
+        self.scalebox = None
 
         self.SetBackgroundColour(wx.WHITE)
 
@@ -63,6 +64,11 @@ class GraphPanel(wx.Panel):
 
         self.Bind(wx.EVT_PAINT, self.OnPaint)
         self.Bind(wx.EVT_SCROLL, self.OnScroll)
+        self.Bind(wx.EVT_ERASE_BACKGROUND, self.OnErase)
+
+
+    def OnErase(self, event):
+        pass
 
 
     def XYSynch(self):
@@ -113,12 +119,14 @@ class GraphPanel(wx.Panel):
             self.xt.SetNumValue(plot.xto, xdiff)
             plot.scrollpos = xpos
 
-        text = "scroll xpos {} xfrom {} xrel {}".format(xpos, xfrom, plot.xrel)
-        pub.sendMessage("status_listener", message=text)
+        #text = "scroll xpos {} xfrom {} xrel {}".format(xpos, xfrom, plot.xrel)
+        #pub.sendMessage("status_listener", message=text)
 
         #if self.gsynch: pub.sendMessage("scroll_listener", graphdisp.index, xpos)
         #else: self.Refresh()
-        pub.sendMessage("scroll_listener", index=self.index, pos=xpos)
+
+        #pub.sendMessage("scroll_listener", index=self.index, pos=xpos)
+        self.scalebox.ScrollUpdate(self.index, xpos)
 
 
     def ReSize(self, newxplot, newyplot):
@@ -145,7 +153,7 @@ class GraphPanel(wx.Panel):
 
     def PaintBackground(self, dc):
         backgroundColour = self.GetBackgroundColour()
-        if backgroundColour.Ok() == False: backgroundColour = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DFACE)
+        #if backgroundColour.Ok() == False: backgroundColour = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DFACE)
 
         dc.SetBrush(wx.Brush(backgroundColour))
         dc.SetPen(wx.Pen(backgroundColour, 1))
@@ -156,9 +164,9 @@ class GraphPanel(wx.Panel):
 
     def OnPaint(self, event):
 
-        dc = wx.PaintDC(self)
-        #dc = wx.BufferedPaintDC(self)
-        #self.PaintBackground(dc)
+        #dc = wx.PaintDC(self)
+        dc = wx.BufferedPaintDC(self)
+        self.PaintBackground(dc)
         gc = wx.GraphicsContext.Create(dc)
 
         xlabels = 10
@@ -167,6 +175,8 @@ class GraphPanel(wx.Panel):
 
         for graphdisp in self.dispset:
             for plot in graphdisp.plots:
+                # get plot index
+                gplot = graphdisp.plots.index(plot)
 
                 # temp test graph
                 # plot = PlotDat()
@@ -229,7 +239,9 @@ class GraphPanel(wx.Panel):
                         textsize = gc.GetFullTextExtent(snum)
                         gc.DrawText(snum, self.xbase + xcoord - textsize[0] / 2, self.ybase + self.yplot + 8)
                     else:
-                        textsize = gc.GetFullTextExtent(snum)
+                        #gc.GetTextExtent(snum, &textwidth, &textheight);
+					    #gc->DrawText(snum, xbase + xcoord - textwidth / 2, ybase + yplot + 10);
+                        textsize = gc.GetTextExtent(snum)
                         gc.DrawText(snum, self.xbase + xcoord - textsize[0] / 2, self.ybase + self.yplot + 10)
 
 
@@ -266,6 +278,22 @@ class GraphPanel(wx.Panel):
                         gc.DrawText(snum, self.xbase - xylab - plot.yticklength - textsize[0], self.ybase + self.yplot - ycoord - textsize[1] / 2)
                     else:
                         textsize = gc.GetFullTextExtent(snum)
-                        gc.DrawText(snum, self.xbase - xylab - textsize[0], self.ybase + self.yplot - ycoord - 7)
-                        
-         
+                        gc.DrawText(snum, self.xbase - xylab - plot.yticklength - textsize[0], self.ybase + self.yplot - ycoord - textsize[1] / 2)
+
+
+                # Plot Name
+                if self.yplot < 150: gc.SetFont(self.textfont, self.colourpen['black'])
+                textsize = gc.GetTextExtent(plot.name)
+                gc.DrawText(plot.name, self.xplot + 50 - textsize[0], 30 + 15 * gplot)
+                #gc.SetPen(self.colourpen[plot.colour])
+
+                # Set drawing scales
+                xto /= plot.binsize
+                xfrom /= plot.binsize
+
+                # xrange - pixels per x unit
+                # xnum - x units per pixel
+
+                yrange = self.yplot / (yto - yfrom)
+                xrange = self.xplot / (xto - xfrom)
+                xnum = (xto - xfrom) / self.xplot

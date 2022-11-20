@@ -47,11 +47,8 @@ class OsmoMod(Mod):
         self.pcodes.append("water")
         self.pcodes.append("salt")
         self.pcodes.append("osmo")
-        # gcodes[3] = "heat";
-        # gcodes[4] = "vaso";
-        # gcodes[5] = "water";
-
-        self.gcount = 3
+    
+        self.gcount = len(self.pcodes)
         self.gsmode = 1
 
 
