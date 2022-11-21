@@ -256,7 +256,7 @@ class HypoMain(MainFrame):
 
             # Graph Switch commands
             if command == "XSYNCH":
-                refplot = self.panelset[i].GetFront()
+                refplot = graphpanel.GetFrontPlot()
                 newplot = plotbase.GetPlot(plottag)
                 newplot.xto = refplot.xto
                 newplot.xfrom = refplot.xfrom
