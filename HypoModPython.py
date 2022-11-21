@@ -223,8 +223,9 @@ class HypoMain(MainFrame):
 
         # Scale Box
         self.scalebox = ScaleBox(self, wx.Size(self.scalewidth, -1), self.numdraw)
-        self.scalebox.PanelUpdateAll()
-        self.scalebox.GraphUpdateAll()
+        #self.scalebox.PanelUpdateAll()
+        #self.scalebox.GraphUpdateAll()
+        self.scalebox.GraphSwitch()
 
         # Model Box
         self.mod = OsmoMod(self, "osmomod")

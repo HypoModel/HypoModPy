@@ -14,6 +14,7 @@ class ScaleBox(ToolPanel):
         self.panelset = parent.panelset
         self.gsynch = 0    # x-axis synchronisation toggle
         self.synchcon = 0  # index of graph panel with synch control
+        self.gflags = {}
 
         # Default scale parameter limits
         self.xmin = -1000000
@@ -68,6 +69,12 @@ class ScaleBox(ToolPanel):
         pub.subscribe(self.Scale_Listener, "scale_listener")
 
         self.Bind(wx.EVT_TEXT_ENTER, self.OnEnter)
+
+
+    def GraphSwitch(self, command = ""):
+        self.mod.GSwitch(self.panelset, self.gflags, command)
+        self.ScaleUpdate()
+        # if(mainwin->graphbox) mainwin->graphbox->SetGraph();
 
 
     def OnEnter(self, event):
