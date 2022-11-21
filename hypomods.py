@@ -34,29 +34,6 @@ class Mod(wx.EvtHandler):
         self.Bind(EVT_MODTHREAD_COMPLETE, self.OnModThreadComplete)
 
 
-    def GSwitch(self, panelset, gflags, command = ""):
-        diag = True
-        if diag: DiagWrite("GSwitch call\n")
-
-        for i in range(self.pcount):
-            plotset = self.plotbase.GetSet(self.pstags[i])
-            if not plotset: continue
-            plottag = plotset.GetPlot(i, gflags)
-            if not plottag: continue
-            if diag: DiagWrite("graphpanel {}  ptag {}  set {}  plot {}  modesum {}  sync {}\n".format( 
-                i, self.ptags[i], plotset.tag, plotset.modesum, self.plotbase.GetPlot(plottag).synchx))
-
-			# Graph Switch commands
-            if command == "XSYNCH":
-                refplot = panelset[i].GetFront()
-                newplot = self.plotbase.GetPlot(plottag)
-                newplot.xto = refplot.xto
-                newplot.xfrom = refplot.xfrom
-			
-            panelset[i].SetFront(self.plotbase.GetPlot(plottag))
-            panelset[i].settag = plotset.tag
-
-
     def GetPath(self):
         if modpath == "": 
             if self.path != "": fullpath = self.path

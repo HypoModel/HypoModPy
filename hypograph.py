@@ -40,6 +40,8 @@ class GraphPanel(wx.Panel):
         self.ostype = GetSystem()
         self.gsynch = 0
         self.scalebox = None
+        self.subplot = 0
+        self.pstag = ""
 
         self.SetBackgroundColour(wx.WHITE)
 
@@ -77,7 +79,7 @@ class GraphPanel(wx.Panel):
 
 
     def ScrollUpdate(self):
-        plot = self.GetFront()
+        plot = self.GetFrontPlot()
         if not plot: return
         if not plot.data:
             #mod->diagbox->Write("plot " + graph->gname + " no data\n")
@@ -140,8 +142,12 @@ class GraphPanel(wx.Panel):
         self.Refresh()
 
 
-    def GetFront(self):
+    def GetFrontPlot(self):
         return self.dispset[0].plots[0]
+
+
+    def SetFrontPlot(self, plot):
+        self.dispset[0].plots[0] = plot
 
     
     def SetFront(self, graphdisp):
@@ -281,10 +287,10 @@ class GraphPanel(wx.Panel):
                         gc.DrawText(snum, self.xbase - xylab - plot.yticklength - textsize[0], self.ybase + self.yplot - ycoord - textsize[1] / 2)
 
 
-                # Plot Name
+                # Plot Label
                 if self.yplot < 150: gc.SetFont(self.textfont, self.colourpen['black'])
-                textsize = gc.GetTextExtent(plot.name)
-                gc.DrawText(plot.name, self.xplot + 50 - textsize[0], 30 + 15 * gplot)
+                textsize = gc.GetTextExtent(plot.label)
+                gc.DrawText(plot.label, self.xbase + self.xplot - textsize[0], 30 + 15 * gplot)
                 #gc.SetPen(self.colourpen[plot.colour])
 
                 # Set drawing scales

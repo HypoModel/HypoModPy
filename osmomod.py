@@ -18,6 +18,8 @@ class OsmoMod(Mod):
         if os.path.exists(self.path) == False: 
             os.mkdir(self.path)
 
+        self.mainwin = mainwin
+
         self.osmobox = OsmoBox(self, "osmo", "Osmo", wx.Point(0, 0), wx.Size(320, 500))
         self.modtools[self.osmobox.boxtag] = self.osmobox
         self.osmobox.Show(True)
@@ -44,12 +46,9 @@ class OsmoMod(Mod):
         # self.graphbase.Add(PlotDat(self.osmodata.vaso, 0, 2000, 0, 100, "vaso", 4, 1, "purple"), "vaso")
 
         # Initial plots
-        self.pstags.append("water")
-        self.pstags.append("salt")
-        self.pstags.append("osmo")
-    
-        self.pcount = len(self.pstags)
-        self.gsmode = 1
+        self.mainwin.panelset[0].pstag = "water"
+        self.mainwin.panelset[1].pstag = "salt"
+        self.mainwin.panelset[2].pstag = "osmo"
 
 
     def OnModThreadComplete(self, event):

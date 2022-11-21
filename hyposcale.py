@@ -84,11 +84,11 @@ class ScaleBox(ToolPanel):
 
     def XSynch(self, pos = -1):
         if self.gsynch:
-            plotzero = self.panelset[self.synchcon].GetFront()
+            plotzero = self.panelset[self.synchcon].GetFrontPlot()
             if not plotzero.synchx: return
             for graphpanel in self.panelset:
                 # sync check box code goes here
-                plot = graphpanel.GetFront()
+                plot = graphpanel.GetFrontPlot()
                 if not plot.synchx: continue
                 if pos >= 0: plot.scrollpos = pos
                 plot.xfrom = plotzero.xfrom
@@ -167,7 +167,7 @@ class ScaleBox(ToolPanel):
 
     def OnOK(self, event):
         for graphpanel in self.panelset:
-            plot = graphpanel.GetFront()
+            plot = graphpanel.GetFrontPlot()
             oldxfrom = plot.xfrom
             oldxto = plot.xto
 
@@ -272,7 +272,7 @@ class ScaleBox(ToolPanel):
     def OnYZoomIn(self, event):
         graphpanel = self.panelset[event.GetId() - 1000]
         if len(graphpanel.dispset) == 0: return
-        plot = graphpanel.GetFront()
+        plot = graphpanel.GetFrontPlot()
         diff = plot.yto - plot.yfrom
 
         if plot.negscale or plot.yfrom < 0:
@@ -289,7 +289,7 @@ class ScaleBox(ToolPanel):
     def OnYZoomOut(self, event):
         graphpanel = self.panelset[event.GetId() - 1010]
         if len(graphpanel.dispset) == 0: return
-        plot = graphpanel.GetFront()
+        plot = graphpanel.GetFrontPlot()
         diff = plot.yto - plot.yfrom
         if plot.negscale or plot.yfrom < 0:
             plot.yto = plot.yto  + diff / 2
@@ -304,7 +304,7 @@ class ScaleBox(ToolPanel):
     def OnXZoomIn(self, event):
         graphpanel = self.panelset[event.GetId() - 1100]
         if len(graphpanel.dispset) == 0: return
-        plot = graphpanel.GetFront()
+        plot = graphpanel.GetFrontPlot()
         diff = plot.xto - plot.xfrom
         plot.xto = plot.xto - diff / 2
         graphpanel.XYSynch
@@ -315,7 +315,7 @@ class ScaleBox(ToolPanel):
     def OnXZoomOut(self, event):
         graphpanel = self.panelset[event.GetId() - 1110]
         if len(graphpanel.dispset) == 0: return
-        plot = graphpanel.GetFront()
+        plot = graphpanel.GetFrontPlot()
         oldxto = plot.xto
         diff = plot.xto - plot.xfrom
         plot.xto = plot.xto + diff

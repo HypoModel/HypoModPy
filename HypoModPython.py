@@ -213,7 +213,7 @@ class HypoMain(MainFrame):
             
          # Graph Panels
         self.panelset = []
-        for graph in range(self.prefs['numdraw']):
+        for graph in range(self.numdraw):
             graphdisp = self.dispset[graph]
             graphpanel = GraphPanel(self)
             graphpanel.index = graph
@@ -225,10 +225,10 @@ class HypoMain(MainFrame):
         self.scalebox = ScaleBox(self, wx.Size(self.scalewidth, -1), self.numdraw)
         #self.scalebox.PanelUpdateAll()
         #self.scalebox.GraphUpdateAll()
-        self.scalebox.GraphSwitch()
 
-        # Model Box
+        # Mod Init
         self.mod = OsmoMod(self, "osmomod")
+        self.GraphSwitch(self.mod.plotbase, self.scalebox.gflags)
         
         # Sizers
         self.graphsizer.AddSpacer(5)
@@ -239,6 +239,34 @@ class HypoMain(MainFrame):
 
         self.Bind(wx.EVT_CLOSE, self.OnClose)
         self.Bind(wx.EVT_SIZE, self.OnHypoSize)
+
+
+    def GraphSwitch(self, plotbase, gflags, command = ""):
+        diag = True
+        if diag: DiagWrite("GSwitch call\n")
+
+        for graphpanel in self.panelset:
+            plotset = plotbase.GetSet(graphpanel.pstag)
+            #plotset = plotbase.GetSet(self.pstags[i])
+            if not plotset: continue
+            plottag = plotset.GetPlot(graphpanel.subplot, gflags)
+            if not plottag: continue
+            if diag: DiagWrite("graphpanel {}  pstag {}  plot {}  modesum {}  sync {}\n".format( 
+                graphpanel.index, graphpanel.pstag, plotset.tag, plotset.modesum, plotbase.GetPlot(plottag).synchx))
+
+            # Graph Switch commands
+            if command == "XSYNCH":
+                refplot = self.panelset[i].GetFront()
+                newplot = plotbase.GetPlot(plottag)
+                newplot.xto = refplot.xto
+                newplot.xfrom = refplot.xfrom
+
+            # Set Panel Plots
+            graphpanel.SetFrontPlot(plotbase.GetPlot(plottag))
+            graphpanel.pstag = plotset.tag
+        
+        # Update scales and plots
+        self.scalebox.ScaleUpdate()
 
 
     def OnHypoSize(self, event):
@@ -264,7 +292,6 @@ class HypoMain(MainFrame):
 	
 
     def UserMenu(self):
-        
         menuFile = wx.Menu()
         menuAnalysis = wx.Menu()
         menuTools = wx.Menu()
@@ -330,7 +357,6 @@ class HypoMain(MainFrame):
         if(self.mod != None):
         #    mod.Close()
             self.mod.ModStore()
-
         event.Skip()
 
 
