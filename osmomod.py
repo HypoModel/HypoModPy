@@ -44,11 +44,11 @@ class OsmoMod(Mod):
         # self.graphbase.Add(PlotDat(self.osmodata.vaso, 0, 2000, 0, 100, "vaso", 4, 1, "purple"), "vaso")
 
         # Initial plots
-        self.pcodes.append("water")
-        self.pcodes.append("salt")
-        self.pcodes.append("osmo")
+        self.pstags.append("water")
+        self.pstags.append("salt")
+        self.pstags.append("osmo")
     
-        self.gcount = len(self.pcodes)
+        self.pcount = len(self.pstags)
         self.gsmode = 1
 
 

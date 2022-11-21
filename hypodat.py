@@ -3,21 +3,49 @@ from hypobase import *
 
 
 
-
 class PlotSet():
     def __init__(self):
         self.ptags = []
         self.pcodes = {}
+        self.label = ""
+        self.tag = ""
+        self.modeflags = []           # Set of flags is used to control the selected, displayed graph 
+        self.modeweights = {}
+        self.single = True
+        self.submenu = 0
+        self.subplot = []
 
 
-    def Add(self, ptag, pcode = -1): 
+    def AddPlot(self, ptag, pcode = -1): 
         self.ptags.append(ptag)
         self.pcodes[ptag] = pcode
         if len(self.ptags) > 1: self.single = False
 
 
+    def AddFlag(self, flag, weight):
+        self.modeflags.append(flag)
+        self.modeweights.append(weight)
+
+
+    def GetPlot(self, pos, gflags):
+        if self.single: return self.ptags[0]
+
+        if self.submenu: 
+            if self.subplot[pos]: return self.ptags[self.subplot[pos]]    
+            else: return self.ptags[0]
+
+        modesum = 0
+        plottag = self.ptags[0]
+        for modeflag in self.modeflags: modesum = modesum + gflags[modeflag] * self.modeweights[modeflag]
+        for tag in self.ptags:
+            if self.pcodes[tag] == modesum: plottag = self.ptag[tag]
+
+        return plottag
+        
+
+
 class PlotDat():
-    def __init__(self, data = None, xf = 0, xt = 500, yf = 0, yt = 1000, name = "", type = None, binsize = 1, colour = "red", xs = 1, xd = 0):
+    def __init__(self, data = None, xf = 0, xt = 500, yf = 0, yt = 1000, label = "", type = None, binsize = 1, colour = "red", xs = 1, xd = 0):
 
         self.xscale = xs
         self.xdis = xd
@@ -38,7 +66,7 @@ class PlotDat():
         self.xto = xt
         self.yfrom = yf
         self.yto = yt
-        self.name = name
+        self.label = label
         self.colour = colour
         self.binsize = binsize
 
@@ -93,7 +121,6 @@ class PlotBase():
 
 
     def Add(self, newplot, plottag, settag = ""):       # default settag = "", for no set use settag = "null"
-
         plotset = None
         diag = True
 
@@ -107,8 +134,9 @@ class PlotBase():
         #mainwin->diagbox->Write(text.Format("GraphBase Add colour index %d string %s\n", newgraph.colour, ColourString(newgraph.strokecolour, 1)));
 
         # If single graph, create new single graph set, otherwise add to set 'settag'
+        # single plot sets use the same tag as the plot
         if settag != None:
-            if settag == "": plotset = self.NewSet(newplot.name, plottag)
+            if settag == "": plotset = self.NewSet(newplot.label, plottag)
             else: plotset = self.setstore[settag]
 
             if plotset:   # extra check, should only fail if 'settag' is invalid
@@ -123,12 +151,17 @@ class PlotBase():
         if diag: DiagWrite("GraphBase Add OK\n")
 
 
-    def NewSet(self, name, tag): 
+    def NewSet(self, label, tag): 
         self.setstore[tag] = PlotSet()
-        self.setstore[tag].name = name
+        self.setstore[tag].label = label
+        self.setstore[tag].tag = tag
         return self.setstore[tag]
 
-	
+
+    def GetSet(self, tag):
+        return self.setstore[tag]
 
 
-    
+    def GetPlot(self, tag):
+        return self.plotstore[tag]
+
