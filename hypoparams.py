@@ -497,11 +497,11 @@ class ParamBox(ToolBox):
 
     def RunBox(self):
         runbox = wx.BoxSizer(wx.HORIZONTAL)
-        runcount = self.NumPanel(50, wx.ALIGN_CENTRE, "---")
+        self.runcount = self.NumPanel(50, wx.ALIGN_CENTRE, "---")
         if GetSystem() == "Mac": self.AddButton(ID_Run, "RUN", 50, runbox)
         else: self.AddButton(ID_Run, "RUN", 70, runbox)
         runbox.AddSpacer(5)
-        runbox.Add(runcount, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL)
+        runbox.Add(self.runcount, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL)
 
         if self.defbutt:
             runbox.AddSpacer(5)

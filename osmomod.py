@@ -39,9 +39,9 @@ class OsmoMod(Mod):
         ##
         ## PlotDat(data pointer, xfrom, xto, yfrom, yto, label string, plot type, bin size, colour)
         ## ----------------------------------------------------------------------------------
-        self.plotbase.Add(PlotDat(self.osmodata.water, 0, 2000, 0, 5000, "water", 4, 1, "blue"), "water")
-        self.plotbase.Add(PlotDat(self.osmodata.salt, 0, 2000, 0, 100, "salt", 4, 1, "red"), "salt")
-        self.plotbase.Add(PlotDat(self.osmodata.osmo, 0, 2000, 0, 100, "osmo", 4, 1, "green"), "osmo")
+        self.plotbase.Add(PlotDat(self.osmodata.water, 0, 2000, 0, 5000, "water", "line", 1, "blue"), "water")
+        self.plotbase.Add(PlotDat(self.osmodata.salt, 0, 2000, 0, 100, "salt", "line", 1, "red"), "salt")
+        self.plotbase.Add(PlotDat(self.osmodata.osmo, 0, 2000, 0, 100, "osmo", "line", 1, "green"), "osmo")
         # self.graphbaseAdd(PlotDat(self.osmodata.heat, 0, 2000, 0, 100, "heat", 4, 1, "lightred"), "heat")
         # self.graphbase.Add(PlotDat(self.osmodata.vaso, 0, 2000, 0, 100, "vaso", 4, 1, "purple"), "vaso")
 
@@ -55,7 +55,7 @@ class OsmoMod(Mod):
         #runmute->Lock();
         #runflag = 0;
         #runmute->Unlock();
-        self.mainwin.scalebox.GraphUpdate()
+        self.mainwin.scalebox.GraphUpdateAll()
         self.DiagWrite("Model thread OK\n\n")
 
 
@@ -134,13 +134,47 @@ class OsmoModel(ModThread):
 
 
     def osmomodel(self):
+        osmodata = self.mod.osmodata
+        osmobox = self.mod.osmobox
         osmoparams = self.mod.osmobox.GetParams()
 
+
+        # Read parameters
         runtime = int(osmoparams["runtime"])
         waterloss = osmoparams["waterloss"]
 
         print("runtime {}".format(runtime))
         print("waterloss {}".format(waterloss))
+
+
+        # Initialise variables
+        water = 50
+        salt = 2000
+        osmo = salt / water
+
+        osmodata.water.append(water)
+        osmodata.salt.append(salt)
+        osmodata.osmo.append(osmo)
+        osmobox.countmark = 0
+
+        
+        # Run model loop
+        for i in range(1, runtime + 1):
+
+            if i%100 == 0: self.osmobox.SetCount(i * 100 / runtime)     # Update run progress % in model panel
+
+            water = water - (water * waterloss)
+            salt = salt
+            osmo = salt / water
+            vaso = 0
+
+            # Record model variables
+            osmodata.water.append(water)
+            osmodata.salt.append(salt)
+            osmodata.osmo.append(osmo)
+
+
+
 
 
 

@@ -1,5 +1,6 @@
 
 import wx
+from math import log
 from hypocontrols import *
 
 
@@ -85,8 +86,8 @@ class GraphPanel(wx.Panel):
             #mod->diagbox->Write("plot " + graph->gname + " no data\n")
             #return
             max = 1000
-        else: plot.xmax = plot.data.max / plot.xscale
-        if plot.xdata: plot.xmax = plot.gdatax.max
+        else: plot.xmax = len(plot.data) / plot.xscale
+        if plot.xdata: plot.xmax = len(plot.xdata)
 
         xdiff = plot.xto - plot.xfrom
         plot.xrel = plot.xfrom - plot.scrollpos     # relative adjustment for non-zero xfrom set from scale panel
@@ -175,9 +176,21 @@ class GraphPanel(wx.Panel):
         self.PaintBackground(dc)
         gc = wx.GraphicsContext.Create(dc)
 
+        drawdiag = True
+
         xlabels = 10
         ylabels = 5
         xylab = 2
+        xoffset = 1
+
+        xlogbase = 2.71828182845904523536028747135266250;   # 3
+        ylogbase = 2.71828182845904523536028747135266250;   # 10                # default values replaced by graph specific below
+
+        xplot = self.xplot
+        yplot = self.yplot
+        xbase = self.xbase
+        ybase = self.ybase
+
 
         for graphdisp in self.dispset:
             for plot in graphdisp.plots:
@@ -196,35 +209,45 @@ class GraphPanel(wx.Panel):
                 gc.SetPen(wx.BLACK_PEN)
                 gc.SetFont(self.textfont, self.colourpen['black'])
                 
-                xaxislength = self.xplot
+                xaxislength = xplot
                 #if(graph->axistrace && drawX != -1) xaxislength = drawX * binsize / (xto - xfrom) * xplot;
                 #mod->diagbox->Write(text.Format("drawX %.0f xfrom %.0f xto %.0f xplot %d xaxislength %d\n", drawX, xfrom, xto, xplot, xaxislength));
                 
                 # Draw Axes
                 if plot.xaxis: 
-                    gc.StrokeLine(self.xbase, self.ybase + self.yplot, self.xbase + xaxislength + self.xstretch, self.ybase + self.yplot)
+                    gc.StrokeLine(xbase, ybase + yplot, xbase + xaxislength + self.xstretch, ybase + yplot)
                 if plot.yaxis: 
-                    gc.StrokeLine(self.xbase, self.ybase, self.xbase, self.ybase + self.yplot)
+                    gc.StrokeLine(xbase, ybase, xbase, ybase + yplot)
 
                 # Draw Axes Ticks and Labels
 
-                # tickmode 0 - off | 1 - count | 2 - step
-                # labelmode 0 - none | 1 - normal | 2 - only end labels
+                    # tickmode 0 - off | 1 - count | 2 - step
+            
+                    # labelmode 0 - none | 1 - normal | 2 - only end labels
+        
+                    # scalemode 0 - linear | 1 - log
 
                 # X-axis
                 if plot.xtickmode == 2:
                     xlabels = int((xto - xfrom) / (plot.xscale * plot.xstep))
-                    xplotstep = (self.xplot * plot.xstep) / (xto - xfrom)
+                    xplotstep = (xplot * plot.xstep) / (xto - xfrom)
                     if xfrom != 0: xtickshift = xfrom
+                    else: xtickshift = 0
                     xtickstart = abs(xtickshift) * xplotstep
+
+                if plot.xscalemode == 1 and xfrom > 0: xlogmax = log(xto / xfrom) / log(xlogbase)
+                else: xlogmax = 0
+
+                if plot.yscalemode == 1 and yfrom > 0: ylogmax = log(yto / yfrom) / log(ylogbase);
+                else: ylogmax = 0
 
                 for i in range(0, xlabels+1):
 
                     #Ticks
                     if plot.xtickmode == 2: xcoord = (int(xplotstep * i) + xtickstart)
-                    else: xcoord = int(i * self.xplot / xlabels)
+                    else: xcoord = int(i * xplot / xlabels)
                     if plot.xtickmode and xcoord <= xaxislength:
-                        gc.StrokeLine(self.xbase + xcoord, self.ybase + self.yplot, self.xbase + xcoord, self.ybase + self.yplot + plot.xticklength)
+                        gc.StrokeLine(xbase + xcoord, ybase + yplot, xbase + xcoord, ybase + yplot + plot.xticklength)
 
                     # Labels
                     if not plot.xlabelmode or xcoord > xaxislength or plot.xlabelmode == 2 and i > 0 and i < xlabels: continue
@@ -243,26 +266,26 @@ class GraphPanel(wx.Panel):
 
                     if GetSystem() == "Mac":
                         textsize = gc.GetFullTextExtent(snum)
-                        gc.DrawText(snum, self.xbase + xcoord - textsize[0] / 2, self.ybase + self.yplot + 8)
+                        gc.DrawText(snum, xbase + xcoord - textsize[0] / 2, ybase + yplot + 8)
                     else:
                         #gc.GetTextExtent(snum, &textwidth, &textheight);
 					    #gc->DrawText(snum, xbase + xcoord - textwidth / 2, ybase + yplot + 10);
                         textsize = gc.GetTextExtent(snum)
-                        gc.DrawText(snum, self.xbase + xcoord - textsize[0] / 2, self.ybase + self.yplot + 10)
+                        gc.DrawText(snum, xbase + xcoord - textsize[0] / 2, ybase + yplot + 10)
 
 
                 # Y-axis
                 if plot.ytickmode == 2:
                     ylabels = int((yto - yfrom) / (plot.yscale * plot.ystep))
-                    yplotstep = (self.xplot * plot.xstep) / (yto - yfrom)
+                    yplotstep = (xplot * plot.xstep) / (yto - yfrom)
 
                 for i in range(0, ylabels+1):
 
                     #Ticks
                     if plot.ytickmode == 2: ycoord = int(yplotstep * i)
-                    else: ycoord = int(i * self.yplot / ylabels)
+                    else: ycoord = int(i * yplot / ylabels)
                     if plot.ytickmode:
-                        gc.StrokeLine(self.xbase, self.ybase + self.yplot - ycoord, self.xbase - plot.yticklength, self.ybase + self.yplot - ycoord)
+                        gc.StrokeLine(xbase, ybase + yplot - ycoord, xbase - plot.yticklength, ybase + yplot - ycoord)
 
                     # Labels
                     if not plot.ylabelmode or plot.ylabelmode == 2 and i > 0 and i < ylabels: continue
@@ -281,16 +304,16 @@ class GraphPanel(wx.Panel):
 
                     if GetSystem() == "Mac":
                         textsize = gc.GetFullTextExtent(snum)
-                        gc.DrawText(snum, self.xbase - xylab - plot.yticklength - textsize[0], self.ybase + self.yplot - ycoord - textsize[1] / 2)
+                        gc.DrawText(snum, xbase - xylab - plot.yticklength - textsize[0], ybase + yplot - ycoord - textsize[1] / 2)
                     else:
                         textsize = gc.GetFullTextExtent(snum)
-                        gc.DrawText(snum, self.xbase - xylab - plot.yticklength - textsize[0], self.ybase + self.yplot - ycoord - textsize[1] / 2)
+                        gc.DrawText(snum, xbase - xylab - plot.yticklength - textsize[0], ybase + yplot - ycoord - textsize[1] / 2)
 
 
                 # Plot Label
                 if self.yplot < 150: gc.SetFont(self.textfont, self.colourpen['black'])
                 textsize = gc.GetTextExtent(plot.label)
-                gc.DrawText(plot.label, self.xbase + self.xplot - textsize[0], 30 + 15 * gplot)
+                gc.DrawText(plot.label, xbase + xplot - textsize[0], 30 + 15 * gplot)
 
                 # Set plot colour
                 gc.SetPen(wx.Pen(self.colourpen[plot.colour]))
@@ -302,103 +325,84 @@ class GraphPanel(wx.Panel):
                 # xrange - pixels per x unit
                 # xnum - x units per pixel
 
-                yrange = self.yplot / (yto - yfrom)
-                xrange = self.xplot / (xto - xfrom)
-                xnum = (xto - xfrom) / self.xplot
+                yrange = yplot / (yto - yfrom)
+                xrange = xplot / (xto - xfrom)
+                xnum = (xto - xfrom) / xplot
 
 
-                if plot.type == 5:                          # line graph with scaling fix
+                if not plot.data: 
+                    DiagWrite("OnPaint: plot - no data\n")
+                    return
 
-                # mod->diagbox->Write(text.Format("line plot xrange %.4f  yscalemode %d  ylogbase %.4f  ylogmax %.4f\n", xrange, graph->yscalemode, ylogbase, ylogmax));
 
+                if plot.type == "line":                          # line graph with scaling fix
+                    # mod->diagbox->Write(text.Format("line plot xrange %.4f  yscalemode %d  ylogbase %.4f  ylogmax %.4f\n", xrange, graph->yscalemode, ylogbase, ylogmax));
                     dir = 1
                     pdir = 0
                     xindex = int(plot.xfrom)
-                    maxdex = plot.data.maxdex()
+                    maxdex = len(plot.data) - 1
                     if xindex > maxdex: break
                     preval = plot.data[xindex]
-                    else maxdex = 0;
-                    oldx = xbase + xoffset;
-				oldy = (int)(yplot + ybase - yrange * (preval - yfrom));
+                    oldx = xbase + xoffset
+                    oldy = yplot + ybase - yrange * (preval - yfrom)
 
-				if(xrange < 1) xcount = xplot;
-				else {
-					xcount = xplot / xrange;
-					if(!xcount) xcount = 1;
-				}
-			
-				for(i=1; i<=xcount; i++) {
-					if(xrange < 1) {
-						xindex = (int)((i * xnum) + xfrom);
-						if(gpar == -3) mpoint = (*gdatav)[xindex];
-						//if(gpar == -4) mpoint = (*gdatadv)[xindex];
-						if(gpar == -4) {
-							if(maxdex && maxdex < xindex) {     //check for end of recorded data range
-								//mainwin->diagbox->Write(text.Format("data end xcount %d  i %d  xnum %.4f  xindex %d  maxdex %d\n", xcount, i, xnum, xindex, gdatadv->maxdex()));
-								break;  
-							}
-							mpoint = (*gdatadv)[xindex];
-						}
+                    if xrange < 1: xcount = xplot
+                    else:
+                        xcount = int(xplot / xrange)
+                        if xcount < 1: xcount = 1
 
-						if(drawdiag) fprintf(ofp, "xdraw %d  preval %.4f  dir %d\n", i, preval, dir);
-						for(j=1; j<xnum; j++) {
-							if(xindex + j > maxdex) break;
-							if(gpar == -3) data = (*gdatav)[xindex + j];
-							if(gpar == -4) data = (*gdatadv)[xindex + j];
-							if(drawdiag) fprintf(ofp, "xdraw %d, xnum %d, data %.4f\n", i, j, data);
-							if(dir) {
-								if(data > mpoint) mpoint = data;
-								else if(data < mpoint) mpoint = data;
-								//if(!dir && (*gdatadv)[xindex + j] < mpoint) mpoint = (*gdatadv)[xindex + j];
-							}
-						}
-						if(preval <= mpoint || preval < 0.000001) dir = 1; else dir = 0;
-						yval = mpoint;
-						preval = mpoint;
-						if(drawdiag) fprintf(ofp, "xdraw %d  preval %.4f  mpoint %.4f  point %.4f\n", i, preval, mpoint, y);
+                    for i in range(xcount):
+                        if(xrange < 1):
+                            xindex = int((i * xnum) + xfrom)
+                            if maxdex and maxdex < xindex:        # check for end of recorded data range
+                                # mainwin->diagbox->Write(text.Format("data end xcount %d  i %d  xnum %.4f  xindex %d  maxdex %d\n", xcount, i, xnum, xindex, gdatadv->maxdex()));
+                                break  
+                            mpoint = plot.data[xindex]
 
-						if(graph->yscalemode == 1 && yfrom > 0) {
-							ypos = (int)((double)yplot * (log(yval / yfrom) / log(ylogbase)) / ylogmax);  // log scaled y-axis  March 2018
-							if(yval < yfrom) {
-								ypos = -yfrom * yrange;
-								//mod->diagbox->Write(text.Format("line draw log low value yval %.4f ypos %d\n", yval, ypos));
-							}
-						}
-						else ypos = (yval - yfrom) * yrange;
-						DrawLine(dc, gc, oldx, oldy, i + xbase + xoffset, (int)(yplot + ybase - ypos));
-						oldx = i + xbase + xoffset;
-						oldy = (int)(yplot + ybase - ypos);
+                            #if drawdiag: fprintf(ofp, "xdraw %d  preval %.4f  dir %d\n", i, preval, dir);
+                            for j in range(xnum):
+                                if xindex + j > maxdex: break
+                                data = plot.data[xindex + j]
+                                #if(drawdiag) fprintf(ofp, "xdraw %d, xnum %d, data %.4f\n", i, j, data);
+                                if dir:
+                                    if data > mpoint: mpoint = data
+                                    elif data < mpoint: mpoint = data
 
-						//DrawLine(dc, gc, oldx, oldy, i + xbase + xoffset, (int)(yplot + ybase - yrange * (y - yfrom)));	
-						//oldx = i + xbase + xoffset;
-						//oldy = (int)(yplot + ybase - yrange * (y - yfrom));
-					}
-					else {
-						xindex = (int)(i + xfrom);
-						if(gpar == -3) yval = (*gdatav)[xindex];
-						if(gpar == -4) {
-							if(maxdex && maxdex < xindex) break;    //check for end of recorded data range
-							yval = (*gdatadv)[xindex];
-						}
-					
-						if(graph->yscalemode == 1 && yfrom > 0) {
-							ypos = (int)((double)yplot * (log(yval / yfrom) / log(ylogbase)) / ylogmax);  // log scaled y-axis  March 2018
-							if(yval < yfrom) ypos = -yfrom * yrange;
-						}
-						else ypos = yrange * (yval - yfrom);
-						if(i < xcount) DrawLine(dc, gc, oldx, oldy, (int)(i * xrange + xbase + xoffset), yplot + ybase - ypos);
-						else {   // interpolate y step for last partial x step
-							int xremain = xplot + xbase + xoffset - oldx;
-							double portion = (double)xrange / xremain;
-							if(portion > 1) portion = 1 / portion;  // where x plot range is less than one x step in data
-							double yremain = oldy - ((double)yplot + ybase - yrange * (yval - yfrom));
-							//mainwin->diagbox->Write(text.Format("xcount %d  xremain %d  portion %.2f  yremain %.2f\n", xcount, xremain, portion, yremain));
-							DrawLine(dc, gc, oldx, oldy, xplot + xbase + xoffset, oldy - yremain * portion);
-						}
-						oldx = i * xrange + xbase + xoffset;
-						oldy = (int)(yplot + ybase - ypos);
-					}
-					//fprintf(pofp, "xindex %d  y %.2f\n  dir %d", xindex, y, dir);
-				}
-				if(drawdiag) fclose(ofp);
-			}
+                            if preval <= mpoint or preval < 0.000001: dir = 1 
+                            else: dir = 0
+                            yval = mpoint
+                            preval = mpoint
+                            #if(drawdiag) fprintf(ofp, "xdraw %d  preval %.4f  mpoint %.4f  point %.4f\n", i, preval, mpoint, y);
+
+                            if plot.yscalemode == 1 and yfrom > 0: 
+                                ypos = yplot * (log(yval / yfrom) / log(ylogbase)) / ylogmax # log scaled y-axis  March 2018
+                                if yval < yfrom: ypos = -yfrom * yrange
+                                #mod->diagbox->Write(text.Format("line draw log low value yval %.4f ypos %d\n", yval, ypos));
+                            else: ypos = (yval - yfrom) * yrange
+
+                            gc.StrokeLine(oldx, oldy, i + xbase + xoffset, int(yplot + ybase - ypos))
+                            oldx = i + xbase + xoffset
+                            oldy = int(yplot + ybase - ypos)
+
+                        else:
+                            xindex = int(i + xfrom)
+                            if maxdex and maxdex < xindex: break;     # check for end of recorded data range
+                            yval = plot.data[xindex]
+
+                            if plot.yscalemode == 1 and yfrom > 0: 
+                                ypos = yplot * (log(yval / yfrom) / log(ylogbase)) / ylogmax  # log scaled y-axis  March 2018
+                                if yval < yfrom: ypos = -yfrom * yrange
+                            else: ypos = yrange * (yval - yfrom)
+
+                            if i < xcount: gc.StrokeLine(oldx, oldy, int((i * xrange + xbase + xoffset), yplot + ybase - ypos))
+                            else: 
+                                # interpolate y step for last partial x step
+                                xremain = xplot + xbase + xoffset - oldx
+                                portion = xrange / xremain
+                                if portion > 1: portion = 1 / portion  # where x plot range is less than one x step in data
+                                yremain = oldy - (yplot + ybase - yrange * (yval - yfrom))
+                                #mainwin->diagbox->Write(text.Format("xcount %d  xremain %d  portion %.2f  yremain %.2f\n", xcount, xremain, portion, yremain));
+                                gc.StrokeLine(oldx, oldy, xplot + xbase + xoffset, oldy - yremain * portion)
+
+                            oldx = i * xrange + xbase + xoffset
+                            oldy = int(yplot + ybase - ypos)
