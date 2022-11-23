@@ -346,6 +346,14 @@ class GraphPanel(wx.Panel):
                     oldx = xbase + xoffset
                     oldy = yplot + ybase - yrange * (preval - yfrom)
 
+                    # subpixel scale drawing mode - drawing data in limited x-axis resolution
+                    # xrange gives ratio of plot pixels to data points, use this mode if xrange < 1
+                    #
+                    # attempt to preserve maxima and minima
+                    # 'dir' gives current direction of plot progression
+                    # 'xnum' gives number of data points for current pixel position, reciprocal of xrange
+                    # choose lowest or highest data point for plot value depending on direction
+
                     if xrange < 1: xcount = xplot
                     else:
                         xcount = int(xplot / xrange)
@@ -360,7 +368,7 @@ class GraphPanel(wx.Panel):
                             mpoint = plot.data[xindex]
 
                             #if drawdiag: fprintf(ofp, "xdraw %d  preval %.4f  dir %d\n", i, preval, dir);
-                            for j in range(xnum):
+                            for j in range(1, int(xnum)):
                                 if xindex + j > maxdex: break
                                 data = plot.data[xindex + j]
                                 #if(drawdiag) fprintf(ofp, "xdraw %d, xnum %d, data %.4f\n", i, j, data);

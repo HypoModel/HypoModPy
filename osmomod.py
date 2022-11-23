@@ -56,7 +56,7 @@ class OsmoMod(Mod):
         #runflag = 0;
         #runmute->Unlock();
         self.mainwin.scalebox.GraphUpdateAll()
-        self.DiagWrite("Model thread OK\n\n")
+        DiagWrite("Model thread OK\n\n")
 
 
     def RunModel(self):
@@ -152,9 +152,15 @@ class OsmoModel(ModThread):
         salt = 2000
         osmo = salt / water
 
-        osmodata.water.append(water)
-        osmodata.salt.append(salt)
-        osmodata.osmo.append(osmo)
+        # Initialise record stores
+        for i in range(10000):
+            osmodata.water.append(0)
+            osmodata.salt.append(0)
+            osmodata.osmo.append(0)
+
+        osmodata.water[0] = water
+        osmodata.salt[0] = salt
+        osmodata.osmo[0] = osmo
         osmobox.countmark = 0
 
         
@@ -169,9 +175,9 @@ class OsmoModel(ModThread):
             vaso = 0
 
             # Record model variables
-            osmodata.water.append(water)
-            osmodata.salt.append(salt)
-            osmodata.osmo.append(osmo)
+            osmodata.water[i] = water
+            osmodata.salt[i] = salt
+            osmodata.osmo[i] = osmo
 
 
 
