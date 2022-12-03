@@ -46,7 +46,7 @@ class PlotSet():
 
 
 class PlotDat():
-    def __init__(self, data = None, xf = 0, xt = 500, yf = 0, yt = 1000, label = "", type = None, binsize = 1, colour = "red", xs = 1, xd = 0):
+    def __init__(self, data = np.zeros(0), xf = 0, xt = 500, yf = 0, yt = 1000, label = "", type = None, binsize = 1, colour = "red", xs = 1, xd = 0):
 
         self.xscale = xs
         self.xdis = xd

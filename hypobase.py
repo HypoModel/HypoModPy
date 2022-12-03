@@ -1,5 +1,6 @@
 
 from math import sqrt
+import numpy as np
 import wx
 from pathlib import Path
 from pubsub import pub

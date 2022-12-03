@@ -308,6 +308,7 @@ class ParamBox(ToolBox):
         self.Bind(wx.EVT_BUTTON, self.OnRun, ID_Run)
         self.Bind(wx.EVT_BUTTON, self.OnDefault, ID_Default)
         self.Bind(wx.EVT_TEXT_ENTER, self.OnRun)
+        self.Bind(wx.EVT_SPIN, self.OnSpin)
 
         #self.Bind(wx.EVT_MENU, self.OnQuit, fileItem)
 
@@ -573,7 +574,7 @@ class ParamBox(ToolBox):
 
 
     def OnSpin(self, event):
-        self.DiagWrite("ParamBox on spin\n") 
+        #self.DiagWrite("ParamBox on spin\n") 
         if self.autorun: self.OnRun(event)
 
 

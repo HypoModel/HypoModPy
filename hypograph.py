@@ -82,12 +82,12 @@ class GraphPanel(wx.Panel):
     def ScrollUpdate(self):
         plot = self.GetFrontPlot()
         if not plot: return
-        if not plot.data:
+        if not np.any(plot.data):
             #mod->diagbox->Write("plot " + graph->gname + " no data\n")
             #return
             max = 1000
         else: plot.xmax = len(plot.data) / plot.xscale
-        if plot.xdata: plot.xmax = len(plot.xdata)
+        if plot.xdata != None: plot.xmax = len(plot.xdata)
 
         xdiff = plot.xto - plot.xfrom
         plot.xrel = plot.xfrom - plot.scrollpos     # relative adjustment for non-zero xfrom set from scale panel
@@ -330,8 +330,10 @@ class GraphPanel(wx.Panel):
                 xnum = (xto - xfrom) / xplot
 
 
-                if not plot.data: 
-                    DiagWrite("OnPaint: plot - no data\n")
+                if not np.any(plot.data): 
+                    print(plot.label)
+                    print(plot.data[0])
+                    DiagWrite("OnPaint: plot {} - no data\n".format(plot.label))
                     return
 
 
@@ -402,7 +404,9 @@ class GraphPanel(wx.Panel):
                                 if yval < yfrom: ypos = -yfrom * yrange
                             else: ypos = yrange * (yval - yfrom)
 
-                            if i < xcount: gc.StrokeLine(oldx, oldy, int((i * xrange + xbase + xoffset), yplot + ybase - ypos))
+                            #DiagWrite("yplot {}  ybase {}  ypos {}\n".format(yplot, ybase, ypos))
+                            #DiagWrite("oldx {}  oldy {}  newx {}  newy {}".format(oldx, oldy, int(i * xrange + xbase + xoffset), int(yplot + ybase - ypos)))
+                            if i < xcount: gc.StrokeLine(oldx, oldy, int(i * xrange + xbase + xoffset), int(yplot + ybase - ypos))
                             else: 
                                 # interpolate y step for last partial x step
                                 xremain = xplot + xbase + xoffset - oldx
@@ -412,5 +416,5 @@ class GraphPanel(wx.Panel):
                                 #mainwin->diagbox->Write(text.Format("xcount %d  xremain %d  portion %.2f  yremain %.2f\n", xcount, xremain, portion, yremain));
                                 gc.StrokeLine(oldx, oldy, xplot + xbase + xoffset, oldy - yremain * portion)
 
-                            oldx = i * xrange + xbase + xoffset
+                            oldx = int(i * xrange + xbase + xoffset)
                             oldy = int(yplot + ybase - ypos)

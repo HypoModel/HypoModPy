@@ -1,6 +1,7 @@
 
 import wx
 import random
+import numpy as np
 
 from hypomods import *
 from hypoparams import *
@@ -56,7 +57,7 @@ class OsmoMod(Mod):
         #runflag = 0;
         #runmute->Unlock();
         self.mainwin.scalebox.GraphUpdateAll()
-        DiagWrite("Model thread OK\n\n")
+        #DiagWrite("Model thread OK\n\n")
 
 
     def RunModel(self):
@@ -68,10 +69,10 @@ class OsmoMod(Mod):
 
 class OsmoDat():
     def __init__(self):
-        self.water = []
-        self.salt = []
-        self.osmo = []
-        self.vaso = []
+        self.water = np.zeros(10000)
+        self.salt = np.zeros(10000)
+        self.osmo = np.zeros(10000)
+        self.vaso = np.zeros(10000)
 
 
 
@@ -86,7 +87,7 @@ class OsmoBox(ParamBox):
 
         self.paramset.AddCon("runtime", "Run Time", 2000, 1, 0)
         self.paramset.AddCon("hstep", "h Step", 1, 0.1, 1)
-        self.paramset.AddCon("waterloss", "Water Loss", 0, 0.001, 4)
+        self.paramset.AddCon("waterloss", "Water Loss", 0, 0.00001, 5)
 
         self.ParamLayout(2)
 
@@ -104,6 +105,7 @@ class OsmoBox(ParamBox):
         self.mainbox.AddSpacer(2)
 
         self.panel.Layout()
+        self.autorun = True
 
 
 
@@ -121,7 +123,7 @@ class OsmoModel(ModThread):
 
 
     def run(self):
-        print("OsmoModel thread running")
+        #print("OsmoModel thread running")
 
         if self.randomflag: random.seed(0)
         else: random.seed(datetime.now())
@@ -143,20 +145,18 @@ class OsmoModel(ModThread):
         runtime = int(osmoparams["runtime"])
         waterloss = osmoparams["waterloss"]
 
-        print("runtime {}".format(runtime))
-        print("waterloss {}".format(waterloss))
-
 
         # Initialise variables
         water = 50
         salt = 2000
         osmo = salt / water
 
+
         # Initialise record stores
         for i in range(10000):
-            osmodata.water.append(0)
-            osmodata.salt.append(0)
-            osmodata.osmo.append(0)
+            osmodata.water[i] = 0 
+            osmodata.salt[i] = 0
+            osmodata.osmo[i] = 0
 
         osmodata.water[0] = water
         osmodata.salt[0] = salt
