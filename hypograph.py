@@ -331,8 +331,6 @@ class GraphPanel(wx.Panel):
 
 
                 if not np.any(plot.data): 
-                    print(plot.label)
-                    print(plot.data[0])
                     DiagWrite("OnPaint: plot {} - no data\n".format(plot.label))
                     return
 
@@ -347,6 +345,9 @@ class GraphPanel(wx.Panel):
                     preval = plot.data[xindex]
                     oldx = xbase + xoffset
                     oldy = yplot + ybase - yrange * (preval - yfrom)
+
+                    path = gc.CreatePath()
+                    path.MoveToPoint(oldx, oldy)
 
                     # subpixel scale drawing mode - drawing data in limited x-axis resolution
                     # xrange gives ratio of plot pixels to data points, use this mode if xrange < 1
@@ -390,7 +391,9 @@ class GraphPanel(wx.Panel):
                                 #mod->diagbox->Write(text.Format("line draw log low value yval %.4f ypos %d\n", yval, ypos));
                             else: ypos = (yval - yfrom) * yrange
 
-                            gc.StrokeLine(oldx, oldy, i + xbase + xoffset, int(yplot + ybase - ypos))
+                            #gc.StrokeLine(oldx, oldy, i + xbase + xoffset, int(yplot + ybase - ypos))
+                            #path.MoveToPoint(oldx, oldy)
+                            path.AddLineToPoint(i + xbase + xoffset, int(yplot + ybase - ypos))
                             oldx = i + xbase + xoffset
                             oldy = int(yplot + ybase - ypos)
 
@@ -406,7 +409,10 @@ class GraphPanel(wx.Panel):
 
                             #DiagWrite("yplot {}  ybase {}  ypos {}\n".format(yplot, ybase, ypos))
                             #DiagWrite("oldx {}  oldy {}  newx {}  newy {}".format(oldx, oldy, int(i * xrange + xbase + xoffset), int(yplot + ybase - ypos)))
-                            if i < xcount: gc.StrokeLine(oldx, oldy, int(i * xrange + xbase + xoffset), int(yplot + ybase - ypos))
+                            if i < xcount: 
+                                #path.MoveToPoint(oldx, oldy)
+                                path.AddLineToPoint(int(i * xrange + xbase + xoffset), int(yplot + ybase - ypos))
+                                #gc.StrokeLine(oldx, oldy, int(i * xrange + xbase + xoffset), int(yplot + ybase - ypos))
                             else: 
                                 # interpolate y step for last partial x step
                                 xremain = xplot + xbase + xoffset - oldx
@@ -414,7 +420,11 @@ class GraphPanel(wx.Panel):
                                 if portion > 1: portion = 1 / portion  # where x plot range is less than one x step in data
                                 yremain = oldy - (yplot + ybase - yrange * (yval - yfrom))
                                 #mainwin->diagbox->Write(text.Format("xcount %d  xremain %d  portion %.2f  yremain %.2f\n", xcount, xremain, portion, yremain));
-                                gc.StrokeLine(oldx, oldy, xplot + xbase + xoffset, oldy - yremain * portion)
+                                #gc.StrokeLine(oldx, oldy, xplot + xbase + xoffset, oldy - yremain * portion)
+                                #path.MoveToPoint(oldx, oldy)
+                                path.AddLineToPoint(xplot + xbase + xoffset, int(oldy - yremain * portion))
 
                             oldx = int(i * xrange + xbase + xoffset)
                             oldy = int(yplot + ybase - ypos)
+
+                    gc.DrawPath(path)
