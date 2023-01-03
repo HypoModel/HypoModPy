@@ -86,6 +86,11 @@ class PlotDat():
 
         self.yscale = 1
 
+        self.xlabels = 0
+        self.ylabels = 0
+        self.xstep = 0
+        self.ystep = 0
+
         self.xtickmode = 1
         self.ytickmode = 1
 
@@ -115,8 +120,27 @@ class PlotDat():
         self.negscale = 0   # check purpose
         self.synchx = 1     # toggle to allow x-axis synchronisation, typically used for common time axis
 
+        self.plotstroke = 0.5
         self.strokecolour = wx.Colour(0, 0, 0)
         self.fillcolour = wx.Colour(255, 255, 255)
+
+        self.xplot = 500
+        self.yplot = 200
+        self.xsample = 1
+
+        self.xlabelgap = 30  #40
+        self.ylabelgap = 30  #20 #30
+        self.labelfontsize = 10
+        self.tickfontsize = 10
+        self.clipmode = 0
+
+        self.barshift = 0
+        self.barwidth = 10
+        self.bargap = 10
+
+        self.labelfont = 0   #default Helvetica
+        self.fillmode = 1
+        self.fillstroke = 0
 
 
     def StoreDat(self, tag):
@@ -134,16 +158,18 @@ class PlotDat():
     
         strokecolourtext = self.strokecolour.GetAsString(wx.C2S_CSS_SYNTAX)
         fillcolourtext = self.fillcolour.GetAsString(wx.C2S_CSS_SYNTAX)
-    
-        DiagWrite("strokecolourtext: " + strokecolourtext)
+        DiagWrite("strokecolourtext: " + strokecolourtext + "\n")
 
-        #gtext1.Printf("v12 index %d tag %s xf %.4f xt %.4f yf %.4f yt %.4f xl %d xs %.4f xm %d yl %d ys %.4f ym %d c %d srgb %s xs %.4f xu %.4f ps %.4f name %s xtag %s ytag %s xp %d yp %d pf %.4f cm %d type %d xd %.4f xsam %.4f bw %.4f bg %.4f yu %.4f ", 
-        #gindex, tag, xfrom, xto, yfrom, yto, xlabels, xstep, xtickmode, ylabels, ystep, ytickmode, colour, strokecolourtext, xshift, xunitscale, plotstroke, storegname, storextag, storeytag, xplot, yplot, labelfontsize, clipmode, type, xunitdscale, xsample, barwidth, bargap, yunitscale);
+        gtext = "v1"
+        gtext += f" tag {tag} xf {self.xfrom} xt {self.xto} yf {self.yfrom} yt {self.yto} xl {self.xlabels} xs {self.xstep} xm {self.xtickmode}"
+        gtext += f" yl {self.ylabels} ys {self.ystep} ym {self.ytickmode} c {self.colour} srgb {strokecolourtext} xs {self.xshift} xu {self.xunitscale}"
+        gtext += f" ps {self.plotstroke} name {storetitle} xtag {storextitle} ytag {storeytitle} xp {self.xplot} yp {self.yplot} pf {self.labelfontsize}"
+        gtext += f" cm {self.clipmode} type {self.type} xd {self.xunitdscale} xsam {self.xsample} bw {self.barwidth} bg {self.bargap} yu {self.yunitscale}" 
+        gtext += f" xl {self.xlabelplaces} yl {self.ylabelplaces} xm {self.xlabelmode} ym {self.ylabelmode} xs {self.xscalemode} ys {self.yscalemode}"
+        gtext += f" xa {self.xaxis} ya {self.yaxis} yd {self.yunitdscale} xg {self.xlabelgap} yg {self.ylabelgap} lf {self.labelfont} sc {self.scattersize}"
+        gtext += f" frgb {fillcolourtext} xfm {self.fillmode} fs {self.fillstroke} lm {self.linemode} sm {self.scattermode}"
 
-        #gtext2.Printf("xl %d yl %d xm %d ym %d xs %d ys %d xa %d ya %d yd %.4f xg %.4f yg %.4f lf %d sc %.4f frgb %s xfm %d fs %d lm %d sm %d", 
-        #xlabelplaces, ylabelplaces, xlabelmode, ylabelmode, xscalemode, yscalemode, xaxis, yaxis, yunitdscale, xlabelgap, ylabelgap, labelfont, scattersize, fillcolourtext, fillmode, fillstroke, linemode, scattermode);
-
-        return gtext1 + gtext2
+        return gtext
 
 
 
@@ -158,8 +184,8 @@ class PlotBase():
         outfile = TextFile(filepath)
         outfile.Open('w')
 
-        for plot in self.plotstore.values():
-            outfile.WriteLine(plot.StoreDat())
+        for plot in self.plotstore:
+            outfile.WriteLine(self.plotstore[plot].StoreDat(plot))
 
         outfile.Close()
         DiagWrite("BaseStore {} graphs\n".format(len(self.plotstore)))
