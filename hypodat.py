@@ -77,6 +77,10 @@ class PlotDat():
 
 
     def Default(self):
+
+        self.xtitle = "X"
+        self.ytitle = "Y"
+
         self.xaxis = True
         self.yaxis = True
 
@@ -111,6 +115,36 @@ class PlotDat():
         self.negscale = 0   # check purpose
         self.synchx = 1     # toggle to allow x-axis synchronisation, typically used for common time axis
 
+        self.strokecolour = wx.Colour(0, 0, 0)
+        self.fillcolour = wx.Colour(255, 255, 255)
+
+
+    def StoreDat(self, tag):
+        if self.label != "": storetitle = self.label         # replace spaces with underscores for textfile storing
+        else: storetitle = " "
+        storetitle.replace(" ", "_")
+
+        if self.xtitle != "": storextitle = self.xtitle
+        else: storextitle = " "
+        storextitle.replace(" ", "_")
+
+        if self.ytitle != "": storeytitle = self.ytitle
+        else: storeytitle = " "
+        storeytitle.replace(" ", "_")
+    
+        strokecolourtext = self.strokecolour.GetAsString(wx.C2S_CSS_SYNTAX)
+        fillcolourtext = self.fillcolour.GetAsString(wx.C2S_CSS_SYNTAX)
+    
+        DiagWrite("strokecolourtext: " + strokecolourtext)
+
+        #gtext1.Printf("v12 index %d tag %s xf %.4f xt %.4f yf %.4f yt %.4f xl %d xs %.4f xm %d yl %d ys %.4f ym %d c %d srgb %s xs %.4f xu %.4f ps %.4f name %s xtag %s ytag %s xp %d yp %d pf %.4f cm %d type %d xd %.4f xsam %.4f bw %.4f bg %.4f yu %.4f ", 
+        #gindex, tag, xfrom, xto, yfrom, yto, xlabels, xstep, xtickmode, ylabels, ystep, ytickmode, colour, strokecolourtext, xshift, xunitscale, plotstroke, storegname, storextag, storeytag, xplot, yplot, labelfontsize, clipmode, type, xunitdscale, xsample, barwidth, bargap, yunitscale);
+
+        #gtext2.Printf("xl %d yl %d xm %d ym %d xs %d ys %d xa %d ya %d yd %.4f xg %.4f yg %.4f lf %d sc %.4f frgb %s xfm %d fs %d lm %d sm %d", 
+        #xlabelplaces, ylabelplaces, xlabelmode, ylabelmode, xscalemode, yscalemode, xaxis, yaxis, yunitdscale, xlabelgap, ylabelgap, labelfont, scattersize, fillcolourtext, fillmode, fillstroke, linemode, scattermode);
+
+        return gtext1 + gtext2
+
 
 
 class PlotBase():
@@ -118,6 +152,17 @@ class PlotBase():
         self.plotstore = {}
         self.setstore = {}
         self.mainwin = mainwin
+
+
+    def BaseStore(self, filepath):
+        outfile = TextFile(filepath)
+        outfile.Open('w')
+
+        for plot in self.plotstore.values():
+            outfile.WriteLine(plot.StoreDat())
+
+        outfile.Close()
+        DiagWrite("BaseStore {} graphs\n".format(len(self.plotstore)))
 
 
     def Add(self, newplot, plottag, pstag = ""):       # default settag = "", for no set use settag = "null"

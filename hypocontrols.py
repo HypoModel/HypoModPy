@@ -38,12 +38,17 @@ class ToolText(wx.StaticText):
 class ToolPanel(wx.Panel):
     def __init__(self, toolbox, pos, size, style = wx.TAB_TRAVERSAL | wx.NO_BORDER):
         wx.Panel.__init__(self, toolbox, wx.ID_ANY, pos, size, style)
-        self.toolbox = toolbox
-        #self.mainwin = toolbox.mainwin
 
+        self.toolbox = toolbox
         self.controlborder = 2
 
+        self.blackpen = wx.Colour("#000000")
+        self.redpen = wx.Colour("#dd0000")
+        self.greenpen = wx.Colour("#009900")
+        self.bluepen = wx.Colour("#0000dd")
+
         self.PanelInit()
+
 
     def PanelInit(self):
         if GetSystem() == 'Mac':
@@ -58,7 +63,8 @@ class ToolPanel(wx.Panel):
         #self.Bind(wx.EVT_LEFT_UP, self.OnLeftClick)
         #self.Bind(wx.EVT_LEFT_DCLICK, self.OnLeftDClick)
         #self.Bind(wx.EVT_RIGHT_DCLICK, self.OnRightDClick)
-	
+
+
 
 class ToolButton(wx.Button):
     def __init__(self, parent, id, label, pos, size):

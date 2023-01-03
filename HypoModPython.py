@@ -221,14 +221,13 @@ class HypoMain(MainFrame):
             self.panelset.append(graphpanel)
             self.graphsizer.Add(graphpanel, 1, wx.EXPAND)
 
+        # Mod Init
+        self.mod = OsmoMod(self, "osmomod")
+
         # Scale Box
         self.scalebox = ScaleBox(self, wx.Size(self.scalewidth, -1), self.numdraw)
         #self.scalebox.PanelUpdateAll()
         #self.scalebox.GraphUpdateAll()
-
-        # Mod Init
-        self.mod = OsmoMod(self, "osmomod")
-        self.GraphSwitch(self.mod.plotbase, self.scalebox.gflags)
         
         # Sizers
         self.graphsizer.AddSpacer(5)
@@ -237,6 +236,10 @@ class HypoMain(MainFrame):
         self.SetSizer(mainsizer)
         self.Layout()
 
+        # Initial Plots
+        self.GraphSwitch(self.mod.plotbase, self.scalebox.gflags)
+
+        # Event Binds
         self.Bind(wx.EVT_CLOSE, self.OnClose)
         self.Bind(wx.EVT_SIZE, self.OnHypoSize)
 

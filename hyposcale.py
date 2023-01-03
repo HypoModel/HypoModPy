@@ -15,6 +15,8 @@ class ScaleBox(ToolPanel):
         self.gsynch = 0    # x-axis synchronisation toggle
         self.synchcon = 0  # index of graph panel with synch control
         self.gflags = {}
+        self.redtag = ""    # store box overwrite warning tag
+        self.mod = parent.mod
 
         # Default scale parameter limits
         self.xmin = -1000000
@@ -114,17 +116,20 @@ class ScaleBox(ToolPanel):
         for graphpanel in self.panelset:
             graphfile.WriteLine("{} {}".format(graphpanel.index, graphpanel.pstag))
 
-        # Write Flag Values
+         # Write Graph Flag Values
         graphfile.WriteLine("")
-        #for flagtag in self.flagtags.values():
-        #    outline = "%.0f".format(self.gflags[flagtag])
-        #    graphfile.WriteLine(flagtag + " " + outline)
+        for tag in self.gflags:
+            outline = "%.0f".format(self.gflags[tag])
+            graphfile.WriteLine(tag + " " + outline)
 
         graphfile.Close()
 
         #if(mainwin->graphbox) mainwin->graphbox->SetParams();
+        self.mod.plotbase.BaseStore(graphpath + "/" + "gbase-" + filetag + ".dat")
 
-        #self.mod.graphbase.BaseStore(filepath, filetag)
+
+    def OnLoad(self, event):
+        return 0
 
 
     def GraphSwitch(self, command = ""):
@@ -257,15 +262,13 @@ class ScaleBox(ToolPanel):
         self.storetag = TagBox(self, label, wx.Size(80, -1), "scalebox", modpath)
         self.storetag.SetFont(self.confont)
 
-        if self.ostype == 'Mac':
-            self.AddButton(ID_Store, "Store", 36, buttons)
-            buttons.AddSpacer(2)
-            self.AddButton(ID_Load, "Load", 36, buttons)
-        else:
-            self.AddButton(ID_Store, "Store", 38, buttons)
-            buttons.AddSpacer(2)
-            self.AddButton(ID_Load, "Load", 38, buttons)
-
+        if self.ostype == 'Mac': buttonwidth = 36
+        else: buttonwidth = 36
+        self.AddButton(ID_Store, "Store", buttonwidth, buttons).Bind(wx.EVT_BUTTON, self.OnStore)
+        buttons.AddSpacer(2)
+        self.AddButton(ID_Load, "Load", buttonwidth, buttons).Bind(wx.EVT_BUTTON, self.OnLoad)
+        
+        
         filebox.Add(self.storetag, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 2)
         filebox.Add(buttons, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 2)
         return filebox

@@ -319,6 +319,71 @@ class ParamBox(ToolBox):
     # "{:.0f}".format(xval + plot.xdis)
 
 
+    def ParamStore(self, filetag = ""):
+        newtag = False
+        if filetag == "": newtag = True
+        parampath = self.mod.path + "/Params"
+        if os.path.exists(parampath) == False: 
+            os.mkdir(parampath)
+
+        if self.storetag != None:
+            if filetag == "": filetag = self.storetag.GetValue()
+            else: self.storetag.SetValue(filetag)
+
+        # Param data file
+        filepath = parampath + "/" + filetag + "-" + self.boxtag + "param.dat";
+
+        # Param file history
+        if self.storetag != None and filetag != "default": 
+            tagpos = self.storetag.FindString(filetag)
+            if tagpos != wx.NOT_FOUND: self.storetag.Delete(tagpos)
+            self.storetag.Insert(filetag, 0)
+            print("tag inserted " + filetag)
+
+        # Overwrite Warning
+        paramfile = TextFile(filepath)
+        if paramfile.Exists() and newtag and self.redtag != filetag: 
+            if self.storetag != None:
+                self.storetag.SetForegroundColour(self.redpen)
+                self.storetag.SetValue("")
+                self.storetag.SetValue(filetag)
+            self.redtag = filetag
+            return
+
+        # Clear Overwrite Warning
+        self.redtag = ""
+        if self.storetag != None:
+            self.storetag.SetForegroundColour(self.blackpen)
+            self.storetag.SetValue("")
+            self.storetag.SetValue(filetag)
+
+        # Open File
+        paramfile.Open('w')
+
+        # Write Parameter Values
+        for con in self.paramset.pcons.values():
+            if con.type != "textcon":
+                outline = "{:.8f}".format(con.GetValue())
+            else: outline = con.GetString()
+            paramfile.WriteLine(con.tag + " " + outline)
+
+        # Write Flag Values
+        paramfile.WriteLine("")
+        for flagtag in self.flagtags.values():
+            outline = "%.0f".format(self.modflags[flagtag])
+            paramfile.WriteLine(flagtag + " " + outline)
+
+        # Write Check Values
+        paramfile.WriteLine("")
+        for checktag in self.checktags.values():
+            outline = "%.0f".format(self.modflags[checktag])
+            paramfile.WriteLine(checktag + " " + outline)
+  
+        # Close File
+        paramfile.Close()
+        self.DiagWrite("Param File OK\n")
+
+
     def ParamLoad(self, filetag = "", compmode = False):
         diagmode = False
         if diagmode: DiagWrite("param load {}\n".format(self.boxtag))
@@ -406,71 +471,6 @@ class ParamBox(ToolBox):
                     if diagmode: DiagWrite("Model check Tag {}, Set {}\n".format(tag, flagval)) 
 
         paramfile.Close()
-
-
-    def ParamStore(self, filetag = ""):
-        newtag = False
-        if filetag == "": newtag = True
-        parampath = self.mod.path + "/Params"
-        if os.path.exists(parampath) == False: 
-            os.mkdir(parampath)
-
-        if self.storetag != None:
-            if filetag == "": filetag = self.storetag.GetValue()
-            else: self.storetag.SetValue(filetag)
-
-        # Param data file
-        filepath = parampath + "/" + filetag + "-" + self.boxtag + "param.dat";
-
-        # Param file history
-        if self.storetag != None and filetag != "default": 
-            tagpos = self.storetag.FindString(filetag)
-            if tagpos != wx.NOT_FOUND: self.storetag.Delete(tagpos)
-            self.storetag.Insert(filetag, 0)
-            print("tag inserted " + filetag)
-
-        # Overwrite Warning
-        paramfile = TextFile(filepath)
-        if paramfile.Exists() and newtag and self.redtag != filetag: 
-            if self.storetag != None:
-                self.storetag.SetForegroundColour(self.redpen)
-                self.storetag.SetValue("")
-                self.storetag.SetValue(filetag)
-            self.redtag = filetag
-            return
-
-        # Clear Overwrite Warning
-        self.redtag = ""
-        if self.storetag != None:
-            self.storetag.SetForegroundColour(self.blackpen)
-            self.storetag.SetValue("")
-            self.storetag.SetValue(filetag)
-
-        # Open File
-        paramfile.Open('w')
-
-        # Write Parameter Values
-        for con in self.paramset.pcons.values():
-            if con.type != "textcon":
-                outline = "{:.8f}".format(con.GetValue())
-            else: outline = con.GetString()
-            paramfile.WriteLine(con.tag + " " + outline)
-
-        # Write Flag Values
-        paramfile.WriteLine("")
-        for flagtag in self.flagtags.values():
-            outline = "%.0f".format(self.modflags[flagtag])
-            paramfile.WriteLine(flagtag + " " + outline)
-
-        # Write Check Values
-        paramfile.WriteLine("")
-        for checktag in self.checktags.values():
-            outline = "%.0f".format(self.modflags[checktag])
-            paramfile.WriteLine(checktag + " " + outline)
-  
-        # Close File
-        paramfile.Close()
-        self.DiagWrite("Param File OK\n")
 
 
     def GetParams(self, pstore = None):
