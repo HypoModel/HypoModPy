@@ -71,6 +71,62 @@ class ScaleBox(ToolPanel):
         self.Bind(wx.EVT_TEXT_ENTER, self.OnEnter)
 
 
+    def OnStore(self, event):
+
+        #wxColour redpen("#dd0000"), blackpen("#000000");
+        #TextFile outfile;
+
+        graphpath = self.mod.path + "/Graphs"
+        if os.path.exists(graphpath) == False: 
+            os.mkdir(graphpath)
+
+        filetag = self.storetag.GetValue()
+        filename = "graph-" + filetag + ".dat"
+
+        # Graph data file
+        filepath = graphpath + "/" + "graph-" + filetag + ".dat"
+
+        # Graph file history
+        tagpos = self.storetag.FindString(filetag)
+        if tagpos != wx.NOT_FOUND: self.storetag.Delete(tagpos)
+        self.storetag.Insert(filetag, 0)
+        #print("tag inserted " + filetag)
+
+         # Overwrite Warning
+        graphfile = TextFile(filepath)
+        if graphfile.Exists() and self.redtag != filetag: 
+            self.storetag.SetForegroundColour(self.redpen)
+            self.storetag.SetValue("")
+            self.storetag.SetValue(filetag)
+            self.redtag = filetag
+            return
+
+        # Clear Overwrite Warning
+        self.redtag = ""
+        self.storetag.SetForegroundColour(self.blackpen)
+        self.storetag.SetValue("")
+        self.storetag.SetValue(filetag)
+
+        # Open File
+        graphfile.Open('w')
+
+        # Write Panel PlotSet Tags
+        for graphpanel in self.panelset:
+            graphfile.WriteLine("{} {}".format(graphpanel.index, graphpanel.pstag))
+
+        # Write Flag Values
+        graphfile.WriteLine("")
+        #for flagtag in self.flagtags.values():
+        #    outline = "%.0f".format(self.gflags[flagtag])
+        #    graphfile.WriteLine(flagtag + " " + outline)
+
+        graphfile.Close()
+
+        #if(mainwin->graphbox) mainwin->graphbox->SetParams();
+
+        #self.mod.graphbase.BaseStore(filepath, filetag)
+
+
     def GraphSwitch(self, command = ""):
         self.mod.GSwitch(self.panelset, self.gflags, command)
         self.ScaleUpdate()
