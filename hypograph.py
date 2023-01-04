@@ -249,6 +249,9 @@ class GraphPanel(wx.Panel):
                     if plot.xtickmode and xcoord <= xaxislength:
                         gc.StrokeLine(xbase + xcoord, ybase + yplot, xbase + xcoord, ybase + yplot + plot.xticklength)
 
+
+                    #DiagWrite(f"xfrom {xfrom}  xto {xto}  xlabels {xlabels} plot.xscale {plot.xscale}  plot.xunitscale {plot.xunitscale}\n")
+
                     # Labels
                     if not plot.xlabelmode or xcoord > xaxislength or plot.xlabelmode == 2 and i > 0 and i < xlabels: continue
                     if plot.xtickmode == 2:

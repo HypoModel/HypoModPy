@@ -64,6 +64,34 @@ def numstring(number, places=0):
     return f"{number:.{places}f}"
 
 
+
+def ParseString(readline, chartag, endtag = ' '):
+    readline = readline.partition(chartag)[2]
+    readline = readline.strip()
+    string = readline.partition(endtag)[0]
+    readline = readline.partition(endtag)[2]
+    return (string, readline)
+
+
+def ParseInt(readline, chartag = None):
+    if chartag: readline = readline.partition(chartag)[2]         # NULL tag just reads next int
+    readline = readline.strip()
+    numstring = readline.partition(' ')[0]
+    numdat = int(numstring)
+    readline = readline.partition(' ')[2]
+    return (numdat, readline)
+
+
+def ParseFloat(readline, chartag = None):
+    if chartag: readline = readline.partition(chartag)[2]         # NULL tag just reads next float
+    readline = readline.strip()
+    numstring = readline.partition(' ')[0]
+    numdat = float(numstring)
+    readline = readline.partition(' ')[2]
+    return (numdat, readline)
+
+
+
 # Paths
 mainpath = ""
 projectpath = "/Users/duncan/Model"

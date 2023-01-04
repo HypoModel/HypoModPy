@@ -9,9 +9,8 @@
 
 import wx
 import os
-import ctypes
+from pubsub import pub
 
-from pathlib import Path
 from hypobase import *
 from hypocontrols import *
 from hypograph import *
@@ -20,7 +19,7 @@ from hypoparams import *
 
 from osmomod import *
 
-from pubsub import pub
+
 
 
 
@@ -237,39 +236,11 @@ class HypoMain(MainFrame):
         self.Layout()
 
         # Initial Plots
-        self.GraphSwitch(self.mod.plotbase, self.scalebox.gflags)
+        self.scalebox.GraphSwitch(self.mod.plotbase)
 
         # Event Binds
         self.Bind(wx.EVT_CLOSE, self.OnClose)
         self.Bind(wx.EVT_SIZE, self.OnHypoSize)
-
-
-    def GraphSwitch(self, plotbase, gflags, command = ""):
-        diag = True
-        if diag: DiagWrite("GSwitch call\n")
-
-        for graphpanel in self.panelset:
-            plotset = plotbase.GetSet(graphpanel.pstag)
-            #plotset = plotbase.GetSet(self.pstags[i])
-            if not plotset: continue
-            plottag = plotset.GetPlot(graphpanel.subplot, gflags)
-            if not plottag: continue
-            if diag: DiagWrite("graphpanel {}  pstag {}  plot {}  modesum {}  sync {}\n".format( 
-                graphpanel.index, graphpanel.pstag, plotset.tag, plotset.modesum, plotbase.GetPlot(plottag).synchx))
-
-            # Graph Switch commands
-            if command == "XSYNCH":
-                refplot = graphpanel.GetFrontPlot()
-                newplot = plotbase.GetPlot(plottag)
-                newplot.xto = refplot.xto
-                newplot.xfrom = refplot.xfrom
-
-            # Set Panel Plots
-            graphpanel.SetFrontPlot(plotbase.GetPlot(plottag))
-            graphpanel.pstag = plotset.tag
-        
-        # Update scales and plots
-        self.scalebox.ScaleUpdate()
 
 
     def OnHypoSize(self, event):

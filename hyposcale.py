@@ -17,6 +17,7 @@ class ScaleBox(ToolPanel):
         self.gflags = {}
         self.redtag = ""    # store box overwrite warning tag
         self.mod = parent.mod
+        self.mainwin = parent
 
         # Default scale parameter limits
         self.xmin = -1000000
@@ -73,17 +74,13 @@ class ScaleBox(ToolPanel):
         self.Bind(wx.EVT_TEXT_ENTER, self.OnEnter)
 
 
-    def OnStore(self, event):
-
-        #wxColour redpen("#dd0000"), blackpen("#000000");
-        #TextFile outfile;
+    def OnGStore(self, event):
 
         graphpath = self.mod.path + "/Graphs"
         if os.path.exists(graphpath) == False: 
             os.mkdir(graphpath)
 
         filetag = self.storetag.GetValue()
-        filename = "graph-" + filetag + ".dat"
 
         # Graph data file
         filepath = graphpath + "/" + "graph-" + filetag + ".dat"
@@ -128,14 +125,75 @@ class ScaleBox(ToolPanel):
         self.mod.plotbase.BaseStore(graphpath + "/" + "gbase-" + filetag + ".dat")
 
 
-    def OnLoad(self, event):
-        return 0
+    def OnGLoad(self, event):
+        self.GLoad()
 
 
-    def GraphSwitch(self, command = ""):
-        self.mod.GSwitch(self.panelset, self.gflags, command)
-        self.ScaleUpdate()
-        # if(mainwin->graphbox) mainwin->graphbox->SetGraph();
+    def GLoad(self, tag = ""):
+        pbase = self.mod.plotbase
+
+        graphpath = self.mod.path + "/Graphs"
+        if tag == "": filetag = self.storetag.GetValue()
+        else: filetag = tag
+        filename = "graph-" + filetag + ".dat"
+
+        # Graph data file
+        filepath = graphpath + "/" + "graph-" + filetag + ".dat"
+        graphfile = TextFile(filepath)
+        if not graphfile.Exists():
+            if self.storetag: self.storetag.SetValue("Not found")
+            return
+
+        # File history
+        if filetag != "default": 
+            tagpos = self.storetag.FindString(filetag)
+            if tagpos != wx.NOT_FOUND: self.storetag.Delete(tagpos)
+            self.storetag.Insert(filetag, 0)
+
+        # Clear Overwrite Warning
+        self.redtag = ""
+        self.storetag.SetForegroundColour(self.blackpen)
+        self.storetag.SetValue("")
+        self.storetag.SetValue(filetag)
+
+        # Load file
+        if not graphfile.Open('r'): return
+        filetext = graphfile.ReadLines()
+        mode = "panel"
+
+        for readline in filetext:
+
+            # Parse line type
+            readline = readline.strip()
+            if readline == "":  # marks end of file or section
+                if mode == "panel": mode = "flag"
+                continue  
+            readdata = readline.split(' ')
+
+            # Read graph panel
+            if mode == "param":
+                index = readdata[0]    # panel index
+                stag = readdata[1]  # plot set tag
+                if stag in pbase.plotstore or stag in pbase.setstore: self.panelset[index].pstag = stag
+                else: DiagWrite(f"GLoad graph/set {tag} not found\n")
+                if len(readdata) > 2: 
+                    tag = readdata[2]
+                    if tag in pbase.plotstore:
+                        if stag in pbase.setstore: pbase.GetSet(stag).subplot[index] = tag      # ported code, likely needs work, odd use of index
+
+            # Read graph flags
+            if mode == "flag":
+                tag = readdata[0]  # graph flag tag
+                data = readdata[1]  # flag data
+                if tag in self.gflags:
+                    flagval = int(data)
+                    self.gflags[tag] = flagval
+                    DiagWrite(f"Graph flag tag {tag}, value {flagval}\n") 
+
+        graphfile.Close()
+
+        pbase.BaseLoad(graphpath + "/" + "gbase-" + filetag + ".dat")
+        self.GraphSwitch(self.mod.plotbase)
 
 
     def OnEnter(self, event):
@@ -263,10 +321,10 @@ class ScaleBox(ToolPanel):
         self.storetag.SetFont(self.confont)
 
         if self.ostype == 'Mac': buttonwidth = 36
-        else: buttonwidth = 36
-        self.AddButton(ID_Store, "Store", buttonwidth, buttons).Bind(wx.EVT_BUTTON, self.OnStore)
+        else: buttonwidth = 38
+        self.AddButton(ID_Store, "Store", buttonwidth, buttons).Bind(wx.EVT_BUTTON, self.OnGStore)
         buttons.AddSpacer(2)
-        self.AddButton(ID_Load, "Load", buttonwidth, buttons).Bind(wx.EVT_BUTTON, self.OnLoad)
+        self.AddButton(ID_Load, "Load", buttonwidth, buttons).Bind(wx.EVT_BUTTON, self.OnGLoad)
         
         
         filebox.Add(self.storetag, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 2)
@@ -407,3 +465,31 @@ class ScaleBox(ToolPanel):
         numbox.val = index
             
         return numbox
+
+
+    def GraphSwitch(self, plotbase, command = ""):
+        diag = True
+        if diag: DiagWrite("GSwitch call\n")
+
+        for graphpanel in self.panelset:
+            plotset = plotbase.GetSet(graphpanel.pstag)
+            #plotset = plotbase.GetSet(self.pstags[i])
+            if not plotset: continue
+            plottag = plotset.GetPlot(graphpanel.subplot, self.gflags)
+            if not plottag: continue
+            if diag: DiagWrite("graphpanel {}  pstag {}  plot {}  modesum {}  sync {}\n".format( 
+                graphpanel.index, graphpanel.pstag, plotset.tag, plotset.modesum, plotbase.GetPlot(plottag).synchx))
+
+            # Graph Switch commands
+            if command == "XSYNCH":
+                refplot = graphpanel.GetFrontPlot()
+                newplot = plotbase.GetPlot(plottag)
+                newplot.xto = refplot.xto
+                newplot.xfrom = refplot.xfrom
+
+            # Set Panel Plots
+            graphpanel.SetFrontPlot(plotbase.GetPlot(plottag))
+            graphpanel.pstag = plotset.tag
+        
+        # Update scales and plots
+        self.ScaleUpdate()

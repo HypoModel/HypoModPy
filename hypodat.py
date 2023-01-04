@@ -81,8 +81,8 @@ class PlotDat():
         self.xtitle = "X"
         self.ytitle = "Y"
 
-        self.xaxis = True
-        self.yaxis = True
+        self.xaxis = 1
+        self.yaxis = 1
 
         self.yscale = 1
 
@@ -168,9 +168,69 @@ class PlotDat():
         gtext += f" xl {self.xlabelplaces} yl {self.ylabelplaces} xm {self.xlabelmode} ym {self.ylabelmode} xs {self.xscalemode} ys {self.yscalemode}"
         gtext += f" xa {self.xaxis} ya {self.yaxis} yd {self.yunitdscale} xg {self.xlabelgap} yg {self.ylabelgap} lf {self.labelfont} sc {self.scattersize}"
         gtext += f" frgb {fillcolourtext} xfm {self.fillmode} fs {self.fillstroke} lm {self.linemode} sm {self.scattermode}"
-
         return gtext
 
+
+    def LoadDat(self, readline, version):   
+        self.xfrom, readline = ParseFloat(readline, 'f')
+        self.xto, readline = ParseFloat(readline, 't')
+        self.yfrom, readline = ParseFloat(readline, 'f')
+        self.yto, readline = ParseFloat(readline, 't')
+        self.xlabels, readline = ParseInt(readline, 'l')
+        self.xstep, readline = ParseFloat(readline, 's')
+        self.xtickmode, readline = ParseInt(readline, 'm')
+        self.ylabels, readline = ParseInt(readline, 'l')
+        self.ystep, readline = ParseFloat(readline, 's')
+        self.ytickmode, readline = ParseInt(readline, 'm')
+
+        self.colour, readline = ParseString(readline, 'c')
+        colourstring, readline = ParseString(readline, 'b', 'x')
+        self.strokecolour.Set(colourstring.strip())
+        self.xshift, readline = ParseFloat(readline, 's')
+        self.xunitscale, readline = ParseFloat(readline, 'u')
+        self.plotstroke, readline = ParseFloat(readline, 's')
+        self.gtitle, readline = ParseString(readline, 'e')
+        self.gtitle.replace("_", " ")
+
+        self.xtitle, readline = ParseString(readline, 'g')
+        self.xtitle.replace("_", " ")
+        if self.xtitle == " ": self.xtitle = ""
+
+        self.ytitle, readline = ParseString(readline, 'g')
+        self.ytitle.replace("_", " ")
+        if self.ytitle == " ": self.ytitle = ""
+
+        self.xplot, readline = ParseFloat(readline, 'p')
+        self.yplot, readline = ParseFloat(readline, 'p')
+        self.labelfontsize, readline = ParseFloat(readline, 'f')
+        self.clipmode, readline = ParseInt(readline, 'm')
+        self.type, readline = ParseString(readline, 'e')
+        self.xunitdscale, readline = ParseFloat(readline, 'd')
+        self.xsample, readline = ParseFloat(readline, 'm')
+        self.barwidth, readline = ParseFloat(readline, 'w')
+        self.bargap, readline = ParseFloat(readline, 'g')
+
+        self.yunitscale, readline = ParseFloat(readline, 'u')
+        self.xlabelplaces, readline = ParseInt(readline, 'l')
+        self.ylabelplaces, readline = ParseInt(readline, 'l')
+        self.xlabelmode, readline = ParseInt(readline, 'm')
+        self.ylabelmode, readline = ParseInt(readline, 'm')
+        self.xscalemode, readline = ParseInt(readline, 's')
+        self.yscalemode, readline = ParseInt(readline, 's')
+        self.xaxis, readline = ParseInt(readline, 'a')
+        self.yaxis, readline = ParseInt(readline, 'a')
+        self.yunitdscale, readline = ParseFloat(readline, 'd')
+        self.xlabelgap, readline = ParseFloat(readline, 'g')
+        self.ylabelgap, readline = ParseFloat(readline, 'g')
+
+        self.labelfont, readline = ParseInt(readline, 'f')
+        self.scattersize, readline = ParseFloat(readline, 'c')
+        colourstring, readline = ParseString(readline, 'b', 'x')
+        self.fillcolour.Set(colourstring.strip())
+        self.fillmode, readline = ParseInt(readline, 'm')
+        self.fillstroke, readline = ParseInt(readline, 's')
+        self.linemode, readline = ParseInt(readline, 'm')
+        self.scattermode, readline = ParseInt(readline, 'm')
 
 
 class PlotBase():
@@ -191,7 +251,38 @@ class PlotBase():
         DiagWrite("BaseStore {} graphs\n".format(len(self.plotstore)))
 
 
-    def Add(self, newplot, plottag, pstag = ""):       # default settag = "", for no set use settag = "null"
+    def BaseLoad(self, filepath):
+        infile = TextFile(filepath)
+        if not infile.Open('r'): 
+            print("BaseLoad bad file")
+            return
+        pcount = 0
+
+        # read file
+        filetext = infile.ReadLines()
+        for readline in filetext:
+            # parse line
+            readline = readline.strip()
+            if readline == "": continue
+            # version check
+            if readline[0] == 'v': 
+                version, readline = ParseInt(readline, 'v')    #  check gbase file version for backwards compatability
+
+            else: version = 0
+            DiagWrite(f"Base file version {version}\n")
+            DiagWrite(f"Readline {readline}\n")
+
+            ptag, readline = ParseString(readline, 'g')     # parse plot tag
+            DiagWrite(f"ptag {ptag}\n")
+            plot = self.plotstore[ptag]                     # access plot from store
+            if plot: plot.LoadDat(readline, version)        # parse plot parameters
+            pcount += 1                                     # count only for diagnostics
+
+        infile.Close()
+        DiagWrite(f"BaseLoad {pcount} graphs\n")
+
+
+    def AddPlot(self, newplot, plottag, pstag = ""):       # default settag = "", for no set use settag = "null"
         plotset = None
         diag = True
 
