@@ -269,11 +269,11 @@ class PlotBase():
                 version, readline = ParseInt(readline, 'v')    #  check gbase file version for backwards compatability
 
             else: version = 0
-            DiagWrite(f"Base file version {version}\n")
-            DiagWrite(f"Readline {readline}\n")
+            #DiagWrite(f"Base file version {version}\n")
+            #DiagWrite(f"Readline {readline}\n")
 
             ptag, readline = ParseString(readline, 'g')     # parse plot tag
-            DiagWrite(f"ptag {ptag}\n")
+            #DiagWrite(f"ptag {ptag}\n")
             plot = self.plotstore[ptag]                     # access plot from store
             if plot: plot.LoadDat(readline, version)        # parse plot parameters
             pcount += 1                                     # count only for diagnostics

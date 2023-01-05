@@ -34,6 +34,7 @@ class OsmoMod(Mod):
 
         self.osmodata = OsmoDat()
         self.PlotData()
+        self.graphload = True
 
 
     def PlotData(self):
@@ -45,10 +46,9 @@ class OsmoMod(Mod):
         self.plotbase.AddPlot(PlotDat(self.osmodata.water, 0, 2000, 0, 5000, "water", "line", 1, "blue"), "water")
         self.plotbase.AddPlot(PlotDat(self.osmodata.salt, 0, 2000, 0, 100, "salt", "line", 1, "red"), "salt")
         self.plotbase.AddPlot(PlotDat(self.osmodata.osmo, 0, 2000, 0, 100, "osmo", "line", 1, "green"), "osmo")
-        # self.graphbaseAdd(PlotDat(self.osmodata.heat, 0, 2000, 0, 100, "heat", 4, 1, "lightred"), "heat")
         # self.graphbase.Add(PlotDat(self.osmodata.vaso, 0, 2000, 0, 100, "vaso", 4, 1, "purple"), "vaso")
 
-        # Initial plots
+        # Default plots
         self.mainwin.panelset[0].pstag = "water"
         self.mainwin.panelset[1].pstag = "salt"
         self.mainwin.panelset[2].pstag = "osmo"
@@ -71,10 +71,12 @@ class OsmoMod(Mod):
 
 class OsmoDat():
     def __init__(self):
-        self.water = np.zeros(10000)
-        self.salt = np.zeros(10000)
-        self.osmo = np.zeros(10000)
-        self.vaso = np.zeros(10000)
+        storesize = 10000
+
+        self.water = np.zeros(storesize + 1)
+        self.salt = np.zeros(storesize + 1)
+        self.osmo = np.zeros(storesize + 1)
+        self.vaso = np.zeros(storesize + 1)
 
 
 
@@ -82,10 +84,14 @@ class OsmoBox(ParamBox):
     def __init__(self, model, tag, title, position, size):
         ParamBox.__init__(self, model, title, position, size, tag, 0, 1)
 
-        # Menu 
+        self.autorun = True
+
+        # Initialise Menu 
         self.InitMenu()
+
+        # Model Flags
         self.AddFlag(ID_randomflag, "randomflag", "Fixed Random Seed", 0)
-        self.AddFlag(ID_heatflag, "heatflag", "Heat Effect", 0)
+        #self.AddFlag(ID_heatflag, "heatflag", "Heat Effect", 0)
 
 
         # Parameter controls
@@ -111,7 +117,6 @@ class OsmoBox(ParamBox):
         self.mainbox.AddSpacer(5)
         self.mainbox.Add(paramfilebox, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 0)	
         self.mainbox.AddSpacer(2)
-
         self.panel.Layout()
 
 

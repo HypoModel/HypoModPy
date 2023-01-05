@@ -99,6 +99,12 @@ modpath = "/Users/duncan/Model"
 #modpathwin  = "C:\Users\Duncan\Model"
 modpathwin = "C:/Users/Duncan/Model"
 
+
+# Preference Flags
+basicmode = 0
+studentmode = 1
+
+
 # Control IDs
 ID_Sync = wx.NewIdRef()
 ID_Store = wx.NewIdRef()
@@ -106,6 +112,15 @@ ID_Load = wx.NewIdRef()
 ID_Run = wx.NewIdRef()
 ID_AutoRun = wx.NewIdRef()
 ID_Default = wx.NewIdRef()
+
+# Menu IDs
+ID_GraphEPS = wx.NewIdRef()
+ID_Scale = wx.NewIdRef()
+ID_UnZoom = wx.NewIdRef()
+ID_MultiEPS = wx.NewIdRef()
+ID_MultiCell = wx.NewIdRef()
+ID_Output = wx.NewIdRef()
+
 
 # Mod IDs
 ID_randomflag = wx.NewIdRef()

@@ -89,16 +89,19 @@ class GraphPanel(wx.Panel):
         else: plot.xmax = len(plot.data) / plot.xscale
         if plot.xdata != None: plot.xmax = len(plot.xdata)
 
+        #plot.xmax = 5000
+
         xdiff = plot.xto - plot.xfrom
         plot.xrel = plot.xfrom - plot.scrollpos     # relative adjustment for non-zero xfrom set from scale panel
         if plot.xrel < plot.xmin: plot.xrel = plot.xmin
 
-        scrollxto = int((plot.xmax - plot.xrel) * plot.binsize)
+        scrollxto = int((plot.xmax - plot.xrel) * plot.binsize) - 1
         section = int(xdiff)
         if section > scrollxto:
             plot.scrollpos = 0
 
         self.scrollbar.SetScrollbar(plot.scrollpos, section, scrollxto, section)
+        #DiagWrite(f"scrollpos {plot.scrollpos} section {section} scrollxto {scrollxto} section {section}\n")
 
         #self.Refresh()
         #overlay.Reset()
@@ -139,7 +142,7 @@ class GraphPanel(wx.Panel):
         self.scrollbar.SetSize(self.xplot, -1)
         self.scrollbar.Move(self.xbase, int(self.yplot + 35))
         
-        #overlay.Reset();
+        #overlay.Reset()
         self.Refresh()
 
 
@@ -156,6 +159,64 @@ class GraphPanel(wx.Panel):
             self.dispset.append(graphdisp)
         else:
             self.dispset[0] = graphdisp
+
+
+    def OnRightClick(self, event):
+        menuPlot = wx.Menu()
+        subPlot = None
+
+        if not basicmode:
+            if studentmode:
+                menuPlot.Append(ID_GraphEPS, "Export EPS")
+                menuPlot.Append(ID_Scale, "Plot Panel")
+                menuPlot.Append(ID_UnZoom, "Zoom Undo")
+                menuPlot.AppendSeparator()
+            else:
+                #menuPlot->Append(ID_GraphRemove, "Delete Graph")
+                menuPlot.Append(ID_GraphEPS, "Export EPS")
+                menuPlot.Append(ID_MultiEPS, "Multi EPS")
+                menuPlot.Append(ID_MultiCell, "Multi Cell")
+                menuPlot.Append(ID_Scale, "Plot Panel")
+                menuPlot.Append(ID_UnZoom, "Zoom Undo")
+                #menuPlot->Append(ID_Test, "Test")
+                menuPlot.Append(ID_Output, "Grid Output")
+                menuPlot.AppendSeparator()
+    
+        for pstag in self.mod.plotbase.setstore:
+            plotset = self.mod.plotbase.setstore[pstag]
+            if plotset.submenu:
+                menuitem = wx.MenuItem(menuPlot, 1000 + i, plotset.tag, "", wx.ITEM_CHECK)
+#ifndef OSX
+                #menuitem->SetBitmaps(radio_on, radio_off)
+#endif
+                menuPlot.Append(menuitem)
+                menuitem.Check(False)
+                #menuPlot->AppendRadioItem(1000 + i, graphset->name)
+            else:
+                subPlot = wx.Menu()
+                for(j=0 j<graphset->numgraphs j++) {
+                menuitem = new wxMenuItem(subPlot, 2000 + graphset->gindex[j], graphset->GetPlot(j)->gname, "", wxITEM_CHECK)
+#ifndef OSX
+                //menuitem->SetBitmaps(radio_on, radio_off)
+#endif
+                subPlot->Append(menuitem)
+                menuitem->Check(false)
+            }
+            //subPlot->AppendRadioItem(2000 + graphset->gindex[j], graphset->GetPlot(j)->gname)
+            menuPlot->Append(ID_subplot, graphset->name, subPlot)
+            //menuPlot->Check(ID_subplot, true)
+        }
+    }
+
+    Connect(1000, 1000 + mod->graphbase->numsets - 1, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(GraphWindow3::OnGraphSelectSet))
+    Connect(2000, 2000 + mod->graphbase->numgraphs, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(GraphWindow3::OnGraphSelectPlot))
+
+    //menuPlot->Check(1000, false)
+    graphset = mod->graphbase->GetSet(dispset[0]->sdex)
+    if(!graphset->submenu) menuPlot->Check(1000 + dispset[0]->sdex, true)
+    else if(subPlot) subPlot->Check(2000 + dispset[0]->gdex, true)
+    mainwin->diagbox->Write(text.Format("\ngraph menu set %d\n", dispset[0]->sdex))
+    PopupMenu(menuPlot, pos.x + 20, pos.y)
 
 
     def PaintBackground(self, dc):
@@ -183,8 +244,8 @@ class GraphPanel(wx.Panel):
         xylab = 2
         xoffset = 1
 
-        xlogbase = 2.71828182845904523536028747135266250;   # 3
-        ylogbase = 2.71828182845904523536028747135266250;   # 10                # default values replaced by graph specific below
+        xlogbase = 2.71828182845904523536028747135266250   # 3
+        ylogbase = 2.71828182845904523536028747135266250   # 10                # default values replaced by graph specific below
 
         xplot = self.xplot
         yplot = self.yplot
@@ -210,8 +271,8 @@ class GraphPanel(wx.Panel):
                 gc.SetFont(self.textfont, self.colourpen['black'])
                 
                 xaxislength = xplot
-                #if(graph->axistrace && drawX != -1) xaxislength = drawX * binsize / (xto - xfrom) * xplot;
-                #mod->diagbox->Write(text.Format("drawX %.0f xfrom %.0f xto %.0f xplot %d xaxislength %d\n", drawX, xfrom, xto, xplot, xaxislength));
+                #if(graph->axistrace && drawX != -1) xaxislength = drawX * binsize / (xto - xfrom) * xplot
+                #mod->diagbox->Write(text.Format("drawX %.0f xfrom %.0f xto %.0f xplot %d xaxislength %d\n", drawX, xfrom, xto, xplot, xaxislength))
                 
                 # Draw Axes
                 if plot.xaxis: 
@@ -238,7 +299,7 @@ class GraphPanel(wx.Panel):
                 if plot.xscalemode == 1 and xfrom > 0: xlogmax = log(xto / xfrom) / log(xlogbase)
                 else: xlogmax = 0
 
-                if plot.yscalemode == 1 and yfrom > 0: ylogmax = log(yto / yfrom) / log(ylogbase);
+                if plot.yscalemode == 1 and yfrom > 0: ylogmax = log(yto / yfrom) / log(ylogbase)
                 else: ylogmax = 0
 
                 for i in range(0, xlabels+1):
@@ -264,15 +325,15 @@ class GraphPanel(wx.Panel):
                         if srangex < 0.1: snum = "{:.3f}".format(xval + plot.xdis)
                         elif srangex < 1: snum = "{:.2f}".format(xval + plot.xdis)
                         elif srangex < 10: snum = "{:.1f}".format(xval + plot.xdis)
-                        else: snum = "{:.0f}".format(xval + plot.xdis)	
+                        else: snum = "{:.0f}".format(xval + plot.xdis)    
                     else: snum = f"{xval + plot.xdis:.{plot.xlabelplaces}f}"
 
                     if GetSystem() == "Mac":
                         textsize = gc.GetFullTextExtent(snum)
                         gc.DrawText(snum, xbase + xcoord - textsize[0] / 2, ybase + yplot + 8)
                     else:
-                        #gc.GetTextExtent(snum, &textwidth, &textheight);
-					    #gc->DrawText(snum, xbase + xcoord - textwidth / 2, ybase + yplot + 10);
+                        #gc.GetTextExtent(snum, &textwidth, &textheight)
+                        #gc->DrawText(snum, xbase + xcoord - textwidth / 2, ybase + yplot + 10)
                         textsize = gc.GetTextExtent(snum)
                         gc.DrawText(snum, xbase + xcoord - textsize[0] / 2, ybase + yplot + 10)
 
@@ -302,7 +363,7 @@ class GraphPanel(wx.Panel):
                         if srangey < 0.1: snum = "{:.3f}".format(yval)
                         elif srangey < 1: snum = "{:.2f}".format(yval)
                         elif srangey < 10: snum = "{:.1f}".format(yval)
-                        else: snum = "{:.0f}".format(yval)	
+                        else: snum = "{:.0f}".format(yval)    
                     else: snum = f"{yval + plot.ydis:.{plot.ylabelplaces}f}"
 
                     if GetSystem() == "Mac":
@@ -334,12 +395,12 @@ class GraphPanel(wx.Panel):
 
 
                 if not np.any(plot.data): 
-                    DiagWrite("OnPaint: plot {} - no data\n".format(plot.label))
+                    #DiagWrite("OnPaint: plot {} - no data\n".format(plot.label))
                     return
 
 
                 if plot.type == "line":                          # line graph with scaling fix
-                    # mod->diagbox->Write(text.Format("line plot xrange %.4f  yscalemode %d  ylogbase %.4f  ylogmax %.4f\n", xrange, graph->yscalemode, ylogbase, ylogmax));
+                    # mod->diagbox->Write(text.Format("line plot xrange %.4f  yscalemode %d  ylogbase %.4f  ylogmax %.4f\n", xrange, graph->yscalemode, ylogbase, ylogmax))
                     dir = 1
                     pdir = 0
                     xindex = int(plot.xfrom)
@@ -369,15 +430,15 @@ class GraphPanel(wx.Panel):
                         if(xrange < 1):
                             xindex = int((i * xnum) + xfrom)
                             if maxdex and maxdex < xindex:        # check for end of recorded data range
-                                # mainwin->diagbox->Write(text.Format("data end xcount %d  i %d  xnum %.4f  xindex %d  maxdex %d\n", xcount, i, xnum, xindex, gdatadv->maxdex()));
+                                # mainwin->diagbox->Write(text.Format("data end xcount %d  i %d  xnum %.4f  xindex %d  maxdex %d\n", xcount, i, xnum, xindex, gdatadv->maxdex()))
                                 break  
                             mpoint = plot.data[xindex]
 
-                            #if drawdiag: fprintf(ofp, "xdraw %d  preval %.4f  dir %d\n", i, preval, dir);
+                            #if drawdiag: fprintf(ofp, "xdraw %d  preval %.4f  dir %d\n", i, preval, dir)
                             for j in range(1, int(xnum)):
                                 if xindex + j > maxdex: break
                                 data = plot.data[xindex + j]
-                                #if(drawdiag) fprintf(ofp, "xdraw %d, xnum %d, data %.4f\n", i, j, data);
+                                #if(drawdiag) fprintf(ofp, "xdraw %d, xnum %d, data %.4f\n", i, j, data)
                                 if dir:
                                     if data > mpoint: mpoint = data
                                     elif data < mpoint: mpoint = data
@@ -386,12 +447,12 @@ class GraphPanel(wx.Panel):
                             else: dir = 0
                             yval = mpoint
                             preval = mpoint
-                            #if(drawdiag) fprintf(ofp, "xdraw %d  preval %.4f  mpoint %.4f  point %.4f\n", i, preval, mpoint, y);
+                            #if(drawdiag) fprintf(ofp, "xdraw %d  preval %.4f  mpoint %.4f  point %.4f\n", i, preval, mpoint, y)
 
                             if plot.yscalemode == 1 and yfrom > 0: 
                                 ypos = yplot * (log(yval / yfrom) / log(ylogbase)) / ylogmax # log scaled y-axis  March 2018
                                 if yval < yfrom: ypos = -yfrom * yrange
-                                #mod->diagbox->Write(text.Format("line draw log low value yval %.4f ypos %d\n", yval, ypos));
+                                #mod->diagbox->Write(text.Format("line draw log low value yval %.4f ypos %d\n", yval, ypos))
                             else: ypos = (yval - yfrom) * yrange
 
                             #gc.StrokeLine(oldx, oldy, i + xbase + xoffset, int(yplot + ybase - ypos))
@@ -402,7 +463,7 @@ class GraphPanel(wx.Panel):
 
                         else:
                             xindex = int(i + xfrom)
-                            if maxdex and maxdex < xindex: break;     # check for end of recorded data range
+                            if maxdex and maxdex < xindex: break     # check for end of recorded data range
                             yval = plot.data[xindex]
 
                             if plot.yscalemode == 1 and yfrom > 0: 
@@ -422,7 +483,7 @@ class GraphPanel(wx.Panel):
                                 portion = xrange / xremain
                                 if portion > 1: portion = 1 / portion  # where x plot range is less than one x step in data
                                 yremain = oldy - (yplot + ybase - yrange * (yval - yfrom))
-                                #mainwin->diagbox->Write(text.Format("xcount %d  xremain %d  portion %.2f  yremain %.2f\n", xcount, xremain, portion, yremain));
+                                #mainwin->diagbox->Write(text.Format("xcount %d  xremain %d  portion %.2f  yremain %.2f\n", xcount, xremain, portion, yremain))
                                 #gc.StrokeLine(oldx, oldy, xplot + xbase + xoffset, oldy - yremain * portion)
                                 #path.MoveToPoint(oldx, oldy)
                                 path.AddLineToPoint(xplot + xbase + xoffset, int(oldy - yremain * portion))

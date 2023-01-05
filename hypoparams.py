@@ -319,24 +319,6 @@ class ParamBox(ToolBox):
     # "{:.0f}".format(xval + plot.xdis)
 
 
-    def InitMenu(self, type = "menu_model"):
-        if type == "menu_model":
-            self.menuControls = wx.Menu()
-            self.menuControls.Append(ID_AutoRun, "Auto Run", "Toggle Autorun", wx.ITEM_CHECK)
-            self.menuControls.Check(ID_AutoRun, self.autorun)
-            self.menuModel = wx.Menu()
-            menuBar = wx.MenuBar()
-            menuBar.Append(self.menuControls, "Controls")
-            menuBar.Append(self.menuModel, "Model")
-
-        if type == "menu_gridbox":
-            self.menuMode = wx.Menu()
-            menuBar = wx.MenuBar()
-            menuBar.Append(self.menuMode, "Mode")
-
-        self.SetMenuBar(menuBar)
-
-
     def ParamStore(self, filetag = ""):
         newtag = False
         if filetag == "": newtag = True
@@ -528,6 +510,24 @@ class ParamBox(ToolBox):
             else: self.AddButton(ID_Default, "RESET", 70, runbox)
 	
         return runbox
+
+
+    def InitMenu(self, type = "menu_model"):
+        if type == "menu_model":
+            self.menuControls = wx.Menu()
+            self.menuControls.Append(ID_AutoRun, "Auto Run", "Toggle Autorun", wx.ITEM_CHECK)
+            self.menuControls.Check(ID_AutoRun, self.autorun)
+            self.menuModel = wx.Menu()
+            menuBar = wx.MenuBar()
+            menuBar.Append(self.menuControls, "Controls")
+            menuBar.Append(self.menuModel, "Model")
+
+        if type == "menu_gridbox":
+            self.menuMode = wx.Menu()
+            menuBar = wx.MenuBar()
+            menuBar.Append(self.menuMode, "Mode")
+
+        self.SetMenuBar(menuBar)
 
 
     def SetCount(self, count):

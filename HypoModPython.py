@@ -225,6 +225,7 @@ class HypoMain(MainFrame):
         self.scalebox = ScaleBox(self, wx.Size(self.scalewidth, -1), self.numdraw)
         #self.scalebox.PanelUpdateAll()
         #self.scalebox.GraphUpdateAll()
+        if self.mod.graphload: self.scalebox.GLoad()
         
         # Sizers
         self.graphsizer.AddSpacer(5)

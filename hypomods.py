@@ -24,6 +24,7 @@ class Mod(wx.EvtHandler):
         self.mainwin = mainwin
         self.tag = tag
         self.type = type
+        self.graphload = False
 
         self.modtools = {}
         self.modbox = None
