@@ -21,8 +21,6 @@ from osmomod import *
 
 
 
-
-
 class DiagBox(ToolBox):
     def __init__(self, parent, title, pos, size):
 

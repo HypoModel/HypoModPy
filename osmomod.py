@@ -7,6 +7,8 @@ from hypomods import *
 from hypoparams import *
 from hypodat import *
 
+ID_heatflag = wx.NewIdRef()
+
 
 
 class OsmoMod(Mod):
@@ -80,6 +82,12 @@ class OsmoBox(ParamBox):
     def __init__(self, model, tag, title, position, size):
         ParamBox.__init__(self, model, title, position, size, tag, 0, 1)
 
+        # Menu 
+        self.InitMenu()
+        self.AddFlag(ID_randomflag, "randomflag", "Fixed Random Seed", 0)
+        self.AddFlag(ID_heatflag, "heatflag", "Heat Effect", 0)
+
+
         # Parameter controls
         #
         # AddCon(tag string, display string, initial value, click increment, decimal places)
@@ -105,7 +113,6 @@ class OsmoBox(ParamBox):
         self.mainbox.AddSpacer(2)
 
         self.panel.Layout()
-        self.autorun = True
 
 
 

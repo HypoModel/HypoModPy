@@ -304,7 +304,7 @@ class ParamBox(ToolBox):
             self.storetag.Show(False)
             self.storetag.SetFont(self.confont)
 
-        self.Bind(wx.EVT_MENU, self.OnAutorun, ID_AutoRun)
+        self.Bind(wx.EVT_MENU, self.OnAutoRun, ID_AutoRun)
         self.Bind(wx.EVT_BUTTON, self.OnRun, ID_Run)
         self.Bind(wx.EVT_BUTTON, self.OnDefault, ID_Default)
         self.Bind(wx.EVT_TEXT_ENTER, self.OnRun)
@@ -317,6 +317,24 @@ class ParamBox(ToolBox):
     #
     # Box mpos x {} y {} shift x {} y {}".format(self.mpos.x, self.mpos.y, shift.x, shift.y)
     # "{:.0f}".format(xval + plot.xdis)
+
+
+    def InitMenu(self, type = "menu_model"):
+        if type == "menu_model":
+            self.menuControls = wx.Menu()
+            self.menuControls.Append(ID_AutoRun, "Auto Run", "Toggle Autorun", wx.ITEM_CHECK)
+            self.menuControls.Check(ID_AutoRun, self.autorun)
+            self.menuModel = wx.Menu()
+            menuBar = wx.MenuBar()
+            menuBar.Append(self.menuControls, "Controls")
+            menuBar.Append(self.menuModel, "Model")
+
+        if type == "menu_gridbox":
+            self.menuMode = wx.Menu()
+            menuBar = wx.MenuBar()
+            menuBar.Append(self.menuMode, "Mode")
+
+        self.SetMenuBar(menuBar)
 
 
     def ParamStore(self, filetag = ""):
@@ -532,7 +550,7 @@ class ParamBox(ToolBox):
         else: toolbox.Show(True)
 
 
-    def AddFlag(self, id, flagtag, flagtext, state, menu):
+    def AddFlag(self, id, flagtag, flagtext, state = False, menu = None):
         if menu == None: menu = self.menuModel
         self.modflags[flagtag] = state
         self.flagtags[id] = flagtag
@@ -584,8 +602,9 @@ class ParamBox(ToolBox):
         self.mod.RunModel()
 
 
-    def OnAutorun(self, event):
+    def OnAutoRun(self, event):
         self.autorun = 1 - self.autorun
+        print(f"AutoRun {self.autorun}")
 
 
     def SetStatus(self, text):

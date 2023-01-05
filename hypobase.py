@@ -107,6 +107,10 @@ ID_Run = wx.NewIdRef()
 ID_AutoRun = wx.NewIdRef()
 ID_Default = wx.NewIdRef()
 
+# Mod IDs
+ID_randomflag = wx.NewIdRef()
+
+
 # Events
 #EVT_MODTHREAD_COMPLETE_ID = wx.NewIdRef()
 
