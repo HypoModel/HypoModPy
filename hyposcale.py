@@ -11,7 +11,7 @@ class ScaleBox(ToolPanel):
         iconpath = parent.initpath
         self.ostype = GetSystem()
         self.numdraw = numdraw   # number of graph panels
-        self.panelset = parent.panelset
+        #self.mainwin.panelset = parent.panelset
         self.gsynch = 0    # x-axis synchronisation toggle
         self.synchcon = 0  # index of graph panel with synch control
         self.gflags = {}
@@ -45,7 +45,7 @@ class ScaleBox(ToolPanel):
         vbox.AddSpacer(5)
         self.vconbox = wx.BoxSizer(wx.VERTICAL)
 
-        for graphpanel in self.panelset:
+        for graphpanel in self.mainwin.panelset:
             self.AddGraphConsole(graphpanel)
             #gsync[i] = NULL;
             
@@ -110,7 +110,7 @@ class ScaleBox(ToolPanel):
         graphfile.Open('w')
 
         # Write Panel PlotSet Tags
-        for graphpanel in self.panelset:
+        for graphpanel in self.mainwin.panelset:
             graphfile.WriteLine("{} {}".format(graphpanel.index, graphpanel.settag))
 
          # Write Graph Flag Values
@@ -175,9 +175,10 @@ class ScaleBox(ToolPanel):
             # Read graph panel
             if mode == "panel":
                 index = int(readdata[0])    # panel index
+                if index >= len(self.mainwin.panelset): break
                 tag = readdata[1]  # plot set tag
                 if tag in pbase.plotstore or tag in pbase.setstore: 
-                    self.panelset[index].settag = tag
+                    self.mainwin.panelset[index].settag = tag
                     DiagWrite(f"GLoad panel {index} graph/set {tag}\n")
                 else: DiagWrite(f"GLoad graph/set {tag} not found\n")
                 if len(readdata) > 2: 
@@ -207,9 +208,9 @@ class ScaleBox(ToolPanel):
 
     def XSynch(self, pos = -1):
         if self.gsynch:
-            plotzero = self.panelset[self.synchcon].GetFrontPlot()
+            plotzero = self.mainwin.panelset[self.synchcon].GetFrontPlot()
             if not plotzero.synchx: return
-            for graphpanel in self.panelset:
+            for graphpanel in self.mainwin.panelset:
                 # sync check box code goes here
                 plot = graphpanel.GetFrontPlot()
                 if not plot.synchx: continue
@@ -234,7 +235,7 @@ class ScaleBox(ToolPanel):
         
     def ScaleUpdate(self):
         self.XSynch()
-        for graphpanel in self.panelset:
+        for graphpanel in self.mainwin.panelset:
             self.PanelUpdate(graphpanel)
             self.GraphUpdate(graphpanel)
       
@@ -243,12 +244,12 @@ class ScaleBox(ToolPanel):
         self.synchcon = index
         self.XSynch(pos)
         if(pos == -1 or self.gsynch):
-            for graphpanel in self.panelset:
+            for graphpanel in self.mainwin.panelset:
                 self.PanelUpdate(graphpanel)
                 self.GraphUpdate(graphpanel)
         else:
-            self.PanelUpdate(self.panelset[index])
-            self.GraphUpdate(self.panelset[index])
+            self.PanelUpdate(self.mainwin.panelset[index])
+            self.GraphUpdate(self.mainwin.panelset[index])
 
 
     def GraphUpdate(self, graphpanel):
@@ -257,7 +258,7 @@ class ScaleBox(ToolPanel):
 
 
     def GraphUpdateAll(self):
-        for graphpanel in self.panelset:
+        for graphpanel in self.mainwin.panelset:
             graphpanel.ScrollUpdate()
             graphpanel.Refresh()
 
@@ -284,12 +285,12 @@ class ScaleBox(ToolPanel):
 
 
     def PanelUpdateAll(self):
-        for graphpanel in self.panelset:
+        for graphpanel in self.mainwin.panelset:
             self.PanelUpdate(graphpanel)
         
 
     def OnOK(self, event):
-        for graphpanel in self.panelset:
+        for graphpanel in self.mainwin.panelset:
             plot = graphpanel.GetFrontPlot()
             oldxfrom = plot.xfrom
             oldxto = plot.xto
@@ -388,10 +389,17 @@ class ScaleBox(ToolPanel):
         psetbox.Add(zoombox, 0, wx.ALIGN_CENTRE_HORIZONTAL)
         graphpanel.consolebox.Add(psetbox, 0, wx.ALIGN_CENTRE_HORIZONTAL)
         self.vconbox.Add(graphpanel.consolebox, 1, wx.ALIGN_CENTRE_HORIZONTAL, 0)
+        self.vconbox.Layout()
+
+
+    def RemoveGraphConsole(self, graphpanel):
+        graphpanel.consolebox.Clear(True)
+        self.vconbox.Detach(graphpanel.consolebox)
+        self.vconbox.Layout()
 
 
     def OnYZoomIn(self, event):
-        graphpanel = self.panelset[event.GetId() - 1000]
+        graphpanel = self.mainwin.panelset[event.GetId() - 1000]
         if len(graphpanel.dispset) == 0: return
         plot = graphpanel.GetFrontPlot()
         diff = plot.yto - plot.yfrom
@@ -408,7 +416,7 @@ class ScaleBox(ToolPanel):
         
     
     def OnYZoomOut(self, event):
-        graphpanel = self.panelset[event.GetId() - 1010]
+        graphpanel = self.mainwin.panelset[event.GetId() - 1010]
         if len(graphpanel.dispset) == 0: return
         plot = graphpanel.GetFrontPlot()
         diff = plot.yto - plot.yfrom
@@ -423,7 +431,7 @@ class ScaleBox(ToolPanel):
 
 
     def OnXZoomIn(self, event):
-        graphpanel = self.panelset[event.GetId() - 1100]
+        graphpanel = self.mainwin.panelset[event.GetId() - 1100]
         if len(graphpanel.dispset) == 0: return
         plot = graphpanel.GetFrontPlot()
         diff = plot.xto - plot.xfrom
@@ -434,7 +442,7 @@ class ScaleBox(ToolPanel):
         
 
     def OnXZoomOut(self, event):
-        graphpanel = self.panelset[event.GetId() - 1110]
+        graphpanel = self.mainwin.panelset[event.GetId() - 1110]
         if len(graphpanel.dispset) == 0: return
         plot = graphpanel.GetFrontPlot()
         oldxto = plot.xto
@@ -475,7 +483,7 @@ class ScaleBox(ToolPanel):
         diag = True
         if diag: DiagWrite("GSwitch call\n")
 
-        for graphpanel in self.panelset:
+        for graphpanel in self.mainwin.panelset:
             plotset = plotbase.GetSet(graphpanel.settag)
             #plotset = plotbase.GetSet(self.pstags[i])
             if not plotset: continue

@@ -120,6 +120,7 @@ ID_UnZoom = wx.NewIdRef()
 ID_MultiEPS = wx.NewIdRef()
 ID_MultiCell = wx.NewIdRef()
 ID_Output = wx.NewIdRef()
+ID_GraphRemove = wx.NewIdRef()
 
 
 # Mod IDs

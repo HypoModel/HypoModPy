@@ -212,8 +212,7 @@ class HypoMain(MainFrame):
         self.panelset = []
         for graph in range(self.numdraw):
             graphdisp = self.dispset[graph]
-            graphpanel = GraphPanel(self)
-            graphpanel.index = graph
+            graphpanel = GraphPanel(self, graph)
             graphpanel.SetFront(graphdisp)
             self.panelset.append(graphpanel)
             self.graphsizer.Add(graphpanel, 1, wx.EXPAND)
@@ -230,7 +229,7 @@ class HypoMain(MainFrame):
         if self.mod.graphload: self.scalebox.GLoad()
         
         # Sizers
-        self.graphsizer.AddSpacer(5)
+        #self.graphsizer.AddSpacer(5)
         mainsizer.Add(self.scalebox, 0, wx.EXPAND)
         mainsizer.Add(self.graphsizer, 1, wx.EXPAND)
         self.SetSizer(mainsizer)
@@ -253,8 +252,9 @@ class HypoMain(MainFrame):
         newsize = self.GetSize()
         graphsize = self.graphsizer.GetSize()
 
-        snum = "newsize X {} graphsize X {}".format(newsize.x, graphsize.x)
+        snum = f"newsizeX {newsize.x} graphsizeX {graphsize.x} newsizeY {newsize.y} graphsizeY {graphsize.y}"
         self.SetStatusText(snum)
+        #DiagWrite(snum + '\n')
 
         gspacex = graphsize.x
         xplot = gspacex - 55
@@ -281,6 +281,7 @@ class HypoMain(MainFrame):
 
         itemDiag = menuTools.Append(wx.ID_ANY, "Diagnostic Box")
         itemGrid = menuTools.Append(wx.ID_ANY, "Data Grid")
+        itemAddGraph = menuTools.Append(wx.ID_ANY, "Add Graph")
         #menuTools.Append(ID_Neuro, "Neuro Box")
         #menuTools.Append(ID_Plot, "Plot Box")
         #menuTools.Append(ID_Sound, "Sound Box")
@@ -301,6 +302,42 @@ class HypoMain(MainFrame):
         self.Bind(wx.EVT_MENU, self.OnAbout, itemAbout)
         self.Bind(wx.EVT_MENU, self.OnGridBox, itemGrid)
         self.Bind(wx.EVT_MENU, self.OnDiagBox, itemDiag)
+        self.Bind(wx.EVT_MENU, self.OnGraphAdd, itemAddGraph)
+
+
+    def AddGraph(self):
+        newindex = self.numdraw
+        newdisp = GraphDisp()
+        newdisp.Add(PlotDat())
+        self.dispset.append(newdisp)
+        newpanel = GraphPanel(self, newindex)
+        newpanel.SetFront(newdisp)
+        self.panelset.append(newpanel)
+        self.graphsizer.Add(newpanel, 1, wx.EXPAND)
+        self.scalebox.AddGraphConsole(newpanel)
+        self.scalebox.Refresh()
+        self.numdraw += 1
+
+        self.graphsizer.Layout()
+        self.SizeUpdate()
+        self.Refresh()
+
+
+    def RemoveGraph(self, oldpanel):
+        self.SetStatusText("Remove Graph")
+        self.graphsizer.Detach(oldpanel)
+        self.numdraw -= 1
+        self.scalebox.RemoveGraphConsole(oldpanel)
+        oldpanel.Hide()
+        self.panelset.remove(oldpanel)
+        self.graphsizer.Layout()
+        self.SizeUpdate()
+        self.Refresh()
+
+
+    def OnGraphAdd(self, event):
+        self.SetStatusText("Add Graph")
+        self.AddGraph()
 
 
     def OnQuit(self, event):

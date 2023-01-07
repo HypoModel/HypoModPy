@@ -33,7 +33,7 @@ class GraphDisp():
 
 
 class GraphPanel(wx.Panel):
-    def __init__(self, parent):
+    def __init__(self, parent, index):
         wx.Panel.__init__(self, parent, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize)
         self.numdisps = 0
         self.frontdisp = 0
@@ -44,6 +44,7 @@ class GraphPanel(wx.Panel):
         self.subplot = 0
         self.settag = ""
         self.mainwin = parent
+        self.index = index
 
         # Draw Parameters
         self.xbase = 40
@@ -74,6 +75,12 @@ class GraphPanel(wx.Panel):
         self.Bind(wx.EVT_ERASE_BACKGROUND, self.OnErase)
 
         self.Bind(wx.EVT_RIGHT_DOWN, self.OnRightClick)
+        self.Bind(wx.EVT_MENU, self.OnGraphRemove, ID_GraphRemove)
+        
+
+    def OnGraphRemove(self, event):
+        self.Refresh()
+        self.mainwin.RemoveGraph(self)
 
 
     def OnErase(self, event):
@@ -178,6 +185,7 @@ class GraphPanel(wx.Panel):
                 menuPlot.Append(ID_GraphEPS, "Export EPS")
                 menuPlot.Append(ID_Scale, "Plot Panel")
                 menuPlot.Append(ID_UnZoom, "Zoom Undo")
+                menuPlot.Append(ID_GraphRemove, "Delete Graph")
                 menuPlot.AppendSeparator()
             else:
                 #menuPlot->Append(ID_GraphRemove, "Delete Graph")
@@ -233,7 +241,6 @@ class GraphPanel(wx.Panel):
         self.PopupMenu(menuPlot, pos.x + 20, pos.y)
 
 
-
     def OnGraphSelectPlot(self, event):
         id = event.GetId()
         DiagWrite(f"Graph Plot Select ID {id}\n")
@@ -258,7 +265,6 @@ class GraphPanel(wx.Panel):
         #mod->diagbox->Write(text.Format("gcodes index %d settag %s\n", graphindex, mod->graphbase->GetSetTag(dispset[0]->sdex)));
 
         self.mainwin.scalebox.ScaleUpdate()
-
 
 
     def OnGraphSelectSet(self, event):
