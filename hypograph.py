@@ -42,9 +42,8 @@ class GraphPanel(wx.Panel):
         self.gsynch = 0
         self.scalebox = None
         self.subplot = 0
-        self.pstag = ""
-
-        self.SetBackgroundColour(wx.WHITE)
+        self.settag = ""
+        self.mainwin = parent
 
         # Draw Parameters
         self.xbase = 40
@@ -52,8 +51,13 @@ class GraphPanel(wx.Panel):
         self.xplot = 500
         self.yplot = 200
         self.xstretch = parent.xstretch
-
         self.colourpen = parent.colourpen
+        self.SetBackgroundColour(wx.WHITE)
+
+        # Plot Menu Coding
+        self.menuIdPlotMap = {}
+        self.menuIdSetMap = {}
+
 
         if self.ostype == 'Mac':
             self.textfont = wx.Font(wx.FontInfo(10).FaceName("Tahoma"))
@@ -68,6 +72,8 @@ class GraphPanel(wx.Panel):
         self.Bind(wx.EVT_PAINT, self.OnPaint)
         self.Bind(wx.EVT_SCROLL, self.OnScroll)
         self.Bind(wx.EVT_ERASE_BACKGROUND, self.OnErase)
+
+        self.Bind(wx.EVT_RIGHT_DOWN, self.OnRightClick)
 
 
     def OnErase(self, event):
@@ -162,8 +168,10 @@ class GraphPanel(wx.Panel):
 
 
     def OnRightClick(self, event):
+        pos = event.GetPosition()
         menuPlot = wx.Menu()
         subPlot = None
+        mod = self.mainwin.mod
 
         if not basicmode:
             if studentmode:
@@ -182,41 +190,99 @@ class GraphPanel(wx.Panel):
                 menuPlot.Append(ID_Output, "Grid Output")
                 menuPlot.AppendSeparator()
     
-        for pstag in self.mod.plotbase.setstore:
-            plotset = self.mod.plotbase.setstore[pstag]
-            if plotset.submenu:
-                menuitem = wx.MenuItem(menuPlot, 1000 + i, plotset.tag, "", wx.ITEM_CHECK)
+        for settag in mod.plotbase.setstore:
+            plotset = mod.plotbase.setstore[settag]
+            if not plotset.submenu:
+                menuitem = wx.MenuItem(menuPlot, wx.ID_ANY, settag, "", wx.ITEM_CHECK)
 #ifndef OSX
                 #menuitem->SetBitmaps(radio_on, radio_off)
 #endif
                 menuPlot.Append(menuitem)
                 menuitem.Check(False)
+                self.menuIdSetMap[menuitem.GetId()] = settag
+                self.Bind(wx.EVT_MENU, self.OnGraphSelectSet, menuitem)
+
                 #menuPlot->AppendRadioItem(1000 + i, graphset->name)
             else:
                 subPlot = wx.Menu()
-                for(j=0 j<graphset->numgraphs j++) {
-                menuitem = new wxMenuItem(subPlot, 2000 + graphset->gindex[j], graphset->GetPlot(j)->gname, "", wxITEM_CHECK)
+                for plottag in plotset.plottags:
+                    menuitem = wx.MenuItem(subPlot, wx.ID_ANY, plottag, "", wx.ITEM_CHECK)
 #ifndef OSX
-                //menuitem->SetBitmaps(radio_on, radio_off)
+                    #menuitem->SetBitmaps(radio_on, radio_off)
 #endif
-                subPlot->Append(menuitem)
-                menuitem->Check(false)
-            }
-            //subPlot->AppendRadioItem(2000 + graphset->gindex[j], graphset->GetPlot(j)->gname)
-            menuPlot->Append(ID_subplot, graphset->name, subPlot)
-            //menuPlot->Check(ID_subplot, true)
-        }
-    }
+                    subPlot.Append(menuitem)
+                    menuitem.Check(False)
+                    self.menuIdPlotMap[menuitem.GetId()] = plottag
+                    self.Bind(wx.EVT_MENU, self.OnGraphSelectPlot, menuitem)
 
-    Connect(1000, 1000 + mod->graphbase->numsets - 1, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(GraphWindow3::OnGraphSelectSet))
-    Connect(2000, 2000 + mod->graphbase->numgraphs, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(GraphWindow3::OnGraphSelectPlot))
+                #subPlot->AppendRadioItem(2000 + graphset->gindex[j], graphset->GetPlot(j)->gname)
+                menuPlot.Append(wx.ID_ANY, settag, subPlot)
+                #menuPlot->Check(ID_subplot, true)
+    
+        #Connect(1000, 1000 + mod->graphbase->numsets - 1, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(GraphWindow3::OnGraphSelectSet))
+        #Connect(2000, 2000 + mod->graphbase->numgraphs, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(GraphWindow3::OnGraphSelectPlot))
 
-    //menuPlot->Check(1000, false)
-    graphset = mod->graphbase->GetSet(dispset[0]->sdex)
-    if(!graphset->submenu) menuPlot->Check(1000 + dispset[0]->sdex, true)
-    else if(subPlot) subPlot->Check(2000 + dispset[0]->gdex, true)
-    mainwin->diagbox->Write(text.Format("\ngraph menu set %d\n", dispset[0]->sdex))
-    PopupMenu(menuPlot, pos.x + 20, pos.y)
+        #menuPlot->Check(1000, false)
+
+        #Signal current plot/set
+        #graphset = mod->graphbase->GetSet(dispset[0]->sdex)
+        #if(!graphset->submenu) menuPlot->Check(1000 + dispset[0]->sdex, true)
+        #else if(subPlot) subPlot->Check(2000 + dispset[0]->gdex, true)
+        #mainwin->diagbox->Write(text.Format("\ngraph menu set %d\n", dispset[0]->sdex))
+
+        self.PopupMenu(menuPlot, pos.x + 20, pos.y)
+
+
+
+    def OnGraphSelectPlot(self, event):
+        id = event.GetId()
+        DiagWrite(f"Graph Plot Select ID {id}\n")
+
+        plotbase = self.mainwin.mod.plotbase
+        plottag = self.menuIdPlotMap[id]
+        self.SetFrontPlot(plotbase.GetPlot(plottag))
+
+        self.settag = plotbase.GetPlot(plottag).settag
+        plotset = plotbase.GetSet(self.settag)
+       
+        if plotset.submenu:
+            plotset.subtag = plottag
+            #plotset.subplot[graphindex] = gdex;
+            #mod->gtags[graphindex] = graphset->subtag;
+
+        #graph = (*mod->graphbase)[gdex];
+        #mod->diagbox->Write(text.Format("OnGraph id %d set %d name %s plot %d name %s tag %s\n", id, graphset->sdex, graphset->name, gdex, graph->gname, mod->graphbase->GetTag(gdex)));
+        #mod->diagbox->Write(graphset->Display());
+
+        #mod->gcodes[graphindex] = mod->graphbase->GetSetTag(dispset[0]->sdex);
+        #mod->diagbox->Write(text.Format("gcodes index %d settag %s\n", graphindex, mod->graphbase->GetSetTag(dispset[0]->sdex)));
+
+        self.mainwin.scalebox.ScaleUpdate()
+
+
+
+    def OnGraphSelectSet(self, event):
+        id = event.GetId()
+        DiagWrite(f"Graph Set Select ID {id}\n")
+
+        plotbase = self.mainwin.mod.plotbase
+
+        self.settag = self.menuIdSetMap[id]
+        plotset = plotbase.GetSet(self.settag)
+        plottag = plotset.GetPlot(self.mainwin.scalebox.gflags)
+
+        self.SetFrontPlot(plotbase.GetPlot(plottag))
+        #self.settag = plotset.tag
+
+        #graph = (*mod->graphbase)[gdex];
+        #mod->diagbox->Write(text.Format("OnGraph id %d set %d name %s plot %d name %s\n", id, graphset->sdex, graphset->name, gdex, graph->gname));
+        #mod->diagbox->Write(graphset->Display());
+
+        #mod->gcodes[graphindex] = mod->graphbase->GetSetTag(id-1000);
+
+        #mod->diagbox->Write(text.Format("gcodes index %d settag %s\n", graphindex, mod->graphbase->GetSetTag(id-1000)));
+
+        self.mainwin.scalebox.ScaleUpdate()
 
 
     def PaintBackground(self, dc):
@@ -251,7 +317,6 @@ class GraphPanel(wx.Panel):
         yplot = self.yplot
         xbase = self.xbase
         ybase = self.ybase
-
 
         for graphdisp in self.dispset:
             for plot in graphdisp.plots:

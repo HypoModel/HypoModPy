@@ -5,8 +5,8 @@ from hypobase import *
 
 class PlotSet():
     def __init__(self):
-        self.ptags = []
-        self.pcodes = {}
+        self.plottags = []
+        self.plotcodes = {}
         self.label = ""
         self.tag = ""
         self.modeflags = []           # Set of flags is used to control the selected, displayed graph 
@@ -17,10 +17,10 @@ class PlotSet():
         #self.subplot = []
 
 
-    def AddPlot(self, ptag, pcode = -1): 
-        self.ptags.append(ptag)
-        self.pcodes[ptag] = pcode
-        if len(self.ptags) > 1: self.single = False
+    def AddPlot(self, plottag, plotcode = -1): 
+        self.plottags.append(plottag)
+        self.plotcodes[plottag] = plotcode
+        if len(self.plottags) > 1: self.single = False
 
 
     def AddFlag(self, flag, weight):
@@ -28,18 +28,18 @@ class PlotSet():
         self.modeweights.append(weight)
 
 
-    def GetPlot(self, subplot, gflags):
-        if self.single: return self.ptags[0]
+    def GetPlot(self, gflags, subplot = None):
+        if self.single: return self.plottags[0]
 
         if self.submenu: 
-            if subplot: return self.ptags[subplot]    
-            else: return self.ptags[0]
+            if subplot: return self.plottags[subplot]    
+            else: return self.plottags[0]
 
         self.modesum = 0
-        plottag = self.ptags[0]
+        plottag = self.plottags[0]
         for modeflag in self.modeflags: self.modesum = self.modesum + gflags[modeflag] * self.modeweights[modeflag]
-        for tag in self.ptags:
-            if self.pcodes[tag] == self.modesum: plottag = self.ptag[tag]
+        for tag in self.plottags:
+            if self.plotcodes[tag] == self.modesum: plottag = self.plottags[tag]
 
         return plottag
         
@@ -272,9 +272,9 @@ class PlotBase():
             #DiagWrite(f"Base file version {version}\n")
             #DiagWrite(f"Readline {readline}\n")
 
-            ptag, readline = ParseString(readline, 'g')     # parse plot tag
+            plottag, readline = ParseString(readline, 'g')     # parse plot tag
             #DiagWrite(f"ptag {ptag}\n")
-            plot = self.plotstore[ptag]                     # access plot from store
+            plot = self.plotstore[plottag]                     # access plot from store
             if plot: plot.LoadDat(readline, version)        # parse plot parameters
             pcount += 1                                     # count only for diagnostics
 
@@ -282,11 +282,11 @@ class PlotBase():
         DiagWrite(f"BaseLoad {pcount} graphs\n")
 
 
-    def AddPlot(self, newplot, plottag, pstag = ""):       # default settag = "", for no set use settag = "null"
+    def AddPlot(self, newplot, plottag, settag = ""):       # default settag = "", for no set use settag = "null"
         plotset = None
         diag = True
 
-        if diag: DiagWrite("Plotbase Add {} to set {}, numgraphs {}\n".format(plottag, pstag, len(self.plotstore)))
+        if diag: DiagWrite("Plotbase Add {} to set {}, numgraphs {}\n".format(plottag, settag, len(self.plotstore)))
     
         # colour setting is done here since GraphDat doesn't have access to mainwin colour chart
         newplot.strokecolour = self.mainwin.colourpen[newplot.colour]
@@ -297,13 +297,13 @@ class PlotBase():
 
         # If single graph, create new single graph set, otherwise add to set 'settag'
         # single plot sets use the same tag as the plot
-        if pstag != None:
-            if pstag == "": plotset = self.NewSet(newplot.label, plottag)
-            else: plotset = self.setstore[pstag]
+        if settag != None:
+            if settag == "": plotset = self.NewSet(newplot.label, plottag)
+            else: plotset = self.setstore[settag]
 
             if plotset:   # extra check, should only fail if 'settag' is invalid
                 plotset.AddPlot(plottag)
-                newplot.pstag = pstag
+                newplot.settag = settag
 
         if diag: DiagWrite("GraphSet Add OK\n")
 

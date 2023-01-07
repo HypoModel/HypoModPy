@@ -111,7 +111,7 @@ class ScaleBox(ToolPanel):
 
         # Write Panel PlotSet Tags
         for graphpanel in self.panelset:
-            graphfile.WriteLine("{} {}".format(graphpanel.index, graphpanel.pstag))
+            graphfile.WriteLine("{} {}".format(graphpanel.index, graphpanel.settag))
 
          # Write Graph Flag Values
         graphfile.WriteLine("")
@@ -157,7 +157,9 @@ class ScaleBox(ToolPanel):
         self.storetag.SetValue(filetag)
 
         # Load file
-        if not graphfile.Open('r'): return
+        if not graphfile.Open('r'): 
+            DiagWrite("GLoad graphfile error\n")
+            return
         filetext = graphfile.ReadLines()
         mode = "panel"
 
@@ -171,15 +173,17 @@ class ScaleBox(ToolPanel):
             readdata = readline.split(' ')
 
             # Read graph panel
-            if mode == "param":
-                index = readdata[0]    # panel index
-                stag = readdata[1]  # plot set tag
-                if stag in pbase.plotstore or stag in pbase.setstore: self.panelset[index].pstag = stag
+            if mode == "panel":
+                index = int(readdata[0])    # panel index
+                tag = readdata[1]  # plot set tag
+                if tag in pbase.plotstore or tag in pbase.setstore: 
+                    self.panelset[index].settag = tag
+                    DiagWrite(f"GLoad panel {index} graph/set {tag}\n")
                 else: DiagWrite(f"GLoad graph/set {tag} not found\n")
                 if len(readdata) > 2: 
-                    tag = readdata[2]
-                    if tag in pbase.plotstore:
-                        if stag in pbase.setstore: pbase.GetSet(stag).subplot[index] = tag      # ported code, likely needs work, odd use of index
+                    subtag = readdata[2]
+                    if subtag in pbase.plotstore:
+                        if tag in pbase.setstore: pbase.GetSet(tag).subplot[index] = subtag      # ported code, likely needs work, odd use of index
 
             # Read graph flags
             if mode == "flag":
@@ -472,13 +476,13 @@ class ScaleBox(ToolPanel):
         if diag: DiagWrite("GSwitch call\n")
 
         for graphpanel in self.panelset:
-            plotset = plotbase.GetSet(graphpanel.pstag)
+            plotset = plotbase.GetSet(graphpanel.settag)
             #plotset = plotbase.GetSet(self.pstags[i])
             if not plotset: continue
-            plottag = plotset.GetPlot(graphpanel.subplot, self.gflags)
+            plottag = plotset.GetPlot(self.gflags, graphpanel.subplot)
             if not plottag: continue
-            if diag: DiagWrite("graphpanel {}  pstag {}  plot {}  modesum {}  sync {}\n".format( 
-                graphpanel.index, graphpanel.pstag, plotset.tag, plotset.modesum, plotbase.GetPlot(plottag).synchx))
+            if diag: DiagWrite("graphpanel {}  set {}  plot {}  modesum {}  sync {}\n".format( 
+                graphpanel.index, graphpanel.settag, plotset.tag, plotset.modesum, plotbase.GetPlot(plottag).synchx))
 
             # Graph Switch commands
             if command == "XSYNCH":
@@ -489,7 +493,7 @@ class ScaleBox(ToolPanel):
 
             # Set Panel Plots
             graphpanel.SetFrontPlot(plotbase.GetPlot(plottag))
-            graphpanel.pstag = plotset.tag
+            graphpanel.settag = plotset.tag
         
         # Update scales and plots
         self.ScaleUpdate()

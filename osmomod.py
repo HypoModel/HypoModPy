@@ -38,7 +38,6 @@ class OsmoMod(Mod):
 
 
     def PlotData(self):
-
         ## Data plots
         ##
         ## PlotDat(data pointer, xfrom, xto, yfrom, yto, label string, plot type, bin size, colour)
@@ -48,10 +47,11 @@ class OsmoMod(Mod):
         self.plotbase.AddPlot(PlotDat(self.osmodata.osmo, 0, 2000, 0, 100, "osmo", "line", 1, "green"), "osmo")
         # self.graphbase.Add(PlotDat(self.osmodata.vaso, 0, 2000, 0, 100, "vaso", 4, 1, "purple"), "vaso")
 
-        # Default plots
-        self.mainwin.panelset[0].pstag = "water"
-        self.mainwin.panelset[1].pstag = "salt"
-        self.mainwin.panelset[2].pstag = "osmo"
+
+    def DefaultPlots(self):
+        self.mainwin.panelset[0].settag = "water"
+        self.mainwin.panelset[1].settag = "salt"
+        self.mainwin.panelset[2].settag = "osmo"
 
 
     def OnModThreadComplete(self, event):
@@ -71,12 +71,12 @@ class OsmoMod(Mod):
 
 class OsmoDat():
     def __init__(self):
-        storesize = 10000
+        self.storesize = 10000
 
-        self.water = np.zeros(storesize + 1)
-        self.salt = np.zeros(storesize + 1)
-        self.osmo = np.zeros(storesize + 1)
-        self.vaso = np.zeros(storesize + 1)
+        self.water = np.zeros(self.storesize + 1)
+        self.salt = np.zeros(self.storesize + 1)
+        self.osmo = np.zeros(self.storesize + 1)
+        self.vaso = np.zeros(self.storesize + 1)
 
 
 
@@ -140,32 +140,27 @@ class OsmoModel(ModThread):
         if self.randomflag: random.seed(0)
         else: random.seed(datetime.now())
 
-        self.osmomodel()
+        self.Model()
 
         wx.QueueEvent(self.mod, ModThreadEvent(ModThreadCompleteEvent))
 
-        #self.scalebox.GraphUpdate()
 
-
-    def osmomodel(self):
+    def Model(self):
         osmodata = self.mod.osmodata
         osmobox = self.mod.osmobox
         osmoparams = self.mod.osmobox.GetParams()
 
-
         # Read parameters
         runtime = int(osmoparams["runtime"])
         waterloss = osmoparams["waterloss"]
-
 
         # Initialise variables
         water = 50
         salt = 2000
         osmo = salt / water
 
-
         # Initialise record stores
-        for i in range(10000):
+        for i in range(osmodata.storesize):
             osmodata.water[i] = 0 
             osmodata.salt[i] = 0
             osmodata.osmo[i] = 0
@@ -175,7 +170,6 @@ class OsmoModel(ModThread):
         osmodata.osmo[0] = osmo
         osmobox.countmark = 0
 
-        
         # Run model loop
         for i in range(1, runtime + 1):
 

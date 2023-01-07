@@ -30,7 +30,7 @@ class Mod(wx.EvtHandler):
         self.modbox = None
 
         self.plotbase = PlotBase(mainwin)
-        self.pstags = []
+        self.settags = []
 
         self.Bind(EVT_MODTHREAD_COMPLETE, self.OnModThreadComplete)
 

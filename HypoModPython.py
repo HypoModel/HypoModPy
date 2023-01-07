@@ -220,6 +220,8 @@ class HypoMain(MainFrame):
 
         # Mod Init
         self.mod = OsmoMod(self, "osmomod")
+        self.mod.DefaultPlots()
+        
 
         # Scale Box
         self.scalebox = ScaleBox(self, wx.Size(self.scalewidth, -1), self.numdraw)
