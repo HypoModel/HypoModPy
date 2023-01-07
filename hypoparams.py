@@ -664,7 +664,6 @@ class ParamBox(ToolBox):
         self.storetag.Show(True)
 
         self.AddButton(wx.ID_ANY, "Store", 38, parambuttons).Bind(wx.EVT_BUTTON, self.OnParamStore)
-        #if GetSystem() != "Mac": 
         parambuttons.AddSpacer(2)
         self.AddButton(wx.ID_ANY, "Load", 38, parambuttons).Bind(wx.EVT_BUTTON, self.OnParamLoad)
         

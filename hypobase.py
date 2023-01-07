@@ -121,7 +121,14 @@ ID_MultiEPS = wx.NewIdRef()
 ID_MultiCell = wx.NewIdRef()
 ID_Output = wx.NewIdRef()
 ID_GraphRemove = wx.NewIdRef()
-
+ID_SelectAll = wx.NewIdRef()
+ID_Cut  = wx.NewIdRef()
+ID_Copy = wx.NewIdRef()
+ID_Paste = wx.NewIdRef()
+ID_PasteTranspose = wx.NewIdRef()
+ID_Undo = wx.NewIdRef()
+ID_Insert = wx.NewIdRef()
+ID_Bold = wx.NewIdRef()
 
 # Mod IDs
 ID_randomflag = wx.NewIdRef()
