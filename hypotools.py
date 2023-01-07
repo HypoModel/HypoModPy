@@ -2,6 +2,9 @@
 import wx
 import os
 from hypobase import *
+from pubsub import pub
+
+
 
 
 class ToolText(wx.StaticText):
@@ -264,6 +267,20 @@ class TextBox(wx.TextCtrl):
             self.SetValue("{:.1f}".format(value))
         else:
             self.SetValue("{:.0f}".format(value))  
+
+
+
+class DiagBox(ToolBox):
+    def __init__(self, parent, title, pos, size):
+
+        ToolBox.__init__(self, parent, "DiagBox", title, pos, size)
+
+        self.textbox = wx.TextCtrl(self.panel, -1, "", wx.DefaultPosition, wx.DefaultSize, wx.TE_MULTILINE)
+        self.mainbox.Add(self.textbox, 1, wx.EXPAND)
+
+
+    def Write(self, text):
+        self.textbox.AppendText(text)  
 
 
 

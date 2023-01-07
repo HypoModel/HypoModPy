@@ -5,6 +5,8 @@ import wx
 from pathlib import Path
 from pubsub import pub
 
+#from hypotools import *
+
 
 def GetSystem():
     oslabel = wx.GetOsDescription()
@@ -16,7 +18,6 @@ def GetSystem():
 
 def DiagWrite(text):
     pub.sendMessage("diagbox", message=text)
-
 
 
 
@@ -96,7 +97,6 @@ def ParseFloat(readline, chartag = None):
 mainpath = ""
 projectpath = "/Users/duncan/Model"
 modpath = "/Users/duncan/Model"
-#modpathwin  = "C:\Users\Duncan\Model"
 modpathwin = "C:/Users/Duncan/Model"
 
 
@@ -125,22 +125,3 @@ ID_GraphRemove = wx.NewIdRef()
 
 # Mod IDs
 ID_randomflag = wx.NewIdRef()
-
-
-# Events
-#EVT_MODTHREAD_COMPLETE_ID = wx.NewIdRef()
-
-#def EVT_MODTHREAD_COMPLETE(win, func):
-#    """Define Result Event."""
- #   win.Connect(-1, -1, EVT_MODTHREAD_COMPLETE_ID, func)
-
-#class ModThreadCompleteEvent(wx.PyEvent):
-#    """Simple event to carry arbitrary result data."""
-#    def __init__(self, data):
- #       """Init Result Event."""
-#        wx.PyEvent.__init__(self)
- #       self.SetEventType(EVT_MODTHREAD_COMPLETE_ID)
-#        self.data = data
-
-
-

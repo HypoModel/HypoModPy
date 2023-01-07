@@ -1,6 +1,6 @@
 
 import wx
-from hypocontrols import *
+from hypotools import *
 
 
 

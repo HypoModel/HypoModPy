@@ -1,7 +1,7 @@
 
 import wx
 from math import log
-from hypocontrols import *
+from hypotools import *
 
 
 
