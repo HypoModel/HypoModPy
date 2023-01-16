@@ -370,13 +370,15 @@ class ParamBox(ToolBox):
         # Write Flag Values
         paramfile.WriteLine("")
         for flagtag in self.flagtags.values():
-            outline = "%.0f".format(self.modflags[flagtag])
+            outline = f"{self.modflags[flagtag]}"
+            #outline = "%.0f".format(self.modflags[flagtag])
             paramfile.WriteLine(flagtag + " " + outline)
 
         # Write Check Values
         paramfile.WriteLine("")
         for checktag in self.checktags.values():
-            outline = "%.0f".format(self.modflags[checktag])
+            outline = f"{self.modflags[checktag]}"
+            #outline = "%.0f".format(self.modflags[checktag])
             paramfile.WriteLine(checktag + " " + outline)
   
         # Close File

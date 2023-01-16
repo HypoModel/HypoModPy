@@ -97,7 +97,7 @@ def ParseFloat(readline, chartag = None):
 mainpath = ""
 projectpath = "/Users/duncan/Model"
 modpath = "/Users/duncan/Model"
-modpathwin = "C:/Users/Duncan/Model"
+#modpathwin = "C:/Users/Duncan/Model"
 
 
 # Preference Flags

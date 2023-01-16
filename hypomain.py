@@ -162,6 +162,8 @@ class HypoMain(MainFrame):
         self.prefs["viewwidth"] = 400
         self.prefs["viewheight"] = 600
 
+        self.SetMinSize(wx.Size(500, 400))
+
         # Load Prefs
         self.HypoLoad()
         self.SetSize(self.prefs["viewwidth"], self.prefs["viewheight"])
@@ -188,10 +190,11 @@ class HypoMain(MainFrame):
         self.panelset = []
         for graph in range(self.numdraw):
             graphdisp = self.dispset[graph]
-            graphpanel = GraphPanel(self, graph)
+            graphpanel = GraphPanel(self, graph, wx.Size(100, 110))
             graphpanel.SetFront(graphdisp)
             self.panelset.append(graphpanel)
             self.graphsizer.Add(graphpanel, 1, wx.EXPAND)
+            #self.graphsizer.Add(graphpanel, 1)
 
         # Mod Init
         self.mod = OsmoMod(self, "osmomod")
@@ -204,6 +207,7 @@ class HypoMain(MainFrame):
         # Sizers
         mainsizer.Add(self.scalebox, 0, wx.EXPAND)
         mainsizer.Add(self.graphsizer, 1, wx.EXPAND)
+        #mainsizer.SetSizeHints(self)
         self.SetSizer(mainsizer)
         self.Layout()
 
@@ -224,8 +228,8 @@ class HypoMain(MainFrame):
         newsize = self.GetSize()
         graphsize = self.graphsizer.GetSize()
 
-        snum = f"newsizeX {newsize.x} graphsizeX {graphsize.x} newsizeY {newsize.y} graphsizeY {graphsize.y}"
-        self.SetStatusText(snum)
+        #snum = f"newsizeX {newsize.x} graphsizeX {graphsize.x} newsizeY {newsize.y} graphsizeY {graphsize.y}"
+        #self.SetStatusText(snum)
         #DiagWrite(snum + '\n')
 
         gspacex = graphsize.x
@@ -233,6 +237,9 @@ class HypoMain(MainFrame):
         
         gspacey = graphsize.y - self.numdraw * 55 - 5
         yplot = gspacey / self.numdraw
+
+        snum = f"newsizeX {newsize.x} graphsizeX {graphsize.x} newsizeY {newsize.y} graphsizeY {graphsize.y} yplot {yplot:.0f}"
+        self.SetStatusText(snum)
 
         for graphpanel in self.panelset:
             graphpanel.ReSize(xplot, yplot)
@@ -282,7 +289,7 @@ class HypoMain(MainFrame):
         newdisp = GraphDisp()
         newdisp.Add(PlotDat())
         self.dispset.append(newdisp)
-        newpanel = GraphPanel(self, newindex)
+        newpanel = GraphPanel(self, newindex, wx.Size(100, 110))
         newpanel.SetFront(newdisp)
         self.panelset.append(newpanel)
         self.graphsizer.Add(newpanel, 1, wx.EXPAND)

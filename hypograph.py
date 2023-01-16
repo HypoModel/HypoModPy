@@ -33,8 +33,8 @@ class GraphDisp():
 
 
 class GraphPanel(wx.Panel):
-    def __init__(self, parent, index):
-        wx.Panel.__init__(self, parent, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize)
+    def __init__(self, parent, index, size):
+        wx.Panel.__init__(self, parent, wx.ID_ANY, wx.DefaultPosition, size)
         self.numdisps = 0
         self.frontdisp = 0
         self.dispset = []
@@ -45,6 +45,7 @@ class GraphPanel(wx.Panel):
         self.settag = ""
         self.mainwin = parent
         self.index = index
+        #self.SetMinSize(wx.Size(-1, -1))
 
         # Draw Parameters
         self.xbase = 40

@@ -51,7 +51,7 @@ class OsmoMod(Mod):
     def DefaultPlots(self):
         self.mainwin.panelset[0].settag = "water"
         self.mainwin.panelset[1].settag = "salt"
-        self.mainwin.panelset[2].settag = "osmo"
+        #self.mainwin.panelset[2].settag = "osmo"
 
 
     def OnModThreadComplete(self, event):

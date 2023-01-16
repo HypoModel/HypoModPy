@@ -388,5 +388,5 @@ class TagBox(wx.ComboBox):
 
         tagfile.Close()	
         self.SetLabel(tag)
-        # DiagWrite(name + " " + tag + "\n");
+        DiagWrite(self.boxtag + " " + tag + "\n")
         if tag != "": self.labelset = True
