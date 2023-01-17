@@ -321,6 +321,7 @@ class PlotBase():
 
 
     def GetSet(self, tag):
+        if tag == "": return None
         return self.setstore[tag]
 
 
