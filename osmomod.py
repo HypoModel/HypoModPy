@@ -6,6 +6,7 @@ import numpy as np
 from hypomods import *
 from hypoparams import *
 from hypodat import *
+from hypogrid import *
 
 ID_heatflag = wx.NewIdRef()
 
@@ -24,9 +25,11 @@ class OsmoMod(Mod):
         self.mainwin = mainwin
 
         self.osmobox = OsmoBox(self, "osmo", "Osmo", wx.Point(0, 0), wx.Size(320, 500))
+        self.gridbox = GridBox(self, "Data Grid", wx.Point(0, 0), wx.Size(320, 500), 100, 20)
         self.modtools[self.osmobox.boxtag] = self.osmobox
         self.osmobox.Show(True)
         mainwin.toolset.AddBox(self.osmobox)  
+        mainwin.toolset.AddBox(self.gridbox)  
         self.modbox = self.osmobox
 
         self.ModLoad()

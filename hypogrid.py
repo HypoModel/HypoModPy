@@ -5,7 +5,7 @@ from hypoparams import *
 
 
 
-class TextGrid(wx.Grid):
+class TextGrid(wx.grid.Grid):
     def __init__(self, parent, size):
         wx.grid.Grid.__init__(self, parent, wx.ID_ANY)
 
@@ -51,6 +51,169 @@ class TextGrid(wx.Grid):
     def OnRightClick(self, event):
         pos = event.GetPosition()
         self.PopupMenu(self.rightmenu, pos.x - 20, pos.y)
+
+
+    def CopyColumn(self, source, dest):
+        numrows = self.GetNumberRows()
+
+        for i in range(numrows):
+            celltext = self.GetCellValue(i, source)
+            self.SetCellValue(i, dest, celltext)
+
+
+    def InsertColumn(self, col):
+        self.InsertCols(col)
+
+
+    def ReadFloat(self, row, col):
+        celltext = self.GetCell(row, col)
+        celltext = celltext.strip()
+        if not celltext == "": celldata = float(celltext)
+        else: return 0
+        return celldata
+
+    
+    def GetCell(self, row, col):
+        numrows = self.GetNumberRows()
+        numcols = self.GetNumberCols()
+
+        if row >= numrows or col >= numcols: return "" 
+        else: return self.GetCellValue(row, col)
+
+
+    def SetCell(self, row, col, data):
+        numrows = self.GetNumberRows()
+        numcols = self.GetNumberCols()
+
+        if row >= numrows: self.AppendRows(row - numrows + 10)
+        if col >= numcols: self.AppendCols(col - numcols + 10)
+
+        #if(row == 0) diagbox->Write(text.Format("SetCell row %d col %d data %s\n", row, col, data));
+        self.SetCellValue(row, col, data)
+
+
+    def OnKey(self, event):
+        if event.GetUnicodeKey() == 'C' and event.ControlDown() == True: self.Copy()
+
+        elif event.GetUnicodeKey() == 'V' and event.ControlDown() == True: self.Paste()
+
+        elif event.GetUnicodeKey() == 'T' and event.ControlDown() == True: self.Paste(1)
+
+        elif event.GetUnicodeKey() == 'X' and event.ControlDown() == True: self.Cut()
+
+        elif event.GetUnicodeKey() == 'Z' and event.ControlDown() == True: self.Undo()
+
+        elif event.GetUnicodeKey() == 'A' and event.ControlDown() == True: self.SelectAll()
+
+        elif event.GetKeyCode() == wx.K_DELETE:
+            self.Delete()
+            return
+
+        event.Skip()
+
+
+    def ClearCol(self, col):
+        for i in range(self.GetNumberRows()):
+            self.SetCellValue(i, col, "")
+
+
+    def SetBold(self):
+        self.CopyUndo()
+
+        for i in range(self.GetNumberRows()):     
+            for j in range(self.GetNumberCols()): 
+                if self.IsInSelection(i, j): self.SetCellFont(i, j, wx.Font(9, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD))
+
+        self.Refresh()
+
+
+    def OnSelectAll(self, event):
+        self.SelectAll()
+
+
+    def OnInsertColumn(self, event):
+        col = self.GetGridCursorCol()
+        self.InsertColumn(col)
+
+
+    def OnCut(self, event):
+        self.Cut()
+
+    
+    def OnCopy(self, event):
+        self.Copy()
+
+
+    def OnPaste(self, event):
+        if event.GetId() == ID_PasteTranspose: self.Paste(1)
+        else: self.Paste(0)
+
+
+    def OnBold(self, event):
+        self.SetBold()
+
+
+    def Delete(self):
+        self.CopyUndo()
+        self.SetCellValue(self.GetGridCursorRow(), self.GetGridCursorCol(), "")
+        for i in range(self.GetNumberRows()):     
+            for j in range(self.GetNumberCols()): 
+                if self.IsInSelection(i, j): self.SetCellValue(i, j, "")
+
+
+    def Cut(self):
+        self.Copy()
+        self.Delete()
+
+
+    def Copy(self):
+        # Get selected cells
+        top_left = self.GetSelectionBlockTopLeft()[0]
+        bottom_right = self.GetSelectionBlockBottomRight()[0]
+
+        # Prepare data for clipboard
+        data = ""
+        for row in range(top_left[0], bottom_right[0] + 1):
+            for col in range(top_left[1], bottom_right[1] + 1):
+                data += str(self.GetCellValue(row, col)) + '\t'
+            data = data[:-1] + '\n'
+        data = data[:-1]
+
+        # Copy data to clipboard
+        if wx.TheClipboard.Open():
+            wx.TheClipboard.SetData(wx.TextDataObject(data))
+            wx.TheClipboard.Close()
+
+
+"""
+    def Copy(self):
+        # Copy selected cells to the clipboard
+        
+        if self.Selection:
+            # Store selected cells in a string
+            data = ""
+            for topLeft, bottomRight in grid.Selection:
+                for row in range(topLeft.GetRow(), bottomRight.GetRow()+1):
+                    for col in range(topLeft.GetCol(), bottomRight.GetCol()+1):
+                        value = self.GetValue(row, col)
+                        data += str(value) + '\t'
+                    data = data[:-1] + '\n'
+            data = data[:-1]
+            
+            # Put the string on the clipboard
+            if wx.TheClipboard.Open():
+                wx.TheClipboard.SetData(wx.TextDataObject(data))
+                wx.TheClipboard.Close()
+
+
+
+    ""
+    def Copy(self):
+        if self.IsSelection():
+            data = ""
+            for block in self.GetSelectedBlocks():
+                for row in range(block.T)
+"""
 
 
 
