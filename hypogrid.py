@@ -325,6 +325,8 @@ class GridBox(ParamBox):
         self.grids["Params"] = None
         self.grids["Layout"] = None
 
+        self.gridtags = []
+
         vdubox = wx.BoxSizer(wx.VERTICAL)
 
         if vdumode:
@@ -377,9 +379,9 @@ class GridBox(ParamBox):
 
 
     def OnGridSelect(self, event):
-        newpage = event.GetSelection()
-        self.currgrid = newpage.tag
-        DiagWrite(f"OnGridSelect {newpage.tag}\n")
+        newpageindex = event.GetSelection()
+        self.currgrid = self.gridtags[newpageindex]
+        DiagWrite(f"OnGridSelect {newpageindex} {self.currgrid}\n")
 
 
 
@@ -391,8 +393,11 @@ class GridBox(ParamBox):
         if self.notebook: 
             newgrid = TextGrid(self.notebook, size)
             self.notebook.AddPage(newgrid, label)
-            newgrid.tag = label
         else: newgrid = TextGrid(self.panel, size)
+
+        self.grids[label] = newgrid
+        self.gridtags.append(label)     # store grid tags by page index, for page selection
+        newgrid.tag = label
           
         # Set Links
         newgrid.vdu = self.vdu
@@ -405,7 +410,7 @@ class GridBox(ParamBox):
         newgrid.SetRowLabelSize(50) 
 
         #self.textgrid.append(newgrid)
-        self.grids[label] = newgrid
+        
 
 
     def OnUndo(self, event):
