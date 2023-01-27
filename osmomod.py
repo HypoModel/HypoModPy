@@ -26,11 +26,20 @@ class OsmoMod(Mod):
 
         self.osmobox = OsmoBox(self, "osmo", "Osmo", wx.Point(0, 0), wx.Size(320, 500))
         self.gridbox = GridBox(self, "Data Grid", wx.Point(0, 0), wx.Size(320, 500), 100, 20)
+
+        # link mod owned boxes
+        mainwin.gridbox = self.gridbox
+
         self.modtools[self.osmobox.boxtag] = self.osmobox
+        self.modtools[self.gridbox.boxtag] = self.gridbox
+
         self.osmobox.Show(True)
+        self.modbox = self.osmobox
+
         mainwin.toolset.AddBox(self.osmobox)  
         mainwin.toolset.AddBox(self.gridbox)  
-        self.modbox = self.osmobox
+
+        
 
         self.ModLoad()
         print("Osmo Model OK")

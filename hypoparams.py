@@ -654,7 +654,7 @@ class ParamBox(ToolBox):
         return storebox
 
 
-    def StoreBox(self, label, storepanel=None):
+    def StoreBox(self, label="", storepanel=None):
         if self.storetag == None: return
         paramfilebox = wx.BoxSizer(wx.HORIZONTAL)
         parambuttons = wx.BoxSizer(wx.HORIZONTAL)
