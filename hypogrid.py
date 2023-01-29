@@ -188,7 +188,7 @@ class TextGrid(wx.grid.Grid):
 
 
     def Paste(self, mode = 0):
-	    # grid paste code from wxwidgets forum
+        # grid paste code from wxwidgets forum
 
         self.CopyUndo()
 
@@ -257,7 +257,7 @@ class TextGrid(wx.grid.Grid):
             for y in range(self.GetNumberRows()):
                 data = self.undogrid.GetValue(y, x)
                 self.SetCellValue(y, x, data)
-	
+    
 
 
 """
@@ -330,12 +330,12 @@ class GridBox(ParamBox):
         vdubox = wx.BoxSizer(wx.VERTICAL)
 
         if vdumode:
-            self.vdu = wx.TextCtrl(self.panel, wx.ID_ANY, "", wx.DefaultPosition, wx.Size(-1, -1), wx.BORDER_RAISED|wx.TE_MULTILINE)
+            self.vdu = wx.TextCtrl(self.panel, wx.ID_ANY, "", wx.DefaultPosition, wx.Size(-1, 50), wx.BORDER_RAISED|wx.TE_MULTILINE)
             self.vdu.SetFont(self.confont)
             self.vdu.SetForegroundColour(wx.Colour(0,255,0)) # set text color
             self.vdu.SetBackgroundColour(wx.Colour(0,0,0)) # set text back color
-            self.gauge = wx.Gauge(self.panel, wx.ID_ANY, 10)
-            vdubox.Add(self.vdu, 1, wx.EXPAND)
+            self.gauge = wx.Gauge(self.panel, wx.ID_ANY, 20)
+            #vdubox.Add(self.vdu, 1, wx.EXPAND)
 
         if bookmode:
             self.notebook = wx.Notebook(self.panel, -1, wx.Point(-1,-1), wx.Size(-1, 400), wx.NB_TOP)
@@ -361,7 +361,7 @@ class GridBox(ParamBox):
         controlbox.AddSpacer(10)
         controlbox.Add(leftbox, 1, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL)
         controlbox.AddSpacer(10)
-        if vdumode: controlbox.Add(vdubox, 100, wx.EXPAND)
+        if vdumode: controlbox.Add(self.vdu, 10, wx.EXPAND)
         controlbox.AddSpacer(10)
 
         if bookmode: self.mainbox.Add(self.notebook, 1, wx.EXPAND)
@@ -371,6 +371,8 @@ class GridBox(ParamBox):
 
         self.panel.Layout()
 
+        #self.Bind(wxEVT_BUTTON, self.OnGridStore, ID_paramstore)
+        #Connect(ID_paramload, wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(GridBox::OnGridLoad));
         self.Bind(wx.EVT_BUTTON, self.OnUndo, ID_Undo)
         self.Bind(wx.EVT_BUTTON, self.OnCopy, ID_Copy)
         #self.Bind(wx.EVT_RIGHT_DOWN, self.OnRightClick)
@@ -412,7 +414,6 @@ class GridBox(ParamBox):
         #self.textgrid.append(newgrid)
         
 
-
     def OnUndo(self, event):
         self.grids[self.currgrid].Undo()
 
@@ -420,3 +421,86 @@ class GridBox(ParamBox):
     def OnCopy(self, event):
         self.grids[self.currgrid].Copy()
 
+
+    def OnStore(self, event):
+        print("GridStore")
+        self.GridStore()
+
+
+    def OnLoad(self, event):
+        self.GridLoad()
+
+
+    def GridStore(self):
+
+        storeversion = 1
+
+        gridpath = self.mod.path + "/Grids"
+        if os.path.exists(gridpath) == False: 
+            os.mkdir(gridpath)
+
+        filetag = self.storetag.GetValue()
+        if filetag == "": 
+            print("GridStore() Bad file name")
+            return
+
+        # Grid data file
+        filepath = gridpath + "/" + filetag + "-grid.txt"
+
+        # Graph file history
+        tagpos = self.storetag.FindString(filetag)
+        if tagpos != wx.NOT_FOUND: self.storetag.Delete(tagpos)
+        self.storetag.Insert(filetag, 0)
+
+         # Overwrite Warning
+        outfile = TextFile(filepath)
+        if outfile.Exists() and self.redtag != filetag: 
+            self.storetag.SetForegroundColour(self.redpen)
+            self.storetag.SetValue("")
+            self.storetag.SetValue(filetag)
+            self.redtag = filetag
+            return
+
+        # Clear Overwrite Warning
+        self.redtag = ""
+        self.storetag.SetForegroundColour(self.blackpen)
+        self.storetag.SetValue("")
+        self.storetag.SetValue(filetag)
+
+        # Open File
+        outfile.Open('w')
+        outtext = []
+    
+        self.WriteVDU("Writing file...")
+
+        outtext.append(f"gsv {storeversion}\n")
+        outtext.append(f"num {len(self.grids)}\n")
+
+        for tag in self.grids:
+            outtext.append(f"g {tag} r {self.grids[tag].GetNumberRows()} c {self.grids[tag].GetNumberCols()}\n")
+
+        for tag in self.grids:
+            for row in self.grids[tag].GetNumberRows():
+                if self.gauge: self.gauge.SetValue(100 * (row + 1) / self.grids[tag].GetNumberRows())
+                for col in self.grids[tag].GetNumberCols():
+                    celltext = self.grid[tag].GetCellValue(row, col)
+                    celltext = celltext.strip()
+                    if not celltext == "": 
+                        outtext.append(f"{tag} {row} {col} {celltext}\n")
+
+        outtext.append("\n")
+        outfile.WriteLines(outtext)
+        outfile.Close()
+        if self.gauge: self.gauge.SetValue(0)
+        self.WriteVDU("OK\n")
+
+        # Grid size file
+        filepath = gridpath + "/" + filetag + "-gridsize.txt"
+        outfile = TextFile(filepath)
+        outfile.Open('w')
+
+        for tag in self.grids:
+            for col in self.grids[tag].GetNumberCols():
+                outfile.WriteLine(f"grid {tag} col {col} {self.grids[tag].GetColSize(col)}")
+    
+        outfile.Close()

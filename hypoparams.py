@@ -665,20 +665,20 @@ class ParamBox(ToolBox):
         if label != "": self.storetag.SetLabel(label)
         self.storetag.Show(True)
 
-        self.AddButton(wx.ID_ANY, "Store", 38, parambuttons).Bind(wx.EVT_BUTTON, self.OnParamStore)
+        self.AddButton(wx.ID_ANY, "Store", 38, parambuttons).Bind(wx.EVT_BUTTON, self.OnStore)
         parambuttons.AddSpacer(2)
-        self.AddButton(wx.ID_ANY, "Load", 38, parambuttons).Bind(wx.EVT_BUTTON, self.OnParamLoad)
+        self.AddButton(wx.ID_ANY, "Load", 38, parambuttons).Bind(wx.EVT_BUTTON, self.OnLoad)
         
         paramfilebox.Add(self.storetag, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 2)
         paramfilebox.Add(parambuttons, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 2)
         return paramfilebox
 
     
-    def OnParamStore(self, event):
+    def OnStore(self, event):
         self.ParamStore()
 
 
-    def OnParamLoad(self, event):
+    def OnLoad(self, event):
         self.ParamLoad()
 
     
