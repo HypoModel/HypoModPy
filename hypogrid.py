@@ -169,9 +169,26 @@ class TextGrid(wx.grid.Grid):
 
 
     def Copy(self):
+        # Testing
+        DiagWrite("Grid Copy\n")
+        top_left = self.GetSelectionBlockTopLeft()
+        bottom_right = self.GetSelectionBlockBottomRight()
+
+        if list(top_left) == []:
+            coords = self.GetGridCursorCoords()
+            DiagWrite(f"single cell row {coords.Row} col {coords.Col}\n")
+        else:
+            DiagWrite(f"top_left {top_left} bottom_right {bottom_right}\n")
+
+
+
+
         # Get selected cells
         top_left = self.GetSelectionBlockTopLeft()[0]
         bottom_right = self.GetSelectionBlockBottomRight()[0]
+
+
+
 
         # Prepare data for clipboard
         data = ""
@@ -320,10 +337,10 @@ class GridBox(ParamBox):
         #numdatagrid.grow = 100;
 
         self.grids = {}
-        self.grids["Data"] = None
-        self.grids["Output"] = None
-        self.grids["Params"] = None
-        self.grids["Layout"] = None
+        #self.grids["Data"] = None
+        #self.grids["Output"] = None
+        #self.grids["Params"] = None
+        #self.grids["Layout"] = None
 
         self.gridtags = []
 
@@ -410,8 +427,6 @@ class GridBox(ParamBox):
         newgrid.SetDefaultRowSize(20, True)
         newgrid.SetDefaultColSize(60, True)
         newgrid.SetRowLabelSize(50) 
-
-        #self.textgrid.append(newgrid)
         
 
     def OnUndo(self, event):
@@ -423,7 +438,7 @@ class GridBox(ParamBox):
 
 
     def OnStore(self, event):
-        print("GridStore")
+        #print("GridStore")
         self.GridStore()
 
 
@@ -433,7 +448,7 @@ class GridBox(ParamBox):
 
     def GridStore(self):
 
-        storeversion = 1
+        storeversion = 2     # first version under Python is v2, v1 is indexed grid format in C++
 
         gridpath = self.mod.path + "/Grids"
         if os.path.exists(gridpath) == False: 
@@ -474,16 +489,16 @@ class GridBox(ParamBox):
         self.WriteVDU("Writing file...")
 
         outtext.append(f"gsv {storeversion}\n")
-        outtext.append(f"num {len(self.grids)}\n")
+        #outtext.append(f"num {len(self.grids)}\n")    # number of grids not used any more
 
         for tag in self.grids:
             outtext.append(f"g {tag} r {self.grids[tag].GetNumberRows()} c {self.grids[tag].GetNumberCols()}\n")
 
         for tag in self.grids:
-            for row in self.grids[tag].GetNumberRows():
-                if self.gauge: self.gauge.SetValue(100 * (row + 1) / self.grids[tag].GetNumberRows())
-                for col in self.grids[tag].GetNumberCols():
-                    celltext = self.grid[tag].GetCellValue(row, col)
+            for row in range(self.grids[tag].GetNumberRows()):
+                if self.gauge: self.gauge.SetValue(int(100 * (row + 1) / self.grids[tag].GetNumberRows()))
+                for col in range(self.grids[tag].GetNumberCols()):
+                    celltext = self.grids[tag].GetCellValue(row, col)
                     celltext = celltext.strip()
                     if not celltext == "": 
                         outtext.append(f"{tag} {row} {col} {celltext}\n")
@@ -500,7 +515,96 @@ class GridBox(ParamBox):
         outfile.Open('w')
 
         for tag in self.grids:
-            for col in self.grids[tag].GetNumberCols():
+            for col in range(self.grids[tag].GetNumberCols()):
                 outfile.WriteLine(f"grid {tag} col {col} {self.grids[tag].GetColSize(col)}")
     
         outfile.Close()
+
+
+
+    def GridLoad(self, tag = ""):
+        diag = False
+
+        # File path
+        gridpath = self.mod.path + "/Grids"
+        if tag == "": filetag = self.storetag.GetValue()
+        else: filetag = tag
+
+        # Grid data file
+        filepath = gridpath + "/" + filetag + "-grid.txt"
+        infile = TextFile(filepath)
+        if not infile.Exists():
+            if self.storetag: self.storetag.SetValue("Not found")
+            return
+
+        # File history
+        if filetag != "default": 
+            tagpos = self.storetag.FindString(filetag)
+            if tagpos != wx.NOT_FOUND: self.storetag.Delete(tagpos)
+            self.storetag.Insert(filetag, 0)
+
+        # Clear Overwrite Warning
+        self.redtag = ""
+        self.storetag.SetForegroundColour(self.blackpen)
+        self.storetag.SetValue("")
+        self.storetag.SetValue(filetag)
+
+        # Load file
+        if not infile.Open('r'): 
+            DiagWrite("GridLoad file error\n")
+            return
+        filetext = infile.ReadLines()
+        linecount = 0
+        numlines = len(filetext)
+
+        self.WriteVDU("Reading grid data...")
+
+        for readline in filetext:
+            if readline.strip() == "": break
+            readdata = readline.split()
+            # read file version
+            if readdata[0] == "gsv": storeversion = int(readdata[1])
+            # read and set grids
+            elif readdata[0] == "g":    
+                tag = readdata[1]
+                numrows = int(readdata[3])
+                numcols = int(readdata[5])
+                if not tag in self.grids: self.AddGrid(tag, wx.Size(numrows, numcols))
+                else: 
+                    if numrows > self.grids[tag].GetNumberRows(): self.grids[tag].AppendRows(numrows - self.grids[tag].GetNumberRows())
+                    if numcols > self.grids[tag].GetNumberCols(): self.grids[tag].AppendRows(numcols - self.grids[tag].GetNumberCols())
+                    self.grids[tag].ClearGrid()
+            # read grid cells
+            else:   
+                if diag: DiagWrite(readline)
+                tag = readdata[0]
+                row = int(readdata[1])
+                col = int(readdata[2])
+                celldata = readdata[3].strip()
+                self.grids[tag].SetCellValue(row, col, celldata)
+                if diag: DiagWrite(f"row {row} col {col} data: {celldata} end\n")
+            linecount += 1
+            if self.gauge: self.gauge.SetValue(int(100 * linecount / numlines))
+
+        self.WriteVDU("OK\n")
+        if self.gauge: self.gauge.SetValue(0)
+        infile.Close()
+
+        # Read column sizes file
+        filepath = gridpath + "/" + filetag + "-gridsize.txt"
+        infile = TextFile(filepath)
+        infile.Open('r')
+
+        if not infile.Open('r'): 
+            DiagWrite("GridLoad file error\n")
+            return
+        filetext = infile.ReadLines()
+
+        for readline in filetext:
+            readdata = readline.split()
+            tag = readdata[1]
+            col = int(readdata[3])
+            width = int(readdata[4])
+            self.grids[tag].SetColSize(col, width)
+
+        infile.Close()
