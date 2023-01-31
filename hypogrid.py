@@ -2,16 +2,19 @@
 import wx.grid
 from hypobase import *
 from hypoparams import *
+#from wx.lib.sheet import *
 
 
 
 class TextGrid(wx.grid.Grid):
     def __init__(self, parent, size):
         wx.grid.Grid.__init__(self, parent, wx.ID_ANY)
+        #CSheet.__init__(self, parent)
 
         self.ostype = GetSystem()
 
         self.CreateGrid(size.x, size.y)
+        #self.SetGridSize(size.x, size.y)
         self.SetRowLabelSize(35)
         self.SetColLabelSize(25)
         self.SetRowLabelAlignment(wx.ALIGN_RIGHT, wx.ALIGN_CENTRE)
@@ -47,8 +50,12 @@ class TextGrid(wx.grid.Grid):
         self.Bind(wx.EVT_MENU, self.OnInsertColumn, ID_Insert)
 
         self.Bind(wx.EVT_KEY_DOWN, self.OnKey)
-       
 
+
+    def SetGridSize(self, numrows = 0, numcols = 0):
+        if numrows: self.SetNumberRows(numrows)
+        if numcols: self.SetNumberCols(numcols)
+       
 
     def OnRightClick(self, event):
         pos = event.GetPosition()
@@ -95,17 +102,29 @@ class TextGrid(wx.grid.Grid):
 
 
     def OnKey(self, event):
-        if event.GetUnicodeKey() == 'C' and event.ControlDown() == True: self.Copy()
+        #if event.ControlDown(): DiagWrite("Control\n")
 
-        elif event.GetUnicodeKey() == 'V' and event.ControlDown() == True: self.Paste()
+        #if event.ControlDown(): DiagWrite(f"Control {event.GetKeyCode()}\n")
 
-        elif event.GetUnicodeKey() == 'T' and event.ControlDown() == True: self.Paste(1)
+        if event.ControlDown() and event.GetKeyCode() == 67: self.Copy()
+            
+        if event.ControlDown() and event.GetKeyCode() == 86: 
+            print("Paste")
+            self.Paste()
+            
+        if event.ControlDown() and event.GetUnicodeKey() == 'C': DiagWrite(f"Control Copy\n")
 
-        elif event.GetUnicodeKey() == 'X' and event.ControlDown() == True: self.Cut()
+        if event.GetKeyCode() == wx.WXK_CONTROL_C: self.Copy()
 
-        elif event.GetUnicodeKey() == 'Z' and event.ControlDown() == True: self.Undo()
+        elif event.GetKeyCode() == wx.WXK_CONTROL_V: self.Paste()
 
-        elif event.GetUnicodeKey() == 'A' and event.ControlDown() == True: self.SelectAll()
+        elif event.GetKeyCode() == wx.WXK_CONTROL_T: self.Paste(1)
+
+        #elif event.GetUnicodeKey() == 'X' and event.ControlDown() == True: self.Cut()
+
+        #elif event.GetUnicodeKey() == 'Z' and event.ControlDown() == True: self.Undo()
+
+        elif event.GetKeyCode() == wx.WXK_CONTROL_A: self.SelectAll()
 
         elif event.GetKeyCode() == wx.WXK_DELETE:
             self.Delete()
@@ -147,8 +166,8 @@ class TextGrid(wx.grid.Grid):
 
 
     def OnPaste(self, event):
-        if event.GetId() == ID_PasteTranspose: self.Paste(1)
-        else: self.Paste(0)
+        if event.GetId() == ID_PasteTranspose: self.Paste()
+        else: self.Paste()
 
 
     def OnBold(self, event):
@@ -166,99 +185,6 @@ class TextGrid(wx.grid.Grid):
     def Cut(self):
         self.Copy()
         self.Delete()
-
-
-    def Copy(self):
-        # Testing
-        """
-        DiagWrite("Grid Copy\n")
-        selectTL = self.GetSelectionBlockTopLeft()
-        selectBR = self.GetSelectionBlockBottomRight()
-
-        if list(top_left) == []:
-            selectcell = self.GetGridCursorCoords()
-            DiagWrite(f"single cell row {selectcell.Row} col {selectcell.Col}\n")
-        else:
-            selectcell = None
-            DiagWrite(f"top_left {top_left} bottom_right {bottom_right}\n")
-        """
-
-        # code adapted from jkueng, https://stackoverflow.com/questions/28509629/work-with-ctrl-c-and-ctrl-v-to-copy-and-paste-into-a-wx-grid-in-wxpython
-        # Get number of copy rows and cols
-        if list(self.GetSelectionBlockTopLeft()) == []:
-            rowstart = self.GetGridCursorRow()
-            colstart = self.GetGridCursorCol()
-            rowend = rowstart
-            colend = colstart
-        else:
-            rowstart = self.GetSelectionBlockTopLeft()[0][0]
-            colstart = self.GetSelectionBlockTopLeft()[0][1]
-            rowend = self.GetSelectionBlockBottomRight()[0][0]
-            colend = self.GetSelectionBlockBottomRight()[0][1]
-
-        numrows = rowend - rowstart + 1
-        numcols = colend - colstart + 1
-
-        # initialise data string
-        data = ""
-
-        # For each cell in selected range append the cell value
-        # to the data string, '\t' to separate cols and '\n' to separate rows
-        for row in range(numrows):
-            for col in range(numcols):
-                data += self.GetCellValue(rowstart + row, colstart + col)
-                if col < numcols - 1: data += '\t'
-            if row < numrows - 1: data += '\n'
-
-        # Create text data object
-        clipboard = wx.TextDataObject()
-        clipboard.SetText(data)
-
-        # Put the data on the clipboard
-        if wx.TheClipboard.Open():
-            wx.TheClipboard.SetData(clipboard)
-            wx.TheClipboard.Close()
-        else:
-            wx.MessageBox("Can't open the clipboard", "Error")
-        
-
-    def Paste(self, mode = 0):
-        # grid paste code from wxwidgets forum
-
-        self.CopyUndo()
-
-        if self.vdu and mode == 1: self.vdu.AppendText("Transpose Pasting...\n")
-        if self.vdu: self.vdu.AppendText("Copy clipboard...")
-
-        if not wx.TheClipboard.Open():
-            wx.MessageBox("Can't open the clipboard", "Warning")
-            return False
-
-        clipboard = wx.TextDataObject()
-        wx.TheClipboard.GetData(clipboard)
-        wx.TheClipboard.Close()
-        data = clipboard.GetText()
-        if data[-1] == "\n":
-            data = data[:-1]
-
-        rowstart = self.GetGridCursorRow()
-        colstart = self.GetGridCursorCol()
-        rowmax = self.GetNumberRows() - 1
-        colmax = self.GetNumberCols() - 1
-
-        for row, line in enumerate(data.split("\n")):
-            target_row = rowstart + row
-            if target_row > rowmax:
-                break
-
-            for col, value in enumerate(line.split("\t")):
-                target_col = colstart + col
-                if target_col > colmax:
-                    break
-
-                self.SetCellValue(target_row, target_col, value.strip())
-
-        
 
 
     def OnUndo(self, event):
@@ -318,8 +244,9 @@ class TextGrid(wx.grid.Grid):
                 self.SetCellValue(y, x, data)
     
 
+    
 
-"""
+    """
     def Copy(self):
         # Copy selected cells to the clipboard
         
@@ -341,14 +268,119 @@ class TextGrid(wx.grid.Grid):
 
 
 
-    ""
+
     def Copy(self):
         if self.IsSelection():
             data = ""
             for block in self.GetSelectedBlocks():
                 for row in range(block.T)
-"""
+    """
 
+
+    def Copy(self):
+        # Testing
+        
+        DiagWrite("Grid Copy\n")
+        topleft = self.GetSelectionBlockTopLeft()
+        bottomright = self.GetSelectionBlockBottomRight()
+
+        if list(topleft) == []:
+            selectcell = self.GetGridCursorCoords()
+            DiagWrite(f"single cell row {selectcell.Row} col {selectcell.Col}\n")
+        else:
+            selectcell = None
+            DiagWrite(f"top_left {topleft} bottom_right {bottomright}\n")
+        
+
+        # code adapted from jkueng, https://stackoverflow.com/questions/28509629/work-with-ctrl-c-and-ctrl-v-to-copy-and-paste-into-a-wx-grid-in-wxpython
+        # Get number of copy rows and cols
+        if list(self.GetSelectionBlockTopLeft()) == []:
+            rowstart = self.GetGridCursorRow()
+            colstart = self.GetGridCursorCol()
+            rowend = rowstart
+            colend = colstart
+        else:
+            rowstart = self.GetSelectionBlockTopLeft()[0][0]
+            colstart = self.GetSelectionBlockTopLeft()[0][1]
+            rowend = self.GetSelectionBlockBottomRight()[0][0]
+            colend = self.GetSelectionBlockBottomRight()[0][1]
+
+        numrows = rowend - rowstart + 1
+        numcols = colend - colstart + 1
+
+        DiagWrite(f"TextGrid Copy() start r{rowstart} c{colstart} {numrows} rows  {numcols} cols\n")
+
+        # initialise data string
+        data = ""
+
+        # For each cell in selected range append the cell value
+        # to the data string, '\t' to separate cols and '\n' to separate rows
+        for row in range(numrows):
+            for col in range(numcols):
+                data += self.GetCellValue(rowstart + row, colstart + col)
+                if col < numcols - 1: data += '\t'
+            #if row < numrows - 1: data += '\n'
+            data += '\n'
+
+
+        DiagWrite(f"TextGrid Copy() data: {data} end\n")
+
+        # Create text data object
+        clipboard = wx.TextDataObject()
+        clipboard.SetText(data)
+
+
+        DiagWrite(f"TextGrid Copy() clipboard {clipboard} end\n")
+
+        # Put the data on the clipboard
+        if wx.TheClipboard.Open():
+            wx.TheClipboard.SetData(clipboard)
+            wx.TheClipboard.Close()
+        else:
+            wx.MessageBox("Can't open the clipboard", "Error")
+        
+
+    def Paste(self, mode = 0):
+        # grid paste code from wxwidgets forum
+
+        self.CopyUndo()
+
+        if self.vdu and mode == 1: self.vdu.AppendText("Transpose Pasting...\n")
+        if self.vdu: self.vdu.AppendText("Copy clipboard...")
+
+        if not wx.TheClipboard.Open():
+            wx.MessageBox("Can't open the clipboard", "Warning")
+            return False
+
+        clipboard = wx.TextDataObject()
+        wx.TheClipboard.GetData(clipboard)
+        wx.TheClipboard.Close()
+        data = clipboard.GetText()
+        if data[-1] == "\n":
+            data = data[:-1]
+
+        DiagWrite(f"TextGrid Paste() data: {data} end\n")
+
+        rowstart = self.GetGridCursorRow()
+        colstart = self.GetGridCursorCol()
+        rowmax = self.GetNumberRows() - 1
+        colmax = self.GetNumberCols() - 1
+
+        for row, line in enumerate(data.split("\n")):
+            target_row = rowstart + row
+            if target_row > rowmax:
+                break
+
+            for col, value in enumerate(line.split("\t")):
+                target_col = colstart + col
+                if target_col > colmax:
+                    break
+
+                self.SetCellValue(target_row, target_col, value.strip())
+
+        if self.vdu: self.vdu.AppendText("OK\n")
+
+        
 
 
 class GridBox(ParamBox):
