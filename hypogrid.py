@@ -104,29 +104,27 @@ class TextGrid(wx.grid.Grid):
     def OnKey(self, event):
         #if event.ControlDown(): DiagWrite("Control\n")
 
-        #if event.ControlDown(): DiagWrite(f"Control {event.GetKeyCode()}\n")
+        if event.ControlDown(): DiagWrite(f"Control {event.GetKeyCode()}\n")
 
-        #if event.ControlDown() and event.GetKeyCode() == 67: self.Copy()
+        if event.ControlDown() and event.GetKeyCode() == 67: self.Copy()
+               
+        if event.ControlDown() and event.GetKeyCode() == 86: self.Paste()
             
-        if event.ControlDown() and event.GetKeyCode() == 86: 
-            print("Paste")
-            self.Paste()
-            
-        if event.ControlDown() and event.GetUnicodeKey() == 'C': DiagWrite(f"Control Copy\n")
+        #if event.ControlDown() and event.GetUnicodeKey() == 'C': DiagWrite(f"Control Copy\n")
 
         #if event.GetKeyCode() == wx.WXK_CONTROL_C: self.Copy()
 
-        elif event.GetKeyCode() == wx.WXK_CONTROL_V: self.Paste()
+        #elif event.GetKeyCode() == wx.WXK_CONTROL_V: self.Paste()
 
-        elif event.GetKeyCode() == wx.WXK_CONTROL_T: self.Paste(1)
+        #elif event.GetKeyCode() == wx.WXK_CONTROL_T: self.Paste(1)
 
         #elif event.GetUnicodeKey() == 'X' and event.ControlDown() == True: self.Cut()
 
         #elif event.GetUnicodeKey() == 'Z' and event.ControlDown() == True: self.Undo()
 
-        elif event.GetKeyCode() == wx.WXK_CONTROL_A: self.SelectAll()
+        #elif event.GetKeyCode() == wx.WXK_CONTROL_A: self.SelectAll()
 
-        elif event.GetKeyCode() == wx.WXK_DELETE:
+        if event.GetKeyCode() == wx.WXK_DELETE:
             self.Delete()
             return
 
