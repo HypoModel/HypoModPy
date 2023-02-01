@@ -254,39 +254,6 @@ class TextGrid(wx.grid.Grid):
                 self.SetCellValue(y, x, data)
     
 
-    
-
-    """
-    def Copy(self):
-        # Copy selected cells to the clipboard
-        
-        if self.Selection:
-            # Store selected cells in a string
-            data = ""
-            for topLeft, bottomRight in grid.Selection:
-                for row in range(topLeft.GetRow(), bottomRight.GetRow()+1):
-                    for col in range(topLeft.GetCol(), bottomRight.GetCol()+1):
-                        value = self.GetValue(row, col)
-                        data += str(value) + '\t'
-                    data = data[:-1] + '\n'
-            data = data[:-1]
-            
-            # Put the string on the clipboard
-            if wx.TheClipboard.Open():
-                wx.TheClipboard.SetData(wx.TextDataObject(data))
-                wx.TheClipboard.Close()
-
-
-
-
-    def Copy(self):
-        if self.IsSelection():
-            data = ""
-            for block in self.GetSelectedBlocks():
-                for row in range(block.T)
-    """
-
-   
     def Copy(self):
         """
         DiagWrite("Grid Copy\n")
@@ -330,7 +297,6 @@ class TextGrid(wx.grid.Grid):
                 if col < numcols - 1: data += '\t'
             if row < numrows - 1: data += '\n'
             #data += '\n'
-
 
         #DiagWrite(f"TextGrid Copy() data: {data} end\n")
 
@@ -535,8 +501,6 @@ class GridBox(ParamBox):
 
         self.panel.Layout()
 
-        #self.Bind(wxEVT_BUTTON, self.OnGridStore, ID_paramstore)
-        #Connect(ID_paramload, wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(GridBox::OnGridLoad));
         self.Bind(wx.EVT_BUTTON, self.OnUndo, ID_Undo)
         self.Bind(wx.EVT_BUTTON, self.OnCopy, ID_Copy)
         #self.Bind(wx.EVT_RIGHT_DOWN, self.OnRightClick)
@@ -719,8 +683,9 @@ class GridBox(ParamBox):
                 if not tag in self.grids: self.AddGrid(tag, wx.Size(numrows, numcols))
                 else: 
                     if numrows > self.grids[tag].GetNumberRows(): self.grids[tag].AppendRows(numrows - self.grids[tag].GetNumberRows())
-                    if numcols > self.grids[tag].GetNumberCols(): self.grids[tag].AppendRows(numcols - self.grids[tag].GetNumberCols())
+                    if numcols > self.grids[tag].GetNumberCols(): self.grids[tag].AppendCols(numcols - self.grids[tag].GetNumberCols())
                     self.grids[tag].ClearGrid()
+                    #print(f"GridLoad {tag} setsize {numrows} {numcols}")
             # read grid cells
             else:   
                 if diag: DiagWrite(readline)
@@ -728,6 +693,7 @@ class GridBox(ParamBox):
                 row = int(readdata[1])
                 col = int(readdata[2])
                 celldata = readdata[3].strip()
+                #print(f"Grid {tag} {self.grids[tag].GetNumberRows()} {self.grids[tag].GetNumberCols()}")
                 self.grids[tag].SetCellValue(row, col, celldata)
                 if diag: DiagWrite(f"row {row} col {col} data: {celldata} end\n")
             linecount += 1
