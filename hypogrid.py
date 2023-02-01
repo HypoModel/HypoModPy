@@ -106,7 +106,7 @@ class TextGrid(wx.grid.Grid):
 
         #if event.ControlDown(): DiagWrite(f"Control {event.GetKeyCode()}\n")
 
-        if event.ControlDown() and event.GetKeyCode() == 67: self.Copy()
+        #if event.ControlDown() and event.GetKeyCode() == 67: self.Copy()
             
         if event.ControlDown() and event.GetKeyCode() == 86: 
             print("Paste")
@@ -114,7 +114,7 @@ class TextGrid(wx.grid.Grid):
             
         if event.ControlDown() and event.GetUnicodeKey() == 'C': DiagWrite(f"Control Copy\n")
 
-        if event.GetKeyCode() == wx.WXK_CONTROL_C: self.Copy()
+        #if event.GetKeyCode() == wx.WXK_CONTROL_C: self.Copy()
 
         elif event.GetKeyCode() == wx.WXK_CONTROL_V: self.Paste()
 
@@ -276,7 +276,7 @@ class TextGrid(wx.grid.Grid):
                 for row in range(block.T)
     """
 
-
+   
     def Copy(self):
         # Testing
         
@@ -291,7 +291,7 @@ class TextGrid(wx.grid.Grid):
             selectcell = None
             DiagWrite(f"top_left {topleft} bottom_right {bottomright}\n")
         
-
+    """
         # code adapted from jkueng, https://stackoverflow.com/questions/28509629/work-with-ctrl-c-and-ctrl-v-to-copy-and-paste-into-a-wx-grid-in-wxpython
         # Get number of copy rows and cols
         if list(self.GetSelectionBlockTopLeft()) == []:
@@ -317,28 +317,28 @@ class TextGrid(wx.grid.Grid):
         # to the data string, '\t' to separate cols and '\n' to separate rows
         for row in range(numrows):
             for col in range(numcols):
-                data += self.GetCellValue(rowstart + row, colstart + col)
+                #data += self.GetCellValue(rowstart + row, colstart + col)
                 if col < numcols - 1: data += '\t'
             #if row < numrows - 1: data += '\n'
-            data += '\n'
+            #data += '\n'
 
 
         DiagWrite(f"TextGrid Copy() data: {data} end\n")
 
         # Create text data object
         clipboard = wx.TextDataObject()
-        clipboard.SetText(data)
+        #clipboard.SetText(data)
 
 
         DiagWrite(f"TextGrid Copy() clipboard {clipboard} end\n")
 
         # Put the data on the clipboard
         if wx.TheClipboard.Open():
-            wx.TheClipboard.SetData(clipboard)
+            #wx.TheClipboard.SetData(clipboard)
             wx.TheClipboard.Close()
         else:
             wx.MessageBox("Can't open the clipboard", "Error")
-        
+     """
 
     def Paste(self, mode = 0):
         # grid paste code from wxwidgets forum
@@ -380,7 +380,7 @@ class TextGrid(wx.grid.Grid):
 
         if self.vdu: self.vdu.AppendText("OK\n")
 
-        
+    
 
 
 class GridBox(ParamBox):
