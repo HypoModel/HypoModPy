@@ -3,6 +3,9 @@ import wx.grid
 from hypobase import *
 from hypoparams import *
 #from wx.lib.sheet import *
+import wx.richtext
+from io import StringIO 
+import wx.py.buffer
 
 
 
@@ -112,29 +115,21 @@ class TextGrid(wx.grid.Grid):
 
 
     def OnKey(self, event):
-        #if event.ControlDown(): DiagWrite("Control\n")
+        #if event.ControlDown(): DiagWrite(f"Control {event.GetKeyCode()}\n")
 
-        if event.ControlDown(): DiagWrite(f"Control {event.GetKeyCode()}\n")
-
-        if event.ControlDown() and event.GetKeyCode() == 67: self.Copy()
+        if event.ControlDown() and event.GetKeyCode() == 67: self.Copy()        # 67 = C
                
-        elif event.ControlDown() and event.GetKeyCode() == 86: self.Paste()
+        elif event.ControlDown() and event.GetKeyCode() == 86: self.Paste()     # 86 = V
 
-        elif event.ControlDown() and event.GetKeyCode() == 69: self.Paste(2)    # Excel mode for RTF double \n on Mac
-            
-        #if event.ControlDown() and event.GetUnicodeKey() == 'C': DiagWrite(f"Control Copy\n")
+        elif event.ControlDown() and event.GetKeyCode() == 69: self.Paste(2)    # 69 = E    # workaround Excel mode for RTF double \n on Mac
 
-        #if event.GetKeyCode() == wx.WXK_CONTROL_C: self.Copy()
+        elif event.ControlDown() and event.GetKeyCode() == 84: self.Paste(1)    # 84 = T
 
-        #elif event.GetKeyCode() == wx.WXK_CONTROL_V: self.Paste()
+        elif event.ControlDown() and event.GetKeyCode() == 88: self.Cut()       # 88 = X
 
-        #elif event.GetKeyCode() == wx.WXK_CONTROL_T: self.Paste(1)
+        elif event.ControlDown() and event.GetKeyCode() == 65: self.SelectAll() # 65 = A
 
-        #elif event.GetUnicodeKey() == 'X' and event.ControlDown() == True: self.Cut()
-
-        #elif event.GetUnicodeKey() == 'Z' and event.ControlDown() == True: self.Undo()
-
-        #elif event.GetKeyCode() == wx.WXK_CONTROL_A: self.SelectAll()
+        elif event.ControlDown() and event.GetKeyCode() == 90: self.Undo()      # 90 = Z
 
         elif event.GetKeyCode() == wx.WXK_DELETE:
             self.Delete()
@@ -184,6 +179,11 @@ class TextGrid(wx.grid.Grid):
         self.SetBold()
 
 
+    def OnInsertColumn(self, event):
+        col = self.GetGridCursorCol()
+        self.InsertColumn(col)
+
+
     def Delete(self):
         self.CopyUndo()
         self.SetCellValue(self.GetGridCursorRow(), self.GetGridCursorCol(), "")
@@ -202,7 +202,7 @@ class TextGrid(wx.grid.Grid):
 
 
     def OnLabelClick(self, event):
-        if self.vdu: self.vdu.AppendText("Label Click\n")
+        #if self.vdu: self.vdu.AppendText("Label Click\n")
         c = event.GetCol()
         r = event.GetRow()
 
@@ -255,19 +255,6 @@ class TextGrid(wx.grid.Grid):
     
 
     def Copy(self):
-        """
-        DiagWrite("Grid Copy\n")
-        topleft = self.GetSelectionBlockTopLeft()
-        bottomright = self.GetSelectionBlockBottomRight()
-
-        if list(topleft) == []:
-            selectcell = self.GetGridCursorCoords()
-            DiagWrite(f"single cell row {selectcell.Row} col {selectcell.Col}\n")
-        else:
-            selectcell = None
-            DiagWrite(f"top_left {topleft} bottom_right {bottomright}\n")
-        """
-        
         # code adapted from jkueng, https://stackoverflow.com/questions/28509629/work-with-ctrl-c-and-ctrl-v-to-copy-and-paste-into-a-wx-grid-in-wxpython
         # Get number of copy rows and cols
         if list(self.GetSelectionBlockTopLeft()) == []:
@@ -296,15 +283,10 @@ class TextGrid(wx.grid.Grid):
                 data += self.GetCellValue(rowstart + row, colstart + col)
                 if col < numcols - 1: data += '\t'
             if row < numrows - 1: data += '\n'
-            #data += '\n'
-
-        #DiagWrite(f"TextGrid Copy() data: {data} end\n")
 
         # Create text data object
         clipboard = wx.TextDataObject()
         clipboard.SetText(data)
-
-        #DiagWrite(f"TextGrid Copy() clipboard {clipboard} end\n")
 
         # Put the data on the clipboard
         if wx.TheClipboard.Open():
@@ -312,6 +294,9 @@ class TextGrid(wx.grid.Grid):
             wx.TheClipboard.Close()
         else:
             wx.MessageBox("Can't open the clipboard", "Error")
+
+
+        print(f"linesep {repr(os.linesep)}")
      
 
     def Paste(self, mode = 0):
@@ -329,12 +314,28 @@ class TextGrid(wx.grid.Grid):
 
         clipboard = wx.TextDataObject()
         wx.TheClipboard.GetData(clipboard)
+
+        
+        #buf = cStringIO.StringIO()
+        buf = wx.py.buffer.Buffer()
+
+        richclip = wx.richtext.RichTextBufferDataObject()
+        wx.TheClipboard.GetData(richclip)
+        richdata = wx.richtext.RichTextBuffer()
+        
+        check = richclip.GetDataHere(wx.DataFormat(wx.DF_UNICODETEXT), buf)
+        print("RichData {check} {richdata}")
+
         wx.TheClipboard.Close()
         data = clipboard.GetText()
         if data[-1] == "\n":
             data = data[:-1]
 
-        #DiagWrite(f"TextGrid Paste() data: {data} end\n")
+        DiagWrite(f"TextGrid Paste() data: {clipboard.GetFormat()} end\n")
+        if clipboard.GetFormat() == wx.DF_TEXT: print("Clipboard wxDF_TEXT")
+        elif clipboard.GetFormat() == wx.DF_UNICODETEXT: print("Clipboard wxDF_UNICODETEXT")
+        else: print("Clipboard UNKNOWN")
+
         
         rowstart = self.GetGridCursorRow()
         colstart = self.GetGridCursorCol()
@@ -348,7 +349,7 @@ class TextGrid(wx.grid.Grid):
         
         newrows = len(data.split(rowstring))
         if newrows > numrows: self.AppendRows(newrows - numrows)
-        print(f"Paste() add rows {numrows} {newrows}")
+        #print(f"Paste() add rows {numrows} {newrows}")
         #DiagWrite(f"Paste() add rows {rowmax} {newrows}")
         
         for row, line in enumerate(data.split(rowstring)):
@@ -364,61 +365,6 @@ class TextGrid(wx.grid.Grid):
                 self.SetCell(target_row, target_col, value.strip())
 
         if self.vdu: self.vdu.AppendText("OK\n")
-    
-
-    def PasteOld(self, mode = 0):
-        # grid paste code from wxwidgets forum
-
-        self.CopyUndo()
-
-        if mode == 1 and self.vdu: self.vdu.AppendText("Transpose Pasting...\n")
-        if self.vdu: self.vdu.AppendText("Copy clipboard...")
-
-        if not wx.TheClipboard.Open():
-            wx.MessageBox("Can't open the clipboard", "Warning")
-            return False
-
-        clipboard = wx.TextDataObject()
-        wx.TheClipboard.GetData(clipboard)
-        wx.TheClipboard.Close()
-        data = clipboard.GetText()
-   
-        datasize = len(data)
-        self.WriteVDU(f"OK, size {datasize}\nWriting cells...")
-
-        i = self.GetGridCursorRow()
-        j = self.GetGridCursorCol()
-        if mode == 1: k = i
-        else: k = j
-        prog = 0.1
-
-        print(repr(data))
-
-        while not data == "":
-            cur_line = data[:data.index('\n')]
-            #if(vdu) vdu->AppendText(text.Format("\nRow %d", i));    
-            while not cur_line == "":
-                cur_field = cur_line[:cur_line.index('\t')]
-                cur_field = cur_field.strip()
-                if not cur_field == "": self.SetCell(i, j, cur_field)
-                if mode == 1: i += 1  # transpose
-                else: j += 1
-                cur_line  = cur_line[cur_line.index('\t')+1:]
-        
-            if mode == 1:   # transpose
-                j += 1 
-                i = k
-            else:           # normal
-                i += 1
-                j = k
-            data = data[data.index('\n')+1:]
-            if len(data) < datasize * (1 - prog): 
-                self.WriteVDU(f"{prog * 100}%%")
-                prog = prog + 0.1
-        
-
-        self.WriteVDU("OK\n")
-
     
 
 
@@ -721,3 +667,14 @@ class GridBox(ParamBox):
             self.grids[tag].SetColSize(col, width)
 
         infile.Close()
+
+
+    def ColumnSelect(self, col):
+        self.WriteVDU(f"Column Select {col}\n")
+        if self.mod: self.mod.GridColumn(col)
+        if self.plotbox: self.plotbox.SetColumn(col)
+
+
+    def RowSelect(self, row):
+        self.WriteVDU(f"Row Select {row}\n")
+        if self.mod: self.mod.GridRow(row)

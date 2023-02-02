@@ -104,6 +104,14 @@ class Mod(wx.EvtHandler):
         print("ModLoad OK")
 
 
+    def GridColumn(self, col):
+        return 0
+
+
+    def GridRow(self, row):
+        return 0
+
+
 
 class ModThread(Thread):
     def __init__(self, box, mainwin):
