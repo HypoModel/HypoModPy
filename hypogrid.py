@@ -6,7 +6,7 @@ from hypoparams import *
 import wx.richtext
 from io import StringIO 
 import wx.py.buffer
-
+import pyperclip
 
 
 class TextGrid(wx.grid.Grid):
@@ -296,7 +296,7 @@ class TextGrid(wx.grid.Grid):
             wx.MessageBox("Can't open the clipboard", "Error")
 
 
-        print(f"linesep {repr(os.linesep)}")
+        #print(f"linesep {repr(os.linesep)}")
      
 
     def Paste(self, mode = 0):
@@ -308,34 +308,37 @@ class TextGrid(wx.grid.Grid):
         if self.vdu and mode == 1: self.vdu.AppendText("Transpose Pasting...\n")
         if self.vdu: self.vdu.AppendText("Copy clipboard...")
         
-        if not wx.TheClipboard.Open():
-            wx.MessageBox("Can't open the clipboard", "Warning")
-            return False
+        #if not wx.TheClipboard.Open():
+        #    wx.MessageBox("Can't open the clipboard", "Warning")
+        #    return False
 
-        clipboard = wx.TextDataObject()
-        wx.TheClipboard.GetData(clipboard)
+        #clipboard = wx.TextDataObject()
+        #wx.TheClipboard.GetData(clipboard)
 
         
         #buf = cStringIO.StringIO()
-        buf = wx.py.buffer.Buffer()
+        #buf = wx.py.buffer.Buffer()
+        #richclip = wx.richtext.RichTextBufferDataObject()
+        #wx.TheClipboard.GetData(richclip)
+        #richdata = wx.richtext.RichTextBuffer()
+        #s = bytearray(10000)
+        #richdata = memoryview(s)
+        #check = richclip.GetDataHere(wx.DataFormat(wx.DF_UNICODETEXT), richdata)
+        #print(f"RichData {check} {richdata}")
 
-        richclip = wx.richtext.RichTextBufferDataObject()
-        wx.TheClipboard.GetData(richclip)
-        richdata = wx.richtext.RichTextBuffer()
-        
-        check = richclip.GetDataHere(wx.DataFormat(wx.DF_UNICODETEXT), buf)
-        print("RichData {check} {richdata}")
-
-        wx.TheClipboard.Close()
-        data = clipboard.GetText()
+        #wx.TheClipboard.Close()
+        #data = clipboard.GetText()
+        data = pyperclip.paste()
         if data[-1] == "\n":
             data = data[:-1]
 
-        DiagWrite(f"TextGrid Paste() data: {clipboard.GetFormat()} end\n")
-        if clipboard.GetFormat() == wx.DF_TEXT: print("Clipboard wxDF_TEXT")
-        elif clipboard.GetFormat() == wx.DF_UNICODETEXT: print("Clipboard wxDF_UNICODETEXT")
-        else: print("Clipboard UNKNOWN")
+        #DiagWrite(f"TextGrid Paste() data: {clipboard.GetFormat()} end\n")
+        #if clipboard.GetFormat() == wx.DF_TEXT: print("Clipboard wxDF_TEXT")
+        #elif clipboard.GetFormat() == wx.DF_UNICODETEXT: print("Clipboard wxDF_UNICODETEXT")
+        #else: print("Clipboard UNKNOWN")
 
+        #s = pyperclip.paste()
+        #print(s)
         
         rowstart = self.GetGridCursorRow()
         colstart = self.GetGridCursorCol()
@@ -362,7 +365,9 @@ class TextGrid(wx.grid.Grid):
                 #if target_col > colmax:
                 #    break
 
+                #if mode == 0 or mode == 2:
                 self.SetCell(target_row, target_col, value.strip())
+                #if mode == 1: 
 
         if self.vdu: self.vdu.AppendText("OK\n")
     
