@@ -96,16 +96,16 @@ def ParseFloat(readline, chartag = None):
 
 
 
+# Preference Flags
+basicmode = 0
+studentmode = 1
+
+
 # Paths
 mainpath = ""
 projectpath = "/Users/duncan/Model"
 modpath = "/Users/duncan/Model"
 #modpathwin = "C:/Users/Duncan/Model"
-
-
-# Preference Flags
-basicmode = 0
-studentmode = 1
 
 
 # Control IDs
