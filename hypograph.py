@@ -93,7 +93,7 @@ class GraphPanel(wx.Panel):
             graphdisp.XYSynch()
 
 
-    def ScrollUpdate(self):
+    def ScrollUpdate(self, xmax=0):
         plot = self.GetFrontPlot()
         if not plot: return
         if not np.any(plot.data):
@@ -101,7 +101,9 @@ class GraphPanel(wx.Panel):
             #return
             max = 1000
         else: plot.xmax = len(plot.data) / plot.xscale
-        if plot.xdata != None: plot.xmax = len(plot.xdata)
+        if plot.xdata != None: 
+            if xmax: plot.xmax = xmax
+            else: plot.xmax = len(plot.xdata)
 
         #plot.xmax = 5000
 

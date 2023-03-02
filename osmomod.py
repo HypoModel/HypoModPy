@@ -8,7 +8,7 @@ from hypoparams import *
 from hypodat import *
 from hypogrid import *
 
-ID_heatflag = wx.NewIdRef()
+#ID_heatflag = wx.NewIdRef()
 
 
 
@@ -38,8 +38,6 @@ class OsmoMod(Mod):
 
         mainwin.toolset.AddBox(self.osmobox)  
         mainwin.toolset.AddBox(self.gridbox)  
-
-        
 
         self.ModLoad()
         print("Osmo Model OK")
@@ -103,14 +101,12 @@ class OsmoBox(ParamBox):
 
         # Model Flags
         self.AddFlag(ID_randomflag, "randomflag", "Fixed Random Seed", 0)
-        #self.AddFlag(ID_heatflag, "heatflag", "Heat Effect", 0)
 
 
         # Parameter controls
         #
         # AddCon(tag string, display string, initial value, click increment, decimal places)
         # ----------------------------------------------------------------------------------
-
         self.paramset.AddCon("runtime", "Run Time", 2000, 1, 0)
         self.paramset.AddCon("hstep", "h Step", 1, 0.1, 1)
         self.paramset.AddCon("waterloss", "Water Loss", 0, 0.00001, 5)
@@ -147,8 +143,6 @@ class OsmoModel(ModThread):
 
 
     def run(self):
-        #print("OsmoModel thread running")
-
         if self.randomflag: random.seed(0)
         else: random.seed(datetime.now())
 
@@ -177,15 +171,15 @@ class OsmoModel(ModThread):
             osmodata.salt[i] = 0
             osmodata.osmo[i] = 0
 
+        # Initialise mode variables
         osmodata.water[0] = water
         osmodata.salt[0] = salt
         osmodata.osmo[0] = osmo
-        osmobox.countmark = 0
 
         # Run model loop
         for i in range(1, runtime + 1):
 
-            if i%100 == 0: self.osmobox.SetCount(i * 100 / runtime)     # Update run progress % in model panel
+            if i%100 == 0: osmobox.SetCount(i * 100 / runtime)     # Update run progress % in model panel
 
             water = water - (water * waterloss)
             salt = salt
