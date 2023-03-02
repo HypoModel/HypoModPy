@@ -24,25 +24,38 @@ class MainFrame(wx.Frame):
         self.diagbox.Write('Diagnostic Box OK\n')
         self.gridbox = None
 
-        respath = rpath;  # defaults to "" for Windows, bundle resource path for OSX
-        self.diagbox.Write("MainFrame respath " + respath + "\n")
+        self.respath = rpath;  # defaults to "" for Windows, bundle resource path for OSX
+        self.diagbox.Write("MainFrame respath " + self.respath + "\n")
         #self.mainpath = mpath
-        self.mainpath = os.getcwd()
-        self.modpath = ""
+        self.app_path = os.getcwd()
+        self.respath = self.app_path + "/Resource"
+
+        stdpaths = wx.StandardPaths.Get()
+        userpath = stdpaths.GetUserConfigDir()
+        self.diagbox.Write(f"userpath {userpath}\n")
+
+        self.mainpath = userpath + "/HypoMod"
+        if os.path.exists(self.mainpath) == False: 
+            os.mkdir(self.mainpath)
 
         # Set up store paths and folders
         if self.mainpath == "": self.initpath = "Init"
         else: self.initpath = self.mainpath + "/Init"
-
-        if self.mainpath == "": self.toolpath = "Tools"
-        else: self.toolpath = self.mainpath + "/Tools"
-
         if os.path.exists(self.initpath) == False: 
             os.mkdir(self.initpath)
 
+        if self.mainpath == "": self.toolpath = "Tools"
+        else: self.toolpath = self.mainpath + "/Tools"
         if os.path.exists(self.toolpath) == False: 
             os.mkdir(self.toolpath)
-        
+
+        if self.mainpath == "": self.modpath = "Model"
+        else: self.modpath = self.mainpath + "/Model"
+        if os.path.exists(self.modpath) == False: 
+            os.mkdir(self.modpath)
+
+
+        # Default colour pens
         self.colourpen = {}
         self.colourpen["black"] = wx.Colour("#000000")
         self.colourpen["red"] = wx.Colour("#F50000")
@@ -150,6 +163,69 @@ class MainFrame(wx.Frame):
 
 
 
+class SystemPanel(wx.Dialog):
+    def __init__(self, mainwin, title):
+        super(SystemPanel, self).__init__(None, -1, title, wx.DefaultPosition, wx.Size(450, 450), 
+                                          wx.FRAME_FLOAT_ON_PARENT | wx.FRAME_TOOL_WINDOW | wx.CAPTION | wx.SYSTEM_MENU | wx.CLOSE_BOX | wx.RESIZE_BORDER)
+
+        self.mainwin = mainwin
+        panel = ToolPanel(self, wx.DefaultPosition, wx.DefaultSize)
+        mainbox = wx.BoxSizer(wx.VERTICAL)
+        panelbox = wx.BoxSizer(wx.VERTICAL)
+        pathbox = wx.BoxSizer(wx.VERTICAL)
+        buttonbox = wx.BoxSizer(wx.HORIZONTAL)
+
+        modpathbox = wx.BoxSizer(wx.HORIZONTAL)
+        self.modpathcon = ParamCon(panel, "textcon", "modpath", "Mod Path", mainwin.modpath, labelwidth=50, datawidth=320)
+        #self.modpathcon.AddButton("Path", ID_ModBrowse, 80).Bind(wx.EVT_BUTTON, self.OnBrowse)
+        pathButton = wx.Button(panel, ID_ModBrowse, "Path", wx.DefaultPosition, wx.Size(40, 30))
+        pathButton.Bind(wx.EVT_BUTTON, self.OnBrowse)
+        modpathbox.Add(self.modpathcon, 0, wx.ALIGN_CENTER_VERTICAL)
+        modpathbox.Add(pathButton, 0, wx.ALIGN_CENTER_VERTICAL)
+
+        pathbox.Add(modpathbox, 1)
+        panelbox.Add(pathbox, 0)
+        panel.SetSizer(panelbox)
+        panel.Layout()
+
+        okButton = wx.Button(self, wx.ID_OK, "Ok", wx.DefaultPosition, wx.Size(70, 30))
+        closeButton = wx.Button(self, wx.ID_CANCEL, "Close", wx.DefaultPosition, wx.Size(70, 30))
+        buttonbox.Add(okButton, 1)
+        buttonbox.Add(closeButton, 1, wx.LEFT, 5)
+        mainbox.Add(panel, 1, wx.ALL, 10)
+        mainbox.Add(buttonbox, 0, wx.ALIGN_CENTRE | wx.TOP | wx.BOTTOM, 10)
+        self.SetSizer(mainbox)
+        self.Layout()
+
+        self.Bind(wx.EVT_TEXT_ENTER, self.OnEnter)
+        okButton.Bind(wx.EVT_BUTTON, self.OnOK)
+
+        #self.Bind(wx.EVT_BUTTON, self.OnOK, wx.ID_OK)
+
+
+    def OnBrowse(self, event):
+        if event.GetId() == ID_ModBrowse:
+            dialog = wx.DirDialog(self, "Choose a directory", self.mainwin.modpath, 0, wx.DefaultPosition)
+            if dialog.ShowModal() == wx.ID_OK: self.modpathcon.SetText(dialog.GetPath())
+
+
+    def OnEnter(self, event):
+        self.mainwin.modpath = self.modpathcon.GetText()
+        #mainwin->GraphPanelsUpdate();
+
+
+    def OnOK(self, event):
+        self.OnEnter(event)
+        self.Close()
+
+
+    def OnClose(self, event):
+        self.mainwin.OptionStore()
+        self.Show(False)
+
+
+
+
 class HypoMain(MainFrame):
     def __init__(self, title, pos, size, respath, mainpath):
         super(HypoMain, self).__init__(title, pos, size, respath, mainpath)
@@ -161,19 +237,22 @@ class HypoMain(MainFrame):
         self.prefs["startmod"] = 0
         self.prefs["viewwidth"] = 400
         self.prefs["viewheight"] = 600
+        self.prefs["modpath"] = self.modpath
 
         self.SetMinSize(wx.Size(500, 400))
 
         # Load Prefs
         self.HypoLoad()
         self.SetSize(self.prefs["viewwidth"], self.prefs["viewheight"])
+        self.numdraw = self.prefs["numdraw"]
+        self.numgraphs = self.prefs["numgraphs"]
+        self.modpath = self.prefs["modpath"]
 
         # Layout
         mainsizer = wx.BoxSizer(wx.HORIZONTAL)
         self.graphsizer = wx.BoxSizer(wx.VERTICAL)
         self.xstretch = 0
-        self.numdraw = self.prefs["numdraw"]
-        self.numgraphs = self.prefs["numgraphs"]
+        
         self.scalewidth = -1
         
         # Menu Bar
@@ -214,6 +293,11 @@ class HypoMain(MainFrame):
         # Initial Plots
         self.scalebox.GraphSwitch(self.mod.plotbase)
 
+
+        # System Panel
+        self.systempanel = SystemPanel(self, "System Panel")
+        #tag = optionpanel->projecttag->GetValue();
+
         # Event Binds
         self.Bind(wx.EVT_CLOSE, self.OnClose)
         self.Bind(wx.EVT_SIZE, self.OnHypoSize)
@@ -243,7 +327,7 @@ class HypoMain(MainFrame):
 
         for graphpanel in self.panelset:
             graphpanel.ReSize(xplot, yplot)
-	
+    
 
     def UserMenu(self):
         menuFile = wx.Menu()
@@ -267,13 +351,13 @@ class HypoMain(MainFrame):
         #menuTools.Append(ID_Mod, "Mod Box")
         #menuTools.Append(ID_Burst, "Burst Box")
 
-        menuSystem.Append(wx.ID_ANY, "Options")
+        itemOptions = menuSystem.Append(wx.ID_ANY, "Options")
         
         menuBar = wx.MenuBar()
         menuBar.Append(menuFile, "&File")
         #menuBar.Append(menuAnalysis, "Analysis")
         menuBar.Append(menuTools, "Tools")
-        #menuBar.Append(menuSystem, "System")
+        menuBar.Append(menuSystem, "System")
         
         self.SetMenuBar(menuBar)
 
@@ -282,6 +366,12 @@ class HypoMain(MainFrame):
         self.Bind(wx.EVT_MENU, self.OnGridBox, itemGrid)
         self.Bind(wx.EVT_MENU, self.OnDiagBox, itemDiag)
         self.Bind(wx.EVT_MENU, self.OnGraphAdd, itemAddGraph)
+        self.Bind(wx.EVT_MENU, self.OnOptions, itemOptions)
+
+
+    def OnOptions(self, event):
+        self.systempanel.Raise()
+        self.systempanel.Show(True)
 
 
     def AddGraph(self):
@@ -340,8 +430,8 @@ class HypoMain(MainFrame):
 
 
     def OnClose(self, event):
-        self.prefs["numdraw"] = self.numdraw
         self.HypoStore()
+        self.systempanel.Destroy()
         MainFrame.ToolStore(self)
         self.scalebox.storetag.HistStore()
         #if(project.mod): 
@@ -353,6 +443,9 @@ class HypoMain(MainFrame):
 
 
     def HypoStore(self):
+        self.prefs["numdraw"] = self.numdraw
+        self.prefs["modpath"] = self.modpath
+
         outfile = TextFile(self.initpath + "/hypoprefs.ini")
         outfile.Open('w')
 
@@ -372,7 +465,9 @@ class HypoMain(MainFrame):
         for line in filetext:
             linedata = line.split(' ')
             tag = linedata[0]
+            data = linedata[1].strip()
             if tag in self.prefs:
-                self.prefs[tag] = int(linedata[1]) 
+                if data.isnumeric(): self.prefs[tag] = int(data)
+                else: self.prefs[tag] = data
 
         infile.Close()

@@ -8,8 +8,6 @@
 
 
 import wx
-import os
-from pubsub import pub
 from hypomain import *
 
 

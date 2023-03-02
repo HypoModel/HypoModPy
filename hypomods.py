@@ -36,12 +36,12 @@ class Mod(wx.EvtHandler):
 
 
     def GetPath(self):
-        if modpath == "": 
+        if self.mainwin.modpath == "": 
             if self.path != "": fullpath = self.path
             else: fullpath = self.mainwin.initpath
         else:
-            if self.path != "": fullpath = modpath + "/" + self.path
-            else: fullpath = modpath
+            if self.path != "": fullpath = self.mainwin.modpath + "/" + self.path
+            else: fullpath = self.mainwin.modpath
 
         print("path " + self.path)
         print("fullpath " + fullpath)

@@ -331,7 +331,10 @@ class TagBox(wx.ComboBox):
         #    if projectpath == "": self.tagpath = self.boxpath + "/Tags"
         #    else: self.tagpath = projectpath + "/" + self.boxpath + "/Tags"
 
-        self.tagpath = self.boxpath + "/Tags"
+        
+        if self.boxpath == "": self.tagpath = "Tags"
+        else: self.tagpath = self.boxpath + "/Tags"
+
         if os.path.exists(self.tagpath) == False: 
             os.mkdir(self.tagpath)
 

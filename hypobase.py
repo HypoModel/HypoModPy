@@ -8,6 +8,20 @@ from pubsub import pub
 #from hypotools import *
 
 
+# Preference Flags
+basicmode = 0
+studentmode = 1
+
+
+# Paths
+#mainpath = ""
+#projectpath = "/Users/duncan/Model"
+#modpath = "/Users/duncan/Model"
+#modpath = ""
+#modpathwin = "C:/Users/Duncan/Model"
+
+
+
 def GetSystem():
     oslabel = wx.GetOsDescription()
     if oslabel.startswith("Windows"): return 'Windows'
@@ -95,26 +109,14 @@ def ParseFloat(readline, chartag = None):
     return (numdat, readline)
 
 
-
-# Preference Flags
-basicmode = 0
-studentmode = 1
-
-
-# Paths
-mainpath = ""
-projectpath = "/Users/duncan/Model"
-modpath = "/Users/duncan/Model"
-#modpathwin = "C:/Users/Duncan/Model"
-
-
-# Control IDs
+# Button IDs
 ID_Sync = wx.NewIdRef()
 ID_Store = wx.NewIdRef()
 ID_Load = wx.NewIdRef()
 ID_Run = wx.NewIdRef()
 ID_AutoRun = wx.NewIdRef()
 ID_Default = wx.NewIdRef()
+ID_ModBrowse = wx.NewIdRef()
 
 # Menu IDs
 ID_GraphEPS = wx.NewIdRef()

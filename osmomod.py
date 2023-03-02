@@ -16,7 +16,7 @@ class OsmoMod(Mod):
     def __init__(self, mainwin, tag):
         Mod.__init__(self, mainwin, tag)
 
-        if modpath != "": self.path = modpath + "/Osmo"
+        if mainwin.modpath != "": self.path = mainwin.modpath + "/Osmo"
         else: self.path = "Osmo"
 
         if os.path.exists(self.path) == False: 

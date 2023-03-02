@@ -5,7 +5,7 @@ from hypotools import *
 
 
 class ParamCon(wx.Control):
-    def __init__(self, panel, type, tag, labeltext, initval, step=0, places=0, labelwidth=60, numwidth=45):
+    def __init__(self, panel, type, tag, labeltext, initval, step=0, places=0, labelwidth=60, datawidth=45):
         ostype = GetSystem()
         wx.Control.__init__(self, panel, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.BORDER_NONE)
         self.numstep = step
@@ -14,7 +14,8 @@ class ParamCon(wx.Control):
         self.decimals = places
         self.type = type
         self.labelwidth = labelwidth
-        self.numwidth = numwidth
+        self.datawidth = datawidth
+        self.buttonwidth = 0
         self.panel = panel
         self.pad = panel.controlborder
         self.cycle = False
@@ -40,7 +41,7 @@ class ParamCon(wx.Control):
         else:
             inittext = initval
 
-        sizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.sizer = wx.BoxSizer(wx.HORIZONTAL)
 
         if labeltext == "":
             label = None
@@ -49,27 +50,43 @@ class ParamCon(wx.Control):
             label = ToolText(self, panel.toolbox, tag, labeltext, wx.DefaultPosition, wx.Size(labelwidth, -1), wx.ALIGN_CENTRE)
             label.SetFont(textfont)
 
-        if ostype == 'Mac' and labelwidth < 40: label.SetFont(smalltextfont)
-        sizer.Add(label, 0, wx.ALIGN_CENTER_VERTICAL|wx.RIGHT, pad)
+        #if ostype == 'Mac' and labelwidth < 40: label.SetFont(smalltextfont)
+        self.sizer.Add(label, 0, wx.ALIGN_CENTER_VERTICAL|wx.RIGHT, pad)
 
-        self.numbox = wx.TextCtrl(self, wx.ID_ANY, inittext, wx.DefaultPosition, wx.Size(numwidth, -1), wx.TE_PROCESS_ENTER)
+        if type == "textcon": print(f"ParamCon init: {initval}")
+
+        self.numbox = wx.TextCtrl(self, wx.ID_ANY, inittext, wx.DefaultPosition, wx.Size(datawidth, -1), wx.TE_PROCESS_ENTER)
         self.numbox.SetFont(textfont)
-        sizer.Add(self.numbox, 0, wx.ALIGN_CENTER_VERTICAL|wx.RIGHT, pad)
+        self.sizer.Add(self.numbox, 0, wx.ALIGN_CENTER_VERTICAL|wx.RIGHT, pad)
 
         if type == 'spincon':
             self.spin = wx.SpinButton(self, wx.ID_ANY, wx.DefaultPosition, wx.Size(17, 23), wx.SP_VERTICAL|wx.SP_ARROW_KEYS);  # 21
             self.spin.SetRange(-1000000, 1000000)
-            sizer.Add(self.spin, 0, wx.ALIGN_CENTER_VERTICAL, 0)
+            self.sizer.Add(self.spin, 0, wx.ALIGN_CENTER_VERTICAL, 0)
             self.spin.Bind(wx.EVT_SPIN_UP, self.OnSpinUp)
             self.spin.Bind(wx.EVT_SPIN_DOWN, self.OnSpinDown)
             self.spin.Bind(wx.EVT_SPIN, self.OnSpin)
 
         self.SetInitialSize(wx.DefaultSize)
         self.Move(wx.DefaultPosition)
-        self.SetSizer(sizer)
+        self.SetSizer(self.sizer)
         self.Layout()
 
         self.Bind(wx.EVT_TEXT_ENTER, self.OnEnter)
+
+
+    def AddButton(self, label, id, width):
+        self.buttonwidth = width
+        self.button = wx.Button(self, id, label, wx.DefaultPosition, wx.Size(self.buttonwidth, 25))
+        self.button.SetFont(self.panel.confont)
+        self.sizer.Add(self.button, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.TOP|wx.BOTTOM, 2)
+        #self.SetInitialSize(wx.DefaultSize)
+        self.Layout()
+        return self.button
+    
+
+    def DoGetBestSize(self):
+        return wx.Size(self.labelwidth + self.datawidth + self.buttonwidth, 25)
 
 
     def Select(self):
@@ -77,16 +94,16 @@ class ParamCon(wx.Control):
 
 
     def GetValue(self):
-        if type == 'textcon': return 0
+        if self.type == 'textcon': return 0
         value = self.numbox.GetValue()
         return float(value)
 
 
-    def GetString(self):
+    def GetText(self):
         return self.numbox.GetValue()
 
 
-    def SetString(self, text):
+    def SetText(self, text):
         return self.numbox.SetValue(text)
 
     
@@ -112,10 +129,10 @@ class ParamCon(wx.Control):
 
     def DoGetBestSize(self): 
         if GetSystem() == 'Mac':
-            if self.type == 'spincon': return wx.Size(self.numwidth + self.labelwidth + self.pad * 2 + 17, 23)
-            else: return wx.Size(self.numwidth + self.labelwidth + self.pad * 2, 20)
+            if self.type == 'spincon': return wx.Size(self.datawidth + self.labelwidth + self.pad * 2 + 17, 23)
+            else: return wx.Size(self.datawidth + self.labelwidth + self.pad * 2, 20)
 
-        if self.type == 'spincon': return wx.Size(self.numwidth + self.labelwidth + 17, 25)
+        if self.type == 'spincon': return wx.Size(self.datawidth + self.labelwidth + 17, 25)
         else: return wx.Size(self.numwidth + self.labelwidth + self.pad * 2, 21 + self.pad * 2)
 
 

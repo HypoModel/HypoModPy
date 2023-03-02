@@ -8,7 +8,7 @@ class ScaleBox(ToolPanel):
     def __init__(self, parent, size, numdraw):
         ToolPanel.__init__(self, parent, wx.DefaultPosition, size)
 
-        iconpath = parent.initpath
+        iconpath = parent.respath
         self.ostype = GetSystem()
         self.numdraw = numdraw   # number of graph panels
         #self.mainwin.panelset = parent.panelset
@@ -322,7 +322,7 @@ class ScaleBox(ToolPanel):
         filebox = wx.BoxSizer(wx.VERTICAL)
         buttons = wx.BoxSizer(wx.HORIZONTAL)
         
-        self.storetag = TagBox(self, label, wx.Size(80, -1), "scalebox", modpath)
+        self.storetag = TagBox(self, label, wx.Size(80, -1), "scalebox", self.mainwin.modpath)
         self.storetag.SetFont(self.confont)
 
         if self.ostype == 'Mac': buttonwidth = 36
