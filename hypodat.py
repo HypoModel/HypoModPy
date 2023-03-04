@@ -1,5 +1,34 @@
 
 from hypobase import *
+import numpy as np
+
+
+# subclass code from 
+# https://numpy.org/doc/stable/user/basics.subclassing.html#slightly-more-realistic-example-attribute-added-to-existing-array
+
+class pdata(np.ndarray):
+    def __new__(subtype, shape, dtype=float, buffer=None, offset=0,
+                strides=None, order=None, info=None):
+        obj = super().__new__(subtype, shape, dtype,
+                              buffer, offset, strides, order)
+        # set the new 'info' attribute to the value passed
+        obj.info = info
+        obj.xmax = len(obj)
+        obj.empty = True
+        # Finally, we must return the newly created object:
+        return obj
+    
+    def __array_finalize__(self, obj):
+        if obj is None: return
+        self.info = getattr(obj, 'info', None)
+
+
+    def clear(self):
+        for i in range(len(self)):
+            self[i] = 0
+        self.empty = False
+
+    
 
 
 
@@ -284,7 +313,7 @@ class PlotBase():
 
     def AddPlot(self, newplot, plottag, settag = ""):       # default settag = "", for no set use settag = "null"
         plotset = None
-        diag = True
+        diag = False
 
         if diag: DiagWrite("Plotbase Add {} to set {}, numgraphs {}\n".format(plottag, settag, len(self.plotstore)))
     

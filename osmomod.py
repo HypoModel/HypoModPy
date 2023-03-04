@@ -24,19 +24,22 @@ class OsmoMod(Mod):
 
         self.mainwin = mainwin
 
-        self.osmobox = OsmoBox(self, "osmo", "Osmo", wx.Point(0, 0), wx.Size(320, 500))
+        self.protobox = OsmoProtoBox(self, "proto", "Input Protocols", wx.Point(0, 0), wx.Size(320, 500))
         self.gridbox = GridBox(self, "Data Grid", wx.Point(0, 0), wx.Size(320, 500), 100, 20)
+        self.osmobox = OsmoBox(self, "osmo", "Osmo", wx.Point(0, 0), wx.Size(320, 500))
 
         # link mod owned boxes
         mainwin.gridbox = self.gridbox
 
         self.modtools[self.osmobox.boxtag] = self.osmobox
+        self.modtools[self.protobox.boxtag] = self.protobox
         self.modtools[self.gridbox.boxtag] = self.gridbox
 
         self.osmobox.Show(True)
         self.modbox = self.osmobox
 
         mainwin.toolset.AddBox(self.osmobox)  
+        mainwin.toolset.AddBox(self.protobox)  
         mainwin.toolset.AddBox(self.gridbox)  
 
         self.ModLoad()
@@ -47,11 +50,13 @@ class OsmoMod(Mod):
         self.graphload = True
 
 
+    ## PlotData() defines all the available plots, each linked to a data array in osmodata
+    ##
     def PlotData(self):
-        ## Data plots
-        ##
-        ## PlotDat(data pointer, xfrom, xto, yfrom, yto, label string, plot type, bin size, colour)
-        ## ----------------------------------------------------------------------------------
+        # Data plots
+        #
+        # PlotDat(data pointer, xfrom, xto, yfrom, yto, label string, plot type, bin size, colour)
+        # ----------------------------------------------------------------------------------
         self.plotbase.AddPlot(PlotDat(self.osmodata.water, 0, 2000, 0, 5000, "water", "line", 1, "blue"), "water")
         self.plotbase.AddPlot(PlotDat(self.osmodata.salt, 0, 2000, 0, 100, "salt", "line", 1, "red"), "salt")
         self.plotbase.AddPlot(PlotDat(self.osmodata.osmo, 0, 2000, 0, 100, "osmo", "line", 1, "green"), "osmo")
@@ -83,16 +88,17 @@ class OsmoDat():
     def __init__(self):
         self.storesize = 10000
 
-        self.water = np.zeros(self.storesize + 1)
-        self.salt = np.zeros(self.storesize + 1)
-        self.osmo = np.zeros(self.storesize + 1)
-        self.vaso = np.zeros(self.storesize + 1)
+        # initialise arrays for recording model variables (or any model values)
+        self.water = pdata(self.storesize + 1)
+        self.salt = pdata(self.storesize + 1)
+        self.osmo = pdata(self.storesize + 1)
+        self.vaso = pdata(self.storesize + 1)
 
 
 
 class OsmoBox(ParamBox):
-    def __init__(self, model, tag, title, position, size):
-        ParamBox.__init__(self, model, title, position, size, tag, 0, 1)
+    def __init__(self, mod, tag, title, position, size):
+        ParamBox.__init__(self, mod, title, position, size, tag, 0, 1)
 
         self.autorun = True
 
@@ -100,7 +106,8 @@ class OsmoBox(ParamBox):
         self.InitMenu()
 
         # Model Flags
-        self.AddFlag(ID_randomflag, "randomflag", "Fixed Random Seed", 0)
+        ID_randomflag = wx.NewIdRef()   # request a new control ID
+        self.AddFlag(ID_randomflag, "randomflag", "Fixed Random Seed", 0)         # menu accessed flags for switching model code
 
 
         # Parameter controls
@@ -111,12 +118,17 @@ class OsmoBox(ParamBox):
         self.paramset.AddCon("hstep", "h Step", 1, 0.1, 1)
         self.paramset.AddCon("waterloss", "Water Loss", 0, 0.00001, 5)
 
-        self.ParamLayout(2)
+        self.ParamLayout(2)   # layout parameter controls in two columns
 
         # ----------------------------------------------------------------------------------
 
         runbox = self.RunBox()
         paramfilebox = self.StoreBoxSync()
+
+        ID_Proto = wx.NewIdRef()
+        self.AddPanelButton(ID_Proto, "Proto", self.mod.protobox)
+        ID_Grid = wx.NewIdRef()
+        self.AddPanelButton(ID_Grid, "Grid", self.mod.gridbox)
 
         self.mainbox.AddSpacer(5)
         self.mainbox.Add(self.pconbox, 1, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 0)
@@ -124,8 +136,44 @@ class OsmoBox(ParamBox):
         self.mainbox.Add(runbox, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 0)
         self.mainbox.AddSpacer(5)
         self.mainbox.Add(paramfilebox, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 0)	
+        #self.mainbox.AddStretchSpacer()
+        self.mainbox.Add(self.buttonbox, 0, wx.ALIGN_CENTRE_HORIZONTAL | wx.ALIGN_CENTRE_VERTICAL | wx.ALL, 0)
+        self.mainbox.AddSpacer(5)
+        #self.mainbox.AddSpacer(2)
+        self.panel.Layout()
+
+
+
+class OsmoProtoBox(ParamBox):
+    def __init__(self, mod, tag, title, position, size):
+        ParamBox.__init__(self, mod, title, position, size, tag, 0, 1)
+
+        self.autorun = True
+
+        # Initialise Menu 
+        #self.InitMenu()
+
+        # Model Flags
+    
+
+        # Parameter controls
+        #
+        # AddCon(tag string, display string, initial value, click increment, decimal places)
+        # ----------------------------------------------------------------------------------
+        self.paramset.AddCon("drinkstart", "Drink Start", 0, 1, 0)
+        self.paramset.AddCon("drinkstop", "Drink Stop", 0, 1, 0)
+        self.paramset.AddCon("drinkrate", "Drink Rate", 10, 1, 0)
+
+        self.ParamLayout(3)   # layout parameter controls in two columns
+
+        # ----------------------------------------------------------------------------------
+
+        self.mainbox.AddSpacer(5)
+        self.mainbox.Add(self.pconbox, 1, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 0)
+        self.mainbox.AddStretchSpacer(5)
         self.mainbox.AddSpacer(2)
         self.panel.Layout()
+
 
 
 
@@ -135,22 +183,24 @@ class OsmoModel(ModThread):
 
         self.mod = mod
         self.osmobox = mod.osmobox
-        #self.osmodata = mod.osmodata
         self.mainwin = mod.mainwin
         self.scalebox = mod.mainwin.scalebox
 
-        self.randomflag = True
-
-
+    ## run() is the thread entry function, used to initialise and call the main Model() function 
+    ##    
     def run(self):
+        # Read model flags
+        self.randomflag = self.osmobox.modflags["randomflag"]      # model flags are useful for switching elements of the model code while running
+
         if self.randomflag: random.seed(0)
         else: random.seed(datetime.now())
 
         self.Model()
-
         wx.QueueEvent(self.mod, ModThreadEvent(ModThreadCompleteEvent))
 
 
+    ## Model() reads in the model parameters, initialises variables, and runs the main model loop
+    ##
     def Model(self):
         osmodata = self.mod.osmodata
         osmobox = self.mod.osmobox
@@ -165,11 +215,10 @@ class OsmoModel(ModThread):
         salt = 2000
         osmo = salt / water
 
-        # Initialise record stores
-        for i in range(osmodata.storesize):
-            osmodata.water[i] = 0 
-            osmodata.salt[i] = 0
-            osmodata.osmo[i] = 0
+        # Initialise model variable recording arrays
+        osmodata.water.clear()
+        osmodata.salt.clear()
+        osmodata.osmo.clear()
 
         # Initialise mode variables
         osmodata.water[0] = water
@@ -190,6 +239,13 @@ class OsmoModel(ModThread):
             osmodata.water[i] = water
             osmodata.salt[i] = salt
             osmodata.osmo[i] = osmo
+
+
+        # Set plot time range
+        osmodata.water.xmax = runtime * 1.1
+        osmodata.salt.xmax = runtime * 1.1
+        osmodata.osmo.xmax = runtime * 1.1
+
 
 
 

@@ -133,7 +133,7 @@ class ParamCon(wx.Control):
             else: return wx.Size(self.datawidth + self.labelwidth + self.pad * 2, 20)
 
         if self.type == 'spincon': return wx.Size(self.datawidth + self.labelwidth + 17, 25)
-        else: return wx.Size(self.numwidth + self.labelwidth + self.pad * 2, 21 + self.pad * 2)
+        else: return wx.Size(self.datawidth + self.labelwidth + self.pad * 2, 21 + self.pad * 2)
 
 
     def OnSpin(self, event):
@@ -269,6 +269,7 @@ class ParamSet:
 class ParamBox(ToolBox):
     def __init__(self, model, title, pos, size, tag, type = 0, storemode = 0):
         ToolBox.__init__(self, model.mainwin, tag, title, pos, size, type)
+        diag = False
 
         self.autorun = 0    # auto run model after parameter change
         self.redtag = ""    # store box overwrite warning tag
@@ -281,13 +282,12 @@ class ParamBox(ToolBox):
         #defstore = false;
         self.diagmode = 0   # diagnostic mode
         self.mainwin = model.mainwin  # main window link
-        
+
         # modmode = 0;
         
         self.activepanel = self.panel
         
-
-        self.DiagWrite("ParamBox " + self.boxtag + " init\n")
+        if diag: self.DiagWrite("ParamBox " + self.boxtag + " init\n")
 
         # Initialise Layout
         self.column = 0     # column mode for parameter controls
@@ -307,16 +307,14 @@ class ParamBox(ToolBox):
         self.checkboxes = {}
         self.flagtags = {}
         self.flagIDs = {}
-
-        #self.checkrefs = RefStore()
+        self.panelrefs = {}
         
-
         print("ParamBox " + self.mod.path)
 
         # Store Tag
         self.storetag = None
         if self.storemode:
-            self.DiagWrite("Store Box initialise " + self.boxtag + "\n")
+            if diag: self.DiagWrite("Store Box initialise " + self.boxtag + "\n")
             self.storetag = TagBox(self.activepanel, "", wx.Size(120, 20), self.boxtag, self.mod.path)
             self.storetag.Show(False)
             self.storetag.SetFont(self.confont)
@@ -560,7 +558,7 @@ class ParamBox(ToolBox):
         self.panelrefs[id] = toolbox
         button = self.AddButton(id, label, self.buttonwidth, self.buttonbox)
         button.Bind(wx.EVT_BUTTON, self.OnPanel)
-
+       
 
     def OnPanel(self, event):
         id = event.GetId()
