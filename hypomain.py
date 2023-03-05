@@ -251,6 +251,11 @@ class HypoMain(MainFrame):
         self.xstretch = 0
         
         self.scalewidth = -1
+
+         # Menu Flags
+        self.hypoflags = {}
+        self.flagtags = {}
+        self.flagIDs = {}
         
         # Menu Bar
         self.UserMenu()
@@ -297,6 +302,22 @@ class HypoMain(MainFrame):
         self.Bind(wx.EVT_SIZE, self.OnHypoSize)
 
 
+    def SetMenuFlag(self, id, flagtag, flagtext, state, menu):
+        self.hypoflags[flagtag] = state
+        self.flagtags[id] = flagtag
+        self.flagIDs[flagtag] = id
+        menu.Append(id, flagtext, "Toggle " + flagtext, wx.ITEM_CHECK)
+        menu.Check(id, state)
+        self.Bind(wx.EVT_MENU, self.OnFlag, id)
+
+
+    def OnFlag(self, event):
+        id = event.GetId()
+        flagtag = self.flagtags[id]
+        if self.hypoflags[flagtag] == 0: self.hypoflags[flagtag] = 1
+        else: self.hypoflags[flagtag] = 0
+
+
     def OnHypoSize(self, event):
         super(HypoMain, self).OnSize(event)
         self.SizeUpdate()
@@ -333,7 +354,8 @@ class HypoMain(MainFrame):
         menuFile.AppendSeparator()
         itemQuit = menuFile.Append(wx.ID_EXIT, "E&xit")
         
-        #SetMenuFlag(ID_XYPos, "xypos", "XY Pos", 1, menuAnalysis)
+        ID_XYPos = wx.NewIdRef()
+        self.SetMenuFlag(ID_XYPos, "xypos", "XY Pos", 1, menuAnalysis)
         #SetMenuFlag(ID_Zoom, "zoom", "Graph Zoom", 0, menuAnalysis) 
 
         itemDiag = menuTools.Append(wx.ID_ANY, "Diagnostic Box")

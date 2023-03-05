@@ -45,7 +45,10 @@ class GraphPanel(wx.Panel):
         self.settag = ""
         self.mainwin = parent
         self.index = index
-        #self.SetMinSize(wx.Size(-1, -1))
+
+        # Plot Mouse Control
+        self.anchorpos = wx.Point(0, 0)
+        self.overlay = wx.Overlay()
 
         # Draw Parameters
         self.xbase = 40
@@ -77,6 +80,88 @@ class GraphPanel(wx.Panel):
         self.Bind(wx.EVT_RIGHT_DOWN, self.OnRightClick)
         self.Bind(wx.EVT_MENU, self.OnGraphRemove, ID_GraphRemove)
 
+        self.Bind(wx.EVT_MOTION, self.OnMouseMove)
+        self.Bind(wx.EVT_LEFT_DOWN, self.OnLeftDown)
+        #self.Bind(wx.EVT_LEFT_UP, self.OnLeftUp)
+
+
+    def OnLeftDown(self, event):
+        pos = event.GetPosition()
+        mousedown = pos
+
+        #if(mainwin->neurobox) mainwin->neurobox->SetGraph(this);
+
+        plot = self.GetFrontPlot()
+        xdiff = plot.xto - plot.xfrom
+        xscale = xdiff / self.xplot
+        xgraph = (mousedown.x - self.xbase) * xscale + plot.xfrom
+
+        ydiff = plot.yto - plot.yfrom
+        yscale = ydiff / self.yplot
+        ygraph = (self.yplot - mousedown.y + self.ybase) * yscale + plot.yfrom
+
+        snum = f"LDown X {pos.x} Y {pos.y}  graph {xgraph} {ygraph}"
+        #if(mainwin->diagnostic) mainwin->SetStatusText(snum);
+
+        #self.CaptureMouse()
+        self.anchorpos = pos
+        if self.anchorpos.x < self.xbase: self.anchorpos.x = self.xbase
+        if self.anchorpos.x > self.xbase + self.xplot: self.anchorpos.x = self.xbase + self.xplot
+        if self.anchorpos.y < self.ybase: self.currentpos.y = self.ybase
+        if self.anchorpos.y > self.ybase + self.yplot: self.anchorpos.y = self.ybase + self.yplot
+
+
+    def OnMouseMove(self, event):
+        pos = event.GetPosition()
+
+        if self.mainwin.hypoflags["xypos"]:
+            plot = self.GetFrontPlot()
+
+            # 27/11/20 fixed scaling using adjusted axis unit scales, still need to fix for measure
+
+            xdiff = plot.xto - plot.xfrom
+            xscale = xdiff / self.xplot
+            xgraph = (pos.x - self.xbase) * xscale + plot.xfrom
+            xpos = xgraph * plot.xunitscale / plot.xunitdscale
+            xdata = xgraph / plot.binsize
+            if self.anchorpos.x < pos.x: xmeasure = (pos.x - self.anchorpos.x) * xscale
+            else: xmeasure = (self.anchorpos.x - pos.x) * xscale
+            xplaces = numplaces(xdiff * plot.xunitscale / plot.xunitdscale)
+
+            ydiff = plot.yto - plot.yfrom
+            yscale = ydiff / self.yplot
+            ygraph = (self.yplot - pos.y + self.ybase) * yscale + plot.yfrom
+            ypos = ygraph * plot.yunitscale / plot.yunitdscale
+            if self.anchorpos.y < pos.y: ymeasure = (pos.y - self.anchorpos.y) * yscale
+            else: ymeasure = (self.anchorpos.y - pos.y) * yscale
+            yplaces = numplaces(ydiff * plot.yunitscale / plot.yunitdscale)
+
+            #data = plot.GetData(xgraph) * plot.yunitscale / plot.yunitdscale
+
+             
+            #if self.mainwin.diagnostic: snum.Printf("Graph Position X %s Y %s  Data %s", 
+            #        numstring(xpos, xplaces), numstring(ypos, yplaces), numstring(data, yplaces));
+            snum = f"Graph Position X {numstring(xpos, xplaces)} Y {numstring(ypos, yplaces)}"
+            self.mainwin.SetStatusText(snum)
+        
+
+        if not self.HasCapture(): return
+
+        currentpos = pos
+        if currentpos.y > self.ybase + self.yplot - 1: currentpos.y = int(self.ybase + self.yplot - 1)
+        if currentpos.y < self.ybase + 1: currentpos.y = self.ybase + 1
+        if currentpos.x > self.xbase + self.xplot - 1: currentpos.x = self.xbase + self.xplot - 1
+        if currentpos.x < self.xbase + 1: currentpos.x = self.xbase + 1
+       
+        dc = wx.ClientDC(self)
+        overlaydc = wx.DCOverlay(self.overlay, dc)
+        overlaydc.Clear()
+
+        ctx = wx.GraphicsContext.Create(dc)
+        ctx.SetBrush(wx.Brush(wx.Colour(192,192,255,64)))
+        newrect = wx.Rect(self.anchorpos, currentpos)
+        ctx.DrawRectangle(newrect.x, newrect.y, newrect.width, newrect.height)
+        
 
     def OnGraphRemove(self, event):
         self.Refresh()

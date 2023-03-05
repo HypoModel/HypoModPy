@@ -82,6 +82,14 @@ def numstring(number, places=0):
     return f"{number:.{places}f}"
 
 
+def numplaces(range):
+    places = 0
+    if range <= 100: places = 1
+    if range <= 10: places = 2
+    if range <= 1: places = 3
+    if range <= 0.1: places = 4	
+    return places
+
 
 def ParseString(readline, chartag, endtag = ' '):
     readline = readline.partition(chartag)[2]
