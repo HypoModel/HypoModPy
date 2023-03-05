@@ -172,6 +172,13 @@ class PlotDat():
         self.fillstroke = 0
 
 
+    def GetData(self, xval): 
+        data = -1
+        xindex = xval / self.binsize
+        data = self.data[xindex]
+        return data
+
+
     def StoreDat(self, tag):
         if self.label != "": storetitle = self.label         # replace spaces with underscores for textfile storing
         else: storetitle = " "

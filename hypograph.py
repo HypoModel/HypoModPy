@@ -45,7 +45,10 @@ class GraphPanel(wx.Panel):
         self.settag = ""
         self.mainwin = parent
         self.index = index
-        #self.SetMinSize(wx.Size(-1, -1))
+
+        # Plot Mouse Control
+        self.anchorpos = wx.Point(0, 0)
+        self.overlay = wx.Overlay()
 
         # Draw Parameters
         self.xbase = 40
@@ -77,69 +80,87 @@ class GraphPanel(wx.Panel):
         self.Bind(wx.EVT_RIGHT_DOWN, self.OnRightClick)
         self.Bind(wx.EVT_MENU, self.OnGraphRemove, ID_GraphRemove)
 
+        self.Bind(wx.EVT_MOTION, self.OnMouseMove)
+        self.Bind(wx.EVT_LEFT_DOWN, self.OnLeftDown)
+        #self.Bind(wx.EVT_LEFT_UP, self.OnLeftUp)
+
+
+    def OnLeftDown(self, event):
+        pos = event.GetPosition()
+        mousedown = pos
+
+        #if(mainwin->neurobox) mainwin->neurobox->SetGraph(this);
+
+        plot = self.GetFrontPlot()
+        xdiff = plot.xto - plot.xfrom
+        xscale = xdiff / self.xplot
+        xgraph = (mousedown.x - self.xbase) * xscale + plot.xfrom
+
+        ydiff = plot.yto - plot.yfrom
+        yscale = ydiff / self.yplot
+        ygraph = (self.yplot - mousedown.y + self.ybase) * yscale + plot.yfrom
+
+        snum = f"LDown X {pos.x} Y {pos.y}  graph {xgraph} {ygraph}"
+        #if(mainwin->diagnostic) mainwin->SetStatusText(snum);
+
+        #self.CaptureMouse()
+        self.anchorpos = pos
+        if self.anchorpos.x < self.xbase: self.anchorpos.x = self.xbase
+        if self.anchorpos.x > self.xbase + self.xplot: self.anchorpos.x = self.xbase + self.xplot
+        if self.anchorpos.y < self.ybase: self.currentpos.y = self.ybase
+        if self.anchorpos.y > self.ybase + self.yplot: self.anchorpos.y = self.ybase + self.yplot
+
 
     def OnMouseMove(self, event):
         pos = event.GetPosition()
 
         if self.mainwin.hypoflags["xypos"]:
-            plot = dispset[0]->plot[0];
+            plot = self.GetFrontPlot()
 
             # 27/11/20 fixed scaling using adjusted axis unit scales, still need to fix for measure
 
             xdiff = plot.xto - plot.xfrom
             xscale = xdiff / self.xplot
             xgraph = (pos.x - self.xbase) * xscale + plot.xfrom
-            xpos = xgraph * graph->xunitscale / graph->xunitdscale;
-            xdata = xgraph / graph->binsize;
-            //xgraph = ((pos.x - xbase) * xscale + graph->xfrom) * graph->xunitscale / graph->xunitdscale;
-            if(anchorpos.x < pos.x) xmeasure = (pos.x - anchorpos.x) * xscale;
-            else xmeasure = (anchorpos.x - pos.x) * xscale;
-            xplaces = numplaces(xdiff * graph->xunitscale / graph->xunitdscale);
+            xpos = xgraph * plot.xunitscale / plot.xunitdscale
+            xdata = xgraph / plot.binsize
+            if self.anchorpos.x < pos.x: xmeasure = (pos.x - self.anchorpos.x) * xscale
+            else: xmeasure = (self.anchorpos.x - pos.x) * xscale
+            xplaces = numplaces(xdiff * plot.xunitscale / plot.xunitdscale)
 
-            ydiff = graph->yto - graph->yfrom;
-            yscale = ydiff / yplot;
-            ygraph = (yplot - pos.y + ybase) * yscale + graph->yfrom;
-            ypos = ygraph * graph->yunitscale / graph->yunitdscale;
-            //ygraph = ((yplot - pos.y + ybase) * yscale + graph->yfrom) * graph->yunitscale / graph->yunitdscale;
-            if(anchorpos.y < pos.y) ymeasure = (pos.y - anchorpos.y) * yscale;
-            else ymeasure = (anchorpos.y - pos.y) * yscale;
-            yplaces = numplaces(ydiff * graph->yunitscale / graph->yunitdscale);
+            ydiff = plot.yto - plot.yfrom
+            yscale = ydiff / self.yplot
+            ygraph = (self.yplot - pos.y + self.ybase) * yscale + plot.yfrom
+            ypos = ygraph * plot.yunitscale / plot.yunitdscale
+            if self.anchorpos.y < pos.y: ymeasure = (pos.y - self.anchorpos.y) * yscale
+            else: ymeasure = (self.anchorpos.y - pos.y) * yscale
+            yplaces = numplaces(ydiff * plot.yunitscale / plot.yunitdscale)
 
-                data = graph->GetData(xgraph) * graph->yunitscale / graph->yunitdscale;
+            #data = plot.GetData(xgraph) * plot.yunitscale / plot.yunitdscale
 
-                //snum.Printf("GMove X %d Y %d gX %.2f gY %.2f", pos.x, pos.y, xgraph, ygraph);
+             
+            #if self.mainwin.diagnostic: snum.Printf("Graph Position X %s Y %s  Data %s", 
+            #        numstring(xpos, xplaces), numstring(ypos, yplaces), numstring(data, yplaces));
+            snum = f"Graph Position X {numstring(xpos, xplaces)} Y {numstring(ypos, yplaces)}"
+            self.mainwin.SetStatusText(snum)
         
-                //if(mainwin->diagnostic) snum.Printf("Graph Position X %s Y %s  ID %d", numstring(xgraph, xplaces), numstring(ygraph, yplaces), gid);
-                //else snum.Printf("Graph Position X %s Y %s", numstring(xgraph, xplaces), numstring(ygraph, yplaces));
-                //if(mainwin->diagnostic) snum.Printf("Graph Position X %s Y %s  ID %d  Measure X %s Y %s", 
-                //        numstring(xpos, xplaces), numstring(ypos, yplaces), gid, numstring(xmeasure, xplaces), numstring(ymeasure, yplaces));
-                if(mainwin->diagnostic) snum.Printf("Graph Position X %s Y %s  Data %s", 
-                        numstring(xpos, xplaces), numstring(ypos, yplaces), numstring(data, yplaces));
-                else snum.Printf("Graph Position X %s Y %s", numstring(xpos, xplaces), numstring(ypos, yplaces));
 
-                mainwin->SetStatusText(snum);
-        }
+        if not self.HasCapture(): return
 
-        if(!HasCapture()) return;
+        currentpos = pos
+        if currentpos.y > self.ybase + self.yplot - 1: currentpos.y = int(self.ybase + self.yplot - 1)
+        if currentpos.y < self.ybase + 1: currentpos.y = self.ybase + 1
+        if currentpos.x > self.xbase + self.xplot - 1: currentpos.x = self.xbase + self.xplot - 1
+        if currentpos.x < self.xbase + 1: currentpos.x = self.xbase + 1
+       
+        dc = wx.ClientDC(self)
+        overlaydc = wx.DCOverlay(self.overlay, dc)
+        overlaydc.Clear()
 
-        currentpos = pos;
-        if(currentpos.y > ybase + yplot - 1) currentpos.y = ybase + yplot - 1;
-        if(currentpos.y < ybase + 1) currentpos.y = ybase + 1;
-        if(currentpos.x > xbase + xplot - 1) currentpos.x = xbase + xplot - 1;
-        if(currentpos.x < xbase + 1) currentpos.x = xbase + 1;
-        //anchorpos.y = ybase + 1; // - 10;
-        //currentpos.y = ybase + yplot - 1;
-
-        //wxBufferedPaintDC dc(this);
-        wxClientDC dc(this);
-        wxDCOverlay overlaydc(overlay, &dc);
-        overlaydc.Clear();
-
-        wxGraphicsContext *ctx = wxGraphicsContext::Create(dc);
-    //ctx->SetPen(*wxGREY_PEN);
-        ctx->SetBrush(wxBrush(wxColour(192,192,255,64)));
-        wxRect newrect(anchorpos, currentpos);
-        ctx->DrawRectangle(newrect.x, newrect.y, newrect.width, newrect.height);
+        ctx = wx.GraphicsContext.Create(dc)
+        ctx.SetBrush(wx.Brush(wx.Colour(192,192,255,64)))
+        newrect = wx.Rect(self.anchorpos, currentpos)
+        ctx.DrawRectangle(newrect.x, newrect.y, newrect.width, newrect.height)
         
 
     def OnGraphRemove(self, event):
