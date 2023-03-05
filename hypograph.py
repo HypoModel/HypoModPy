@@ -163,7 +163,8 @@ class GraphPanel(wx.Panel):
             #mod->diagbox->Write("plot " + graph->gname + " no data\n")
             #return
             max = 1000
-        else: plot.xmax = len(plot.data) / plot.xscale
+        #else: plot.xmax = len(plot.data) / plot.xscale
+        else: plot.xmax = plot.data.xmax / plot.xscale
         if plot.xdata != None: 
             if xmax: plot.xmax = xmax
             else: plot.xmax = len(plot.xdata)
@@ -174,7 +175,8 @@ class GraphPanel(wx.Panel):
         plot.xrel = plot.xfrom - plot.scrollpos     # relative adjustment for non-zero xfrom set from scale panel
         if plot.xrel < plot.xmin: plot.xrel = plot.xmin
 
-        scrollxto = int((plot.xmax - plot.xrel) * plot.binsize) - 1
+        #scrollxto = int((plot.xmax - plot.xrel) * plot.binsize) - 1
+        scrollxto = int((plot.xmax - plot.xrel) * plot.binsize)
         section = int(xdiff)
         if section > scrollxto:
             plot.scrollpos = 0
@@ -531,7 +533,7 @@ class GraphPanel(wx.Panel):
                 xnum = (xto - xfrom) / xplot
 
 
-                if not np.any(plot.data): 
+                if plot.data.empty: 
                     #DiagWrite("OnPaint: plot {} - no data\n".format(plot.label))
                     return
 

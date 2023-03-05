@@ -130,6 +130,7 @@ class ScaleBox(ToolPanel):
 
 
     def GLoad(self, tag = ""):
+        diag = False
         pbase = self.mod.plotbase
 
         graphpath = self.mod.path + "/Graphs"
@@ -158,7 +159,7 @@ class ScaleBox(ToolPanel):
 
         # Load file
         if not graphfile.Open('r'): 
-            DiagWrite("GLoad graphfile error\n")
+            if diag: DiagWrite("GLoad graphfile error\n")
             return
         filetext = graphfile.ReadLines()
         mode = "panel"
@@ -179,8 +180,8 @@ class ScaleBox(ToolPanel):
                 tag = readdata[1]  # plot set tag
                 if tag in pbase.plotstore or tag in pbase.setstore: 
                     self.mainwin.panelset[index].settag = tag
-                    DiagWrite(f"GLoad panel {index} graph/set {tag}\n")
-                else: DiagWrite(f"GLoad graph/set {tag} not found\n")
+                    if diag: DiagWrite(f"GLoad panel {index} graph/set {tag}\n")
+                elif diag: DiagWrite(f"GLoad graph/set {tag} not found\n")
                 if len(readdata) > 2: 
                     subtag = readdata[2]
                     if subtag in pbase.plotstore:
@@ -193,7 +194,7 @@ class ScaleBox(ToolPanel):
                 if tag in self.gflags:
                     flagval = int(data)
                     self.gflags[tag] = flagval
-                    DiagWrite(f"Graph flag tag {tag}, value {flagval}\n") 
+                    if diag: DiagWrite(f"Graph flag tag {tag}, value {flagval}\n") 
 
         graphfile.Close()
 
@@ -480,7 +481,7 @@ class ScaleBox(ToolPanel):
 
 
     def GraphSwitch(self, plotbase, command = ""):
-        diag = True
+        diag = False
         if diag: DiagWrite("GSwitch call\n")
 
         for graphpanel in self.mainwin.panelset:

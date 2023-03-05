@@ -366,6 +366,8 @@ class TagBox(wx.ComboBox):
 
 
     def HistLoad(self):
+        diag = False
+
         tag = ""
         if self.tagpath == "":
             DiagWrite("Tag file not set\n")
@@ -378,8 +380,9 @@ class TagBox(wx.ComboBox):
             DiagWrite("No tag history\n")
             return
 
-        DiagWrite("HistLoad ")
-        DiagWrite("Reading tag history " + self.tagfilename + "\n")
+        if diag: 
+            DiagWrite("HistLoad ")
+            DiagWrite("Reading tag history " + self.tagfilename + "\n")
         
         filetext = tagfile.ReadLines()
         for readline in filetext:
@@ -391,5 +394,5 @@ class TagBox(wx.ComboBox):
 
         tagfile.Close()	
         self.SetLabel(tag)
-        DiagWrite(self.boxtag + " " + tag + "\n")
+        if diag: DiagWrite(self.boxtag + " " + tag + "\n")
         if tag != "": self.labelset = True

@@ -136,4 +136,3 @@ ID_Insert = wx.NewIdRef()
 ID_Bold = wx.NewIdRef()
 
 # Mod IDs
-ID_randomflag = wx.NewIdRef()

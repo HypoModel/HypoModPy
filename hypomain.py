@@ -165,7 +165,7 @@ class MainFrame(wx.Frame):
 
 class SystemPanel(wx.Dialog):
     def __init__(self, mainwin, title):
-        super(SystemPanel, self).__init__(None, -1, title, wx.DefaultPosition, wx.Size(450, 450), 
+        super(SystemPanel, self).__init__(None, -1, title, wx.DefaultPosition, wx.Size(470, 450), 
                                           wx.FRAME_FLOAT_ON_PARENT | wx.FRAME_TOOL_WINDOW | wx.CAPTION | wx.SYSTEM_MENU | wx.CLOSE_BOX | wx.RESIZE_BORDER)
 
         self.mainwin = mainwin
@@ -177,8 +177,7 @@ class SystemPanel(wx.Dialog):
 
         modpathbox = wx.BoxSizer(wx.HORIZONTAL)
         self.modpathcon = ParamCon(panel, "textcon", "modpath", "Mod Path", mainwin.modpath, labelwidth=50, datawidth=320)
-        #self.modpathcon.AddButton("Path", ID_ModBrowse, 80).Bind(wx.EVT_BUTTON, self.OnBrowse)
-        pathButton = wx.Button(panel, ID_ModBrowse, "Path", wx.DefaultPosition, wx.Size(40, 30))
+        pathButton = wx.Button(panel, ID_ModBrowse, "Browse", wx.DefaultPosition, wx.Size(50, 25))
         pathButton.Bind(wx.EVT_BUTTON, self.OnBrowse)
         modpathbox.Add(self.modpathcon, 0, wx.ALIGN_CENTER_VERTICAL)
         modpathbox.Add(pathButton, 0, wx.ALIGN_CENTER_VERTICAL)
@@ -199,8 +198,6 @@ class SystemPanel(wx.Dialog):
 
         self.Bind(wx.EVT_TEXT_ENTER, self.OnEnter)
         okButton.Bind(wx.EVT_BUTTON, self.OnOK)
-
-        #self.Bind(wx.EVT_BUTTON, self.OnOK, wx.ID_OK)
 
 
     def OnBrowse(self, event):
@@ -273,7 +270,6 @@ class HypoMain(MainFrame):
             graphpanel.SetFront(graphdisp)
             self.panelset.append(graphpanel)
             self.graphsizer.Add(graphpanel, 1, wx.EXPAND)
-            #self.graphsizer.Add(graphpanel, 1)
 
         # Mod Init
         self.mod = OsmoMod(self, "osmomod")
@@ -293,10 +289,8 @@ class HypoMain(MainFrame):
         # Initial Plots
         self.scalebox.GraphSwitch(self.mod.plotbase)
 
-
         # System Panel
         self.systempanel = SystemPanel(self, "System Panel")
-        #tag = optionpanel->projecttag->GetValue();
 
         # Event Binds
         self.Bind(wx.EVT_CLOSE, self.OnClose)
