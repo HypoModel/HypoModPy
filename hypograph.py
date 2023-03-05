@@ -60,7 +60,6 @@ class GraphPanel(wx.Panel):
         self.menuIdPlotMap = {}
         self.menuIdSetMap = {}
 
-
         if self.ostype == 'Mac':
             self.textfont = wx.Font(wx.FontInfo(10).FaceName("Tahoma"))
             self.smallfont = wx.Font(wx.FontInfo(8).FaceName("Tahoma"))
@@ -77,6 +76,70 @@ class GraphPanel(wx.Panel):
 
         self.Bind(wx.EVT_RIGHT_DOWN, self.OnRightClick)
         self.Bind(wx.EVT_MENU, self.OnGraphRemove, ID_GraphRemove)
+
+
+    def OnMouseMove(self, event):
+        pos = event.GetPosition()
+
+        if self.mainwin.hypoflags["xypos"]:
+            plot = dispset[0]->plot[0];
+
+            # 27/11/20 fixed scaling using adjusted axis unit scales, still need to fix for measure
+
+            xdiff = plot.xto - plot.xfrom
+            xscale = xdiff / self.xplot
+            xgraph = (pos.x - self.xbase) * xscale + plot.xfrom
+            xpos = xgraph * graph->xunitscale / graph->xunitdscale;
+            xdata = xgraph / graph->binsize;
+            //xgraph = ((pos.x - xbase) * xscale + graph->xfrom) * graph->xunitscale / graph->xunitdscale;
+            if(anchorpos.x < pos.x) xmeasure = (pos.x - anchorpos.x) * xscale;
+            else xmeasure = (anchorpos.x - pos.x) * xscale;
+            xplaces = numplaces(xdiff * graph->xunitscale / graph->xunitdscale);
+
+            ydiff = graph->yto - graph->yfrom;
+            yscale = ydiff / yplot;
+            ygraph = (yplot - pos.y + ybase) * yscale + graph->yfrom;
+            ypos = ygraph * graph->yunitscale / graph->yunitdscale;
+            //ygraph = ((yplot - pos.y + ybase) * yscale + graph->yfrom) * graph->yunitscale / graph->yunitdscale;
+            if(anchorpos.y < pos.y) ymeasure = (pos.y - anchorpos.y) * yscale;
+            else ymeasure = (anchorpos.y - pos.y) * yscale;
+            yplaces = numplaces(ydiff * graph->yunitscale / graph->yunitdscale);
+
+                data = graph->GetData(xgraph) * graph->yunitscale / graph->yunitdscale;
+
+                //snum.Printf("GMove X %d Y %d gX %.2f gY %.2f", pos.x, pos.y, xgraph, ygraph);
+        
+                //if(mainwin->diagnostic) snum.Printf("Graph Position X %s Y %s  ID %d", numstring(xgraph, xplaces), numstring(ygraph, yplaces), gid);
+                //else snum.Printf("Graph Position X %s Y %s", numstring(xgraph, xplaces), numstring(ygraph, yplaces));
+                //if(mainwin->diagnostic) snum.Printf("Graph Position X %s Y %s  ID %d  Measure X %s Y %s", 
+                //        numstring(xpos, xplaces), numstring(ypos, yplaces), gid, numstring(xmeasure, xplaces), numstring(ymeasure, yplaces));
+                if(mainwin->diagnostic) snum.Printf("Graph Position X %s Y %s  Data %s", 
+                        numstring(xpos, xplaces), numstring(ypos, yplaces), numstring(data, yplaces));
+                else snum.Printf("Graph Position X %s Y %s", numstring(xpos, xplaces), numstring(ypos, yplaces));
+
+                mainwin->SetStatusText(snum);
+        }
+
+        if(!HasCapture()) return;
+
+        currentpos = pos;
+        if(currentpos.y > ybase + yplot - 1) currentpos.y = ybase + yplot - 1;
+        if(currentpos.y < ybase + 1) currentpos.y = ybase + 1;
+        if(currentpos.x > xbase + xplot - 1) currentpos.x = xbase + xplot - 1;
+        if(currentpos.x < xbase + 1) currentpos.x = xbase + 1;
+        //anchorpos.y = ybase + 1; // - 10;
+        //currentpos.y = ybase + yplot - 1;
+
+        //wxBufferedPaintDC dc(this);
+        wxClientDC dc(this);
+        wxDCOverlay overlaydc(overlay, &dc);
+        overlaydc.Clear();
+
+        wxGraphicsContext *ctx = wxGraphicsContext::Create(dc);
+    //ctx->SetPen(*wxGREY_PEN);
+        ctx->SetBrush(wxBrush(wxColour(192,192,255,64)));
+        wxRect newrect(anchorpos, currentpos);
+        ctx->DrawRectangle(newrect.x, newrect.y, newrect.width, newrect.height);
         
 
     def OnGraphRemove(self, event):
