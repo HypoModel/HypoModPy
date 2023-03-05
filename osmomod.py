@@ -55,7 +55,7 @@ class OsmoMod(Mod):
     def PlotData(self):
         # Data plots
         #
-        # PlotDat(data pointer, xfrom, xto, yfrom, yto, label string, plot type, bin size, colour)
+        # AddPlot(PlotDat(data array, xfrom, xto, yfrom, yto, label string, plot type, bin size, colour), tag string)
         # ----------------------------------------------------------------------------------
         self.plotbase.AddPlot(PlotDat(self.osmodata.water, 0, 2000, 0, 5000, "water", "line", 1, "blue"), "water")
         self.plotbase.AddPlot(PlotDat(self.osmodata.salt, 0, 2000, 0, 100, "salt", "line", 1, "red"), "salt")
@@ -176,7 +176,6 @@ class OsmoProtoBox(ParamBox):
 
 
 
-
 class OsmoModel(ModThread):
     def __init__(self, mod):
         ModThread.__init__(self, mod.modbox, mod.mainwin)
@@ -205,6 +204,7 @@ class OsmoModel(ModThread):
         osmodata = self.mod.osmodata
         osmobox = self.mod.osmobox
         osmoparams = self.mod.osmobox.GetParams()
+        protoparams = self.mod.protobox.GetParams()
 
         # Read parameters
         runtime = int(osmoparams["runtime"])
@@ -220,7 +220,7 @@ class OsmoModel(ModThread):
         osmodata.salt.clear()
         osmodata.osmo.clear()
 
-        # Initialise mode variables
+        # Initialise model variables
         osmodata.water[0] = water
         osmodata.salt[0] = salt
         osmodata.osmo[0] = osmo
