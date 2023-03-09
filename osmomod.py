@@ -1,4 +1,6 @@
 
+
+
 import wx
 import random
 import numpy as np
@@ -214,17 +216,22 @@ class OsmoModel(ModThread):
         water = 50
         salt = 2000
         osmo = salt / water
+        vaso=0
 
         # Initialise model variable recording arrays
         osmodata.water.clear()
         osmodata.salt.clear()
         osmodata.osmo.clear()
+        osmodata.vaso.clear()
 
         # Initialise model variables
         osmodata.water[0] = water
         osmodata.salt[0] = salt
         osmodata.osmo[0] = osmo
-
+        osmodata.vaso[0] = vaso
+        osmo_thresh=280
+        v_grad=0.2
+        v_max=20
         # Run model loop
         for i in range(1, runtime + 1):
 
@@ -233,22 +240,23 @@ class OsmoModel(ModThread):
             water = water - (water * waterloss)
             salt = salt
             osmo = salt / water
-            vaso = 0
+            if osmo<osmo_thresh: vaso=0
+            else: 
+                vaso= v_grad*(osmo-osmo_thresh)
+                if vaso>v_max: vaso=v_max
 
             # Record model variables
             osmodata.water[i] = water
             osmodata.salt[i] = salt
             osmodata.osmo[i] = osmo
+            osmodata.vaso[i] = vaso
 
 
         # Set plot time range
         osmodata.water.xmax = runtime * 1.1
         osmodata.salt.xmax = runtime * 1.1
         osmodata.osmo.xmax = runtime * 1.1
-
-
-
-
+        osmodata.vaso.xmax = runtime * 1.1
 
 
 
