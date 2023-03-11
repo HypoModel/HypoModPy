@@ -280,7 +280,12 @@ class DiagBox(ToolBox):
 
 
     def Write(self, text):
-        self.textbox.AppendText(text)  
+        try:
+            self.textbox.AppendText(text) 
+            return True
+        except ValueError:
+            return False
+         
 
 
 
