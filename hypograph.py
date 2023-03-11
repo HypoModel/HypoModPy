@@ -1,6 +1,6 @@
 
 import wx
-from math import log
+from math import log, isinf, isnan
 from hypotools import *
 
 
@@ -593,6 +593,7 @@ class GraphPanel(wx.Panel):
                                 # mainwin->diagbox->Write(text.Format("data end xcount %d  i %d  xnum %.4f  xindex %d  maxdex %d\n", xcount, i, xnum, xindex, gdatadv->maxdex()))
                                 break  
                             mpoint = plot.data[xindex]
+                            if isinf(mpoint): break 
 
                             #if drawdiag: fprintf(ofp, "xdraw %d  preval %.4f  dir %d\n", i, preval, dir)
                             for j in range(1, int(xnum)):
@@ -614,6 +615,8 @@ class GraphPanel(wx.Panel):
                                 if yval < yfrom: ypos = -yfrom * yrange
                                 #mod->diagbox->Write(text.Format("line draw log low value yval %.4f ypos %d\n", yval, ypos))
                             else: ypos = (yval - yfrom) * yrange
+
+                            if isinf(ypos) or isnan(ypos): break
 
                             #gc.StrokeLine(oldx, oldy, i + xbase + xoffset, int(yplot + ybase - ypos))
                             #path.MoveToPoint(oldx, oldy)

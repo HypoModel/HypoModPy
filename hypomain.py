@@ -430,9 +430,10 @@ class HypoMain(MainFrame):
 
 
     def OnQuit(self, event):
-        print("Closing")
-        self.model.ModStore()
-        self.Close()
+        self.OnClose(event)
+        #print("Closing")
+        #self.model.ModStore()
+        #self.Close()
 
 
     def OnAbout(self, event):
@@ -457,8 +458,9 @@ class HypoMain(MainFrame):
         #if(project.mod): 
         #    project.Store()
         if(self.mod != None):
-        #    mod.Close()
             self.mod.ModStore()
+            self.mod.modbox.Close()
+            self.mod.Destroy()
         event.Skip()
 
 
