@@ -122,10 +122,10 @@ class ParamCon(wx.Control):
         self.numbox.SetValue(snum)
 
 
-    def SetMinMax(self, newmin, newmax, newcycle):
+    def SetMinMax(self, newmin, newmax, cycle = False):
         self.min = newmin
         self.max = newmax
-        self.cycle = newcycle
+        self.cycle = cycle
 
 
     def DoGetBestSize(self): 
@@ -176,10 +176,10 @@ class ParamCon(wx.Control):
 
 class ParamSet:
     def __init__(self, panel):
-        self.pcons = {}
-        self.paramstore = {}
-        self.panel = panel
-        # currlay = 0;
+        self.pcons = {}         # parameter controls
+        self.paramstore = {}    # parameter value store
+        self.panel = panel      # ToolPanel link
+        self.currlay = 0        # layout counter for use with multiple ParamLayout calls
 
         # Default field widths
         self.num_labelwidth = 65
@@ -213,7 +213,6 @@ class ParamSet:
     def AddCon(self, tag, label, initval, step, places, labelwidth=-1, numwidth=-1): 
         if labelwidth < 0: labelwidth = self.con_labelwidth
         if numwidth < 0: numwidth = self.con_numwidth
-
         self.pcons[tag] = ParamCon(self.panel, 'spincon', tag, label, initval, step, places, labelwidth, numwidth);   # number + spin
         return self.pcons[tag]
 
@@ -221,16 +220,14 @@ class ParamSet:
     def AddNum(self, tag, label, initval, places, labelwidth=-1, numwidth=-1):
         if labelwidth < 0: labelwidth = self.num_labelwidth
         if numwidth < 0: numwidth = self.num_numwidth
-
-        self.con[tag] = ParamCon(self.panel, 'numcon', tag, label, initval, 0, places, labelwidth, numwidth);   # number
+        self.pcons[tag] = ParamCon(self.panel, 'numcon', tag, label, initval, 0, places, labelwidth, numwidth);   # number
         return self.pcons[tag]
 
 
     def AddText(self, tag, label, initval, labelwidth=-1, textwidth=-1):
         if labelwidth < 0: labelwidth = self.text_labelwidth
-        if numwidth < 0: numwidth = self.text_numwidth
-
-        self.con[tag] = ParamCon(self.panel, 'textcon', tag, label, initval, labelwidth, textwidth)     # text
+        if textwidth < 0: textwidth = self.text_numwidth
+        self.pcons[tag] = ParamCon(self.panel, 'textcon', tag, label, initval, labelwidth, textwidth)     # text
         return self.pcons[tag]
 
     
@@ -642,8 +639,6 @@ class ParamBox(ToolBox):
     def ParamLayout(self, numcols = 1):                  
         colsize = 0
         numparams = self.paramset.NumParams()
-
-        #self.VBox(numcols)
 
         if numcols == 1: colsize = numparams
         if(numcols >= 2):
