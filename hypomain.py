@@ -22,6 +22,7 @@ class MainFrame(wx.Frame):
         self.diagbox = DiagBox(self, "Diagnostic", wx.Point(0, 0), wx.Size(400, 500))
         self.diagbox.Write('Diagnostic Box OK\n')
         self.gridbox = None
+        self.plotcon = None
 
         self.respath = rpath;  # defaults to "" for Windows, bundle resource path for OSX
         self.diagbox.Write("MainFrame respath " + self.respath + "\n")
