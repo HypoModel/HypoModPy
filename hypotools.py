@@ -106,14 +106,15 @@ class ToolBox(wx.Frame):
 
         self.diagmode = False
 
-        self.boxtag = tag
+        self.tag = tag
         self.mpos = pos - parent.GetPosition() 
         self.oldpos = pos
-        self.boxsize = size
+        self.size = size
         self.status = None
         self.canclose = False
         self.visible = True
         self.storetag = None
+        self.parent = parent
 
         self.blackpen = wx.Colour("#000000")
         self.redpen = wx.Colour("#dd0000")
@@ -122,7 +123,7 @@ class ToolBox(wx.Frame):
 
         if GetSystem() == 'Mac':
             self.buttonheight = 25
-            self.boxfont = wx.Font(wx.FontInfo(12).FaceName("Tahoma"))
+            self.boxfont = wx.Font(wx.FontInfo(10).FaceName("Tahoma"))
             self.confont = wx.Font(wx.FontInfo(12).FaceName("Tahoma"))
         else:
             self.buttonheight = 23
@@ -192,16 +193,27 @@ class ToolBox(wx.Frame):
         pub.sendMessage("diagbox", message=text)
 
 
+    def InitPosition(self, mpos):
+        mainpos = self.parent.GetPosition()
+        mainsize = self.parent.GetSize()
+        self.Move(mainpos.x + mainsize.x + mpos.x, mainpos.y + mpos.y + 5)
+        #self.oldpos = self.GetPosition()
+        self.mpos = mpos
+
+        #snum = f"Box {self.tag} mpos x {self.mpos.x} y {self.mpos.y}"
+        #DiagWrite(snum + "\n")
+
+
     def SetPosition(self, mainpos, mainsize):
         self.Move(mainpos.x + mainsize.x + self.mpos.x, mainpos.y + self.mpos.y + 5)
-        self.oldpos = self.GetPosition()
+        #self.oldpos = self.GetPosition()
         return wx.Point(mainpos.x + mainsize.x + self.mpos.x, mainpos.y + self.mpos.y + 5)
 
 
     def OnMove(self, event):
         if self.IsActive():
             newpos = self.GetPosition()
-            newsize = self.GetSize()
+            #newsize = self.GetSize()
            
             shift = newpos - self.oldpos
         
@@ -209,19 +221,18 @@ class ToolBox(wx.Frame):
             self.mpos.y = self.mpos.y + shift.y
             self.oldpos = newpos
 
-            snum = "Box mpos x {} y {} shift x {} y {}".format(self.mpos.x, self.mpos.y, shift.x, shift.y)
+            snum = f"Box {self.tag} mpos x {self.mpos.x} y {self.mpos.y} shift x {shift.x} y {shift.y}"
             pub.sendMessage("status_listener", message=snum)
+            #DiagWrite(snum + "\n")
 
 
     def OnSize(self, event):
         event.Skip()
         newsize = self.GetSize()
-        pos = self.GetPosition()
-
+        #pos = self.GetPosition()
         snum = "Box Size X {} Y {}".format(newsize.x, newsize.y)
         pub.sendMessage("status_listener", message=snum)
-
-        self.boxsize = newsize
+        self.size = newsize
 
 
     def OnClose(self, event):
@@ -232,17 +243,46 @@ class ToolBox(wx.Frame):
             event.Skip()
     
 
+# mpos give the position relative to the main plot window
+
+class ToolDat():
+    def __init__(self, tag, mpos, size, visible, box=None):
+        self.tag = tag
+        self.mpos = mpos
+        self.size = size
+        self.box = box
+        self.visible = visible
+
 
 class ToolSet():
     def __init__(self):
-        self.boxset = {}
+        self.tools = {}
+
 
     def AddBox(self, newbox):
-        self.boxset[newbox.boxtag] = newbox
+        if newbox.tag in self.tools:
+            tool = self.GetTool(newbox.tag)
+            tool.box = newbox
+            tool.box.SetSize(tool.size)
+            #tool.box.mpos = tool.mpos
+            tool.box.InitPosition(tool.mpos)
+        else:
+            self.tools[newbox.tag] = ToolDat(newbox.tag, newbox.GetPosition(), newbox.GetSize(), newbox.IsShown(), newbox)
+            
+
+    def AddTool(self, tag, pos, size, visible):
+        self.tools[tag] = ToolDat(tag, pos, size, visible)
+
+
+    def GetTool(self, tag):
+        if(tag in self.tools):
+            return self.tools[tag]
+        return None
+
 
     def GetBox(self, tag):
-        if(tag in self.boxset):
-             return self.boxset[tag]
+        if(tag in self.tools):
+             return self.tools[tag].box
         else:
              return False
              
@@ -296,17 +336,17 @@ class TagBox(wx.ComboBox):
         self.boxtag = boxtag
         self.boxpath = path
         self.redtag = ""
-        self.diagnostic = False
+        self.diag = False
 
         self.PathUpdate()
 
         #if(diagnostic) mainwin->diagbox->Write(text.Format("TagBox tagpath %s boxpath %s\n", tagpath, boxpath));
-        print("TagBox " + path)
+        if self.diag: print("TagBox " + path)
 
         if os.path.exists(self.tagpath) == False: 
             os.mkdir(self.tagpath)
 
-        print("tagpath " + self.tagpath)
+        if self.diag: print("tagpath " + self.tagpath)
 
         # Read fixed location option file, directs to selectable tagfile location
         opfilepath = self.tagpath + "/" + boxtag + "-op.ini"
@@ -343,7 +383,7 @@ class TagBox(wx.ComboBox):
         if os.path.exists(self.tagpath) == False: 
             os.mkdir(self.tagpath)
 
-        if self.diagnostic:
+        if self.diag:
             pub.sendMessage("diagbox", message="TagBox PathUpdate() tagpath {}\n".format(self.tagpath))
 
 
@@ -367,7 +407,7 @@ class TagBox(wx.ComboBox):
         opfile.WriteLine(self.tagfilename)
         opfile.Close()
 
-        print("HistStore tagfile " + filepath)
+        if self.diag: print("HistStore tagfile " + filepath)
 
 
     def HistLoad(self):

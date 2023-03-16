@@ -33,9 +33,9 @@ class OsmoMod(Mod):
         # link mod owned boxes
         mainwin.gridbox = self.gridbox
 
-        self.modtools[self.osmobox.boxtag] = self.osmobox
-        self.modtools[self.protobox.boxtag] = self.protobox
-        self.modtools[self.gridbox.boxtag] = self.gridbox
+        self.modtools[self.osmobox.tag] = self.osmobox
+        self.modtools[self.protobox.tag] = self.protobox
+        self.modtools[self.gridbox.tag] = self.gridbox
 
         self.osmobox.Show(True)
         self.modbox = self.osmobox

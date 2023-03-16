@@ -53,7 +53,7 @@ class ParamCon(wx.Control):
         #if ostype == 'Mac' and labelwidth < 40: label.SetFont(smalltextfont)
         self.sizer.Add(label, 0, wx.ALIGN_CENTER_VERTICAL|wx.RIGHT, pad)
 
-        if type == "textcon": print(f"ParamCon init: {initval}")
+        #if type == "textcon": print(f"ParamCon init: {initval}")
 
         self.numbox = wx.TextCtrl(self, wx.ID_ANY, inittext, wx.DefaultPosition, wx.Size(datawidth, -1), wx.TE_PROCESS_ENTER)
         self.numbox.SetFont(textfont)
@@ -117,7 +117,7 @@ class ParamCon(wx.Control):
 
 
     def SetValue(self, value):
-        if(type == 'textcon'): snum = value
+        if self.type == 'textcon': snum = value
         else: snum = numstring(value, self.decimals)
         self.numbox.SetValue(snum)
 
@@ -247,7 +247,7 @@ class ParamSet:
 
     
     def GetParams(self):
-        for pcon in self.pcons:
+        for pcon in self.pcons.values():
             value = pcon.GetValue()
             if value < pcon.min:
                 value = pcon.oldvalue
@@ -278,7 +278,7 @@ class ParamBox(ToolBox):
         self.status = None
         #defbutt = 0;
         #defstore = false;
-        self.diagmode = 0   # diagnostic mode
+        self.diag = 0   # diagnostic mode
         self.mainwin = model.mainwin  # main window link
 
         # modmode = 0;
@@ -312,8 +312,8 @@ class ParamBox(ToolBox):
         # Store Tag
         self.storetag = None
         if self.storemode:
-            if diag: self.DiagWrite("Store Box initialise " + self.boxtag + "\n")
-            self.storetag = TagBox(self.activepanel, "", wx.Size(120, 20), self.boxtag, self.mod.path)
+            if diag: self.DiagWrite("Store Box initialise " + self.tag + "\n")
+            self.storetag = TagBox(self.activepanel, "", wx.Size(120, 20), self.tag, self.mod.path)
             self.storetag.Show(False)
             self.storetag.SetFont(self.confont)
 

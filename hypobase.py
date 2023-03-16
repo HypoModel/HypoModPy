@@ -153,4 +153,5 @@ ID_Insert = wx.NewIdRef()
 ID_Bold = wx.NewIdRef()
 ID_PlotPanel = wx.NewIdRef()
 
-# Mod IDs
+# Check IDs
+ID_ClipMode = wx.NewIdRef()

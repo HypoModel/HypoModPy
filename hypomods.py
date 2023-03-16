@@ -62,7 +62,7 @@ class Mod(wx.EvtHandler):
         outfile.Open('w')
 
         for box in self.modtools.values():
-            outfile.WriteLine("{} {} {} {} {} {}".format(box.boxtag, box.mpos.x, box.mpos.y, box.boxsize.x, box.boxsize.y, box.IsShown()))
+            outfile.WriteLine("{} {} {} {} {} {}".format(box.tag, box.mpos.x, box.mpos.y, box.boxsize.x, box.boxsize.y, box.IsShown()))
             if box.storetag != None: box.storetag.HistStore()
 
         outfile.Close()
