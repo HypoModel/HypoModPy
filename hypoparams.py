@@ -96,6 +96,7 @@ class ParamCon(wx.Control):
     def GetValue(self):
         if self.type == 'textcon': return 0
         value = self.numbox.GetValue()
+        if not isfloat(value): return 0
         return float(value)
 
 

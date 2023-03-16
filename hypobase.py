@@ -117,6 +117,14 @@ def ParseFloat(readline, chartag = None):
     return (numdat, readline)
 
 
+def isfloat(num):
+    try:
+        float(num)
+        return True
+    except ValueError:
+        return False
+
+
 # Button IDs
 ID_Sync = wx.NewIdRef()
 ID_Store = wx.NewIdRef()

@@ -10,7 +10,6 @@ from hypoparams import *
 from osmomod import *
 
 
-
 class MainFrame(wx.Frame):
     def __init__(self, title, pos, size, rpath, mpath):
         super(MainFrame, self).__init__(None, wx.ID_ANY, title, pos, size)
@@ -364,7 +363,7 @@ class HypoMain(MainFrame):
         #menuTools.Append(ID_Neuro, "Neuro Box")
         #menuTools.Append(ID_Plot, "Plot Box")
         #menuTools.Append(ID_Sound, "Sound Box")
-        #menuTools.Append(ID_Mod, "Mod Box")
+        itemModBox = menuTools.Append(wx.ID_ANY, "Mod Box")
         #menuTools.Append(ID_Burst, "Burst Box")
 
         itemOptions = menuSystem.Append(wx.ID_ANY, "Options")
@@ -383,6 +382,11 @@ class HypoMain(MainFrame):
         self.Bind(wx.EVT_MENU, self.OnDiagBox, itemDiag)
         self.Bind(wx.EVT_MENU, self.OnGraphAdd, itemAddGraph)
         self.Bind(wx.EVT_MENU, self.OnOptions, itemOptions)
+        self.Bind(wx.EVT_MENU, self.OnModBox, itemModBox)
+
+
+    def OnModBox(self, event):
+        if self.mod: self.mod.modbox.Show(True)
 
 
     def OnOptions(self, event):
@@ -426,9 +430,10 @@ class HypoMain(MainFrame):
 
 
     def OnQuit(self, event):
-        print("Closing")
-        self.model.ModStore()
-        self.Close()
+        self.OnClose(event)
+        #print("Closing")
+        #self.model.ModStore()
+        #self.Close()
 
 
     def OnAbout(self, event):
@@ -453,8 +458,9 @@ class HypoMain(MainFrame):
         #if(project.mod): 
         #    project.Store()
         if(self.mod != None):
-        #    mod.Close()
             self.mod.ModStore()
+            self.mod.modbox.Close()
+            self.mod.Destroy()
         event.Skip()
 
 
