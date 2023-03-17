@@ -49,10 +49,10 @@ class MainFrame(wx.Frame):
         if os.path.exists(self.toolpath) == False: 
             os.mkdir(self.toolpath)
 
-        if self.mainpath == "": self.modpath = "Model"
-        else: self.modpath = self.mainpath + "/Model"
-        if os.path.exists(self.modpath) == False: 
-            os.mkdir(self.modpath)
+        # if self.mainpath == "": self.modpath = "Model"
+        # else: self.modpath = self.mainpath + "/Model"
+        # if os.path.exists(self.modpath) == False: 
+        #     os.mkdir(self.modpath)
 
 
         # Default colour pens
@@ -245,7 +245,7 @@ class HypoMain(MainFrame):
         self.prefs["startmod"] = 0
         self.prefs["viewwidth"] = 400
         self.prefs["viewheight"] = 600
-        self.prefs["modpath"] = self.modpath
+        self.prefs["modpath"] = self.mainpath
 
         self.SetMinSize(wx.Size(500, 400))
 

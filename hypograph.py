@@ -677,12 +677,15 @@ class PlotCon(ToolBox):
         #super(PlotCon, self).__init__(None, -1, title, wx.DefaultPosition, wx.Size(320, 600), 
         #                              wx.FRAME_FLOAT_ON_PARENT | wx.FRAME_TOOL_WINDOW | wx.CAPTION | wx.SYSTEM_MENU | wx.CLOSE_BOX | wx.RESIZE_BORDER)
         
-        ToolBox.__init__(self, plotpanel.mainwin, "PlotCon", title, wx.DefaultPosition, wx.Size(320, 600), type)
+        ostype = GetSystem()
+        if ostype == "Windows": boxheight = 700
+        else: boxheight = 600
+        ToolBox.__init__(self, plotpanel.mainwin, "PlotCon", title, wx.Point(0, 0), wx.Size(320, boxheight), type)
 
         #ToolBox.__init__(self, parent, "DiagBox", title, pos, size)
         
         self.plotpanel = plotpanel
-        ostype = GetSystem()
+        
         autosynch = False
         buttonheight = 23
         boxfont = wx.Font(wx.FontInfo(8).FaceName("Tahoma"))

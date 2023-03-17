@@ -63,10 +63,17 @@ class ToolPanel(wx.Panel):
             self.boxfont = wx.Font(wx.FontInfo(8).FaceName("Tahoma"))
             self.confont = wx.Font(wx.FontInfo(8).FaceName("Tahoma"))
 
-        #self.Bind(wx.EVT_LEFT_UP, self.OnLeftClick)
+        self.Bind(wx.EVT_LEFT_UP, self.OnLeftClick)
         #self.Bind(wx.EVT_LEFT_DCLICK, self.OnLeftDClick)
         #self.Bind(wx.EVT_RIGHT_DCLICK, self.OnRightDClick)
 
+
+    def OnLeftClick(self, event):
+        pos = self.toolbox.GetPosition()
+        oldpos = self.toolbox.oldpos
+        mpos = self.toolbox.mpos
+        tag = self.toolbox.tag
+        DiagWrite(f"{tag} pos {pos.x} {pos.y} old {oldpos.x} {oldpos.y} mpos {mpos.x} {mpos.y}\n")
 
 
 class ToolButton(wx.Button):
@@ -197,7 +204,7 @@ class ToolBox(wx.Frame):
         mainpos = self.parent.GetPosition()
         mainsize = self.parent.GetSize()
         self.Move(mainpos.x + mainsize.x + mpos.x, mainpos.y + mpos.y + 5)
-        #self.oldpos = self.GetPosition()
+        self.oldpos = self.GetPosition()
         self.mpos = mpos
 
         #snum = f"Box {self.tag} mpos x {self.mpos.x} y {self.mpos.y}"
@@ -205,9 +212,9 @@ class ToolBox(wx.Frame):
 
 
     def SetPosition(self, mainpos, mainsize):
-        self.Move(mainpos.x + mainsize.x + self.mpos.x, mainpos.y + self.mpos.y + 5)
-        #self.oldpos = self.GetPosition()
-        return wx.Point(mainpos.x + mainsize.x + self.mpos.x, mainpos.y + self.mpos.y + 5)
+        self.Move(mainpos.x + mainsize.x + self.mpos.x, mainpos.y + self.mpos.y)
+        self.oldpos = self.GetPosition()
+        return wx.Point(mainpos.x + mainsize.x + self.mpos.x, mainpos.y + self.mpos.y)
 
 
     def OnMove(self, event):
@@ -263,8 +270,8 @@ class ToolSet():
         if newbox.tag in self.tools:
             tool = self.GetTool(newbox.tag)
             tool.box = newbox
+            newbox.oldpos = newbox.GetPosition()
             tool.box.SetSize(tool.size)
-            #tool.box.mpos = tool.mpos
             tool.box.InitPosition(tool.mpos)
         else:
             self.tools[newbox.tag] = ToolDat(newbox.tag, newbox.GetPosition(), newbox.GetSize(), newbox.IsShown(), newbox)
