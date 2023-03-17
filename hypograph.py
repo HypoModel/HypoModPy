@@ -84,7 +84,7 @@ class GraphPanel(wx.Panel):
 
         self.Bind(wx.EVT_MOTION, self.OnMouseMove)
         self.Bind(wx.EVT_LEFT_DOWN, self.OnLeftDown)
-        #self.Bind(wx.EVT_LEFT_UP, self.OnLeftUp)
+        self.Bind(wx.EVT_LEFT_UP, self.OnLeftUp)
 
 
     def OnPlotCon(self, event):
@@ -94,6 +94,10 @@ class GraphPanel(wx.Panel):
 
         else: self.mainwin.plotcon.SetGraph(self)
         self.mainwin.plotcon.Show(True)
+
+
+    def OnLeftUp(self, event):
+        if self.mainwin.plotcon: self.mainwin.plotcon.SetGraph(self)
 
 
     def OnLeftDown(self, event):
