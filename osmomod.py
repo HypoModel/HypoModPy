@@ -210,11 +210,40 @@ class OsmoModel(ModThread):
         runtime = int(osmoparams["runtime"])
         waterloss = osmoparams["waterloss"]
 
+        # weight(g)water(ml)IVF(ml)Na(mmol)salt(mmol)osmo(mmol/ml)vaso(ug/ml)
         # Initialise variables
-        water = 50
-        salt = 2000
-        osmo = salt / water
+        weight = 400
+        TBW=0.64*weight
+        ECF=0.33*TBW
+        ICF=TBW-ECF
+        global IVF
+        IVF= 11.9*weight/350
+        water=IVF
+        EVF=ECF-IVF
+        Na_ivf = 144/1000*IVF
+        Na_evf= 144/1000*EVF
+        salt = 2*Na_ivf
+        osmo = salt/IVF
+        G=Na_ivf/IVF-Na_evf/EVF
+        G_w=0
         vaso=0
+        L_Naevf=[]
+        thirst_level=0
+        T_drink=-100000
+        #define drink function
+        def drink():
+            thirst_level=0
+            global IVF
+            IVF=IVF+10
+            return
+        #calculate urine volume reabsorption rate=97.8% data finding
+        urine_volume=0
+        #if vaso>0:
+            #urine_osmo=0.2*vaso*1000000
+        #urine_volume=1/urine_osmo
+        
+
+
 
         # Initialise model variable recording arrays
         osmodata.water.clear()
@@ -227,21 +256,41 @@ class OsmoModel(ModThread):
         osmodata.salt[0] = salt
         osmodata.osmo[0] = osmo
         osmodata.vaso[0] = vaso
-        osmo_thresh=280
-        v_grad=0.2
+        osmo_thresh=0.296
+        v_grad=500
         v_max=20
-        # Run model loop
+        # Run model loop runtime(s)
         for i in range(1, runtime + 1):
 
             if i%100 == 0: osmobox.SetCount(i * 100 / runtime)     # Update run progress % in model panel
 
-            water = water - (water * waterloss)
-            salt = salt
+            water = water - (water * waterloss) - urine_volume
+            IVF=water
+            Na_ivf=Na_ivf-2.2*osmo/2/100*urine_volume
+            G=Na_ivf/IVF-Na_evf/EVF
+            Na_ivf = Na_ivf-(G/0.6)
+            Na_evf = Na_evf+(G/0.6)
+            salt = 2*Na_ivf
+            EVF=EVF-G_w/1.61
+            ICF=ICF+G_w/1.61
+            L_Naevf.append(Na_evf/EVF)
+            if i>2:
+                G_w=L_Naevf[2]-L_Naevf[0]
+                L_Naevf.pop(0)
+                
             osmo = salt / water
             if osmo<osmo_thresh: vaso=0
             else: 
                 vaso= v_grad*(osmo-osmo_thresh)
                 if vaso>v_max: vaso=v_max
+            #thirst level judge
+            
+            if vaso>15 and i-T_drink>900:
+                thirst_level=9.06*1000*(osmo-0.288)
+                drink()
+                T_drink=i
+            
+            water=IVF
 
             # Record model variables
             osmodata.water[i] = water
