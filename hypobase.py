@@ -133,6 +133,7 @@ ID_Run = wx.NewIdRef()
 ID_AutoRun = wx.NewIdRef()
 ID_Default = wx.NewIdRef()
 ID_ModBrowse = wx.NewIdRef()
+ID_Print = wx.NewIdRef()
 
 # Menu IDs
 ID_GraphEPS = wx.NewIdRef()
@@ -150,5 +151,7 @@ ID_PasteTranspose = wx.NewIdRef()
 ID_Undo = wx.NewIdRef()
 ID_Insert = wx.NewIdRef()
 ID_Bold = wx.NewIdRef()
+ID_PlotPanel = wx.NewIdRef()
 
-# Mod IDs
+# Check IDs
+ID_ClipMode = wx.NewIdRef()

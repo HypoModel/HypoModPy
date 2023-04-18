@@ -407,6 +407,7 @@ class GridBox(ParamBox):
         #self.grids["Layout"] = None
 
         self.gridtags = []
+        self.gridindex = {}
 
         vdubox = wx.BoxSizer(wx.VERTICAL)
 
@@ -478,6 +479,7 @@ class GridBox(ParamBox):
 
         self.grids[label] = newgrid
         self.gridtags.append(label)     # store grid tags by page index, for page selection
+        self.gridindex[label] = len(self.gridtags) - 1   # store grid index, for page selection
         newgrid.tag = label
           
         # Set Links

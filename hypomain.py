@@ -22,6 +22,7 @@ class MainFrame(wx.Frame):
         self.diagbox = DiagBox(self, "Diagnostic", wx.Point(0, 0), wx.Size(400, 500))
         self.diagbox.Write('Diagnostic Box OK\n')
         self.gridbox = None
+        self.plotcon = None
 
         self.respath = rpath;  # defaults to "" for Windows, bundle resource path for OSX
         self.diagbox.Write("MainFrame respath " + self.respath + "\n")
@@ -48,10 +49,10 @@ class MainFrame(wx.Frame):
         if os.path.exists(self.toolpath) == False: 
             os.mkdir(self.toolpath)
 
-        if self.mainpath == "": self.modpath = "Model"
-        else: self.modpath = self.mainpath + "/Model"
-        if os.path.exists(self.modpath) == False: 
-            os.mkdir(self.modpath)
+        # if self.mainpath == "": self.modpath = "Model"
+        # else: self.modpath = self.mainpath + "/Model"
+        # if os.path.exists(self.modpath) == False: 
+        #     os.mkdir(self.modpath)
 
 
         # Default colour pens
@@ -99,8 +100,18 @@ class MainFrame(wx.Frame):
         outfile = TextFile(self.initpath + "/maintools.ini")
         outfile.Open('w')
         
-        for box in self.toolset.boxset.values():
-            outfile.WriteLine("{} {} {} {} {} {}".format(box.boxtag, box.mpos.x, box.mpos.y, box.boxsize.x, box.boxsize.y, box.IsShown()))
+        for tool in self.toolset.tools.values():
+            if tool.box: 
+                visible = tool.box.IsShown()
+                mpos = tool.box.mpos
+                size = tool.box.size
+            else: 
+                mpos = tool.mpos
+                size = tool.size
+                visible = False
+
+            print("ToolStore " + tool.tag + " size " + f"{size.y}")
+            outfile.WriteLine("{} {} {} {} {} {}".format(tool.tag, mpos.x, mpos.y, size.x, size.y, visible))
         
         outfile.Close()
         print('ToolStore OK')
@@ -115,49 +126,50 @@ class MainFrame(wx.Frame):
 
         for line in filetext:
             linedata = line.split(' ')
-            boxtag = linedata[0]
-            if boxtag in self.toolset.boxset:
+            tag = linedata[0]
+            mpos = wx.Point(int(linedata[1]), int(linedata[2]))
+            size = wx.Size(int(linedata[3]), int(linedata[4]))
+            if linedata[5] == 'True\n': visible = True
+            else: visible = False
+            if tag in self.toolset.tools:
                 #print('boxtag OK')
-                #print('tag' + ' ' + boxtag + ' ' + 'data1' + ' ' + linedata[1])          
-                pos = wx.Point(int(linedata[1]), int(linedata[2]))
-                size = wx.Size(int(linedata[3]), int(linedata[4]))
-                if linedata[5] == 'True\n': visible = True
-                else: visible = False
-                self.toolset.boxset[boxtag].visible = visible
-                self.toolset.boxset[boxtag].mpos = pos
-                self.toolset.boxset[boxtag].boxsize = size
-
+                print('tag' + ' ' + tag + ' ' + 'data1' + ' ' + linedata[1])  
+                tool = self.toolset.GetTool(tag)
+                tool.visible = visible
+                tool.mpos = mpos
+                tool.size = size
+                if tool.box:
+                    tool.box.SetSize(size)
+                    tool.box.mpos = mpos
+                    tool.box.SetPosition(self.GetPosition(), self.GetSize())
+                    tool.box.Show(visible) 
+            else:
+                self.toolset.AddTool(tag, mpos, size, visible)
+                
         infile.Close()
 
-        for box in self.toolset.boxset.values():
-            box.SetSize(box.boxsize)
-            box.SetPosition(self.GetPosition(), self.GetSize())
-            box.Show(box.visible)
-            
 
     def OnLeftClick(self, event):
-        for box in self.toolset.boxset.values():
+        for box in self.toolset.tools.values():
             if box.IsShown(): box.Show(False)
             else: box.Show(True)
 
 
     def OnMove(self, event):
-        for box in self.toolset.boxset.values():
-            box.SetPosition(self.GetPosition(), self.GetSize())
-
+        for tool in self.toolset.tools.values():
+            if tool.box: tool.box.SetPosition(self.GetPosition(), self.GetSize())
         event.Skip()
 
 
     def OnSize(self, event):
         newsize = self.GetSize()
-        for box in self.toolset.boxset.values():
-            box.SetPosition(self.GetPosition(), newsize)
+        for tool in self.toolset.tools.values():
+            if tool.box: tool.box.SetPosition(self.GetPosition(), newsize)
 
         self.prefs["viewwidth"] = newsize.x
         self.prefs["viewheight"] = newsize.y
-        snum = "Main Size X {} Y {}".format(newsize.x, newsize.y)
+        #snum = "Main Size X {} Y {}".format(newsize.x, newsize.y)
         #self.SetStatusText(snum)
-
         event.Skip()
 
 
@@ -233,7 +245,7 @@ class HypoMain(MainFrame):
         self.prefs["startmod"] = 0
         self.prefs["viewwidth"] = 400
         self.prefs["viewheight"] = 600
-        self.prefs["modpath"] = self.modpath
+        self.prefs["modpath"] = self.mainpath
 
         self.SetMinSize(wx.Size(500, 400))
 

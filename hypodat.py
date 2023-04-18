@@ -130,6 +130,7 @@ class PlotDat():
         self.yunitscale = 1
         self.xunitdscale = 1
         self.yunitdscale = 1
+        self.xsample = 1
 
         self.xlabelmode = 1
         self.ylabelmode = 1

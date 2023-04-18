@@ -47,13 +47,13 @@ class ParamCon(wx.Control):
             label = None
             self.labelwidth = 0
         else:
-            label = ToolText(self, panel.toolbox, tag, labeltext, wx.DefaultPosition, wx.Size(labelwidth, -1), wx.ALIGN_CENTRE)
+            label = ToolText(self, panel.parent, tag, labeltext, wx.DefaultPosition, wx.Size(labelwidth, -1), wx.ALIGN_CENTRE)
             label.SetFont(textfont)
 
         #if ostype == 'Mac' and labelwidth < 40: label.SetFont(smalltextfont)
         self.sizer.Add(label, 0, wx.ALIGN_CENTER_VERTICAL|wx.RIGHT, pad)
 
-        if type == "textcon": print(f"ParamCon init: {initval}")
+        #if type == "textcon": print(f"ParamCon init: {initval}")
 
         self.numbox = wx.TextCtrl(self, wx.ID_ANY, inittext, wx.DefaultPosition, wx.Size(datawidth, -1), wx.TE_PROCESS_ENTER)
         self.numbox.SetFont(textfont)
@@ -117,15 +117,15 @@ class ParamCon(wx.Control):
 
 
     def SetValue(self, value):
-        if(type == 'textcon'): snum = value
+        if self.type == 'textcon': snum = value
         else: snum = numstring(value, self.decimals)
         self.numbox.SetValue(snum)
 
 
-    def SetMinMax(self, newmin, newmax, newcycle):
+    def SetMinMax(self, newmin, newmax, cycle = False):
         self.min = newmin
         self.max = newmax
-        self.cycle = newcycle
+        self.cycle = cycle
 
 
     def DoGetBestSize(self): 
@@ -176,10 +176,10 @@ class ParamCon(wx.Control):
 
 class ParamSet:
     def __init__(self, panel):
-        self.pcons = {}
-        self.paramstore = {}
-        self.panel = panel
-        # currlay = 0;
+        self.pcons = {}         # parameter controls
+        self.paramstore = {}    # parameter value store
+        self.panel = panel      # ToolPanel link
+        self.currlay = 0        # layout counter for use with multiple ParamLayout calls
 
         # Default field widths
         self.num_labelwidth = 65
@@ -213,7 +213,6 @@ class ParamSet:
     def AddCon(self, tag, label, initval, step, places, labelwidth=-1, numwidth=-1): 
         if labelwidth < 0: labelwidth = self.con_labelwidth
         if numwidth < 0: numwidth = self.con_numwidth
-
         self.pcons[tag] = ParamCon(self.panel, 'spincon', tag, label, initval, step, places, labelwidth, numwidth);   # number + spin
         return self.pcons[tag]
 
@@ -221,16 +220,14 @@ class ParamSet:
     def AddNum(self, tag, label, initval, places, labelwidth=-1, numwidth=-1):
         if labelwidth < 0: labelwidth = self.num_labelwidth
         if numwidth < 0: numwidth = self.num_numwidth
-
-        self.con[tag] = ParamCon(self.panel, 'numcon', tag, label, initval, 0, places, labelwidth, numwidth);   # number
+        self.pcons[tag] = ParamCon(self.panel, 'numcon', tag, label, initval, 0, places, labelwidth, numwidth);   # number
         return self.pcons[tag]
 
 
     def AddText(self, tag, label, initval, labelwidth=-1, textwidth=-1):
         if labelwidth < 0: labelwidth = self.text_labelwidth
-        if numwidth < 0: numwidth = self.text_numwidth
-
-        self.con[tag] = ParamCon(self.panel, 'textcon', tag, label, initval, labelwidth, textwidth)     # text
+        if textwidth < 0: textwidth = self.text_numwidth
+        self.pcons[tag] = ParamCon(self.panel, 'textcon', tag, label, initval, labelwidth, textwidth)     # text
         return self.pcons[tag]
 
     
@@ -250,7 +247,7 @@ class ParamSet:
 
     
     def GetParams(self):
-        for pcon in self.pcons:
+        for pcon in self.pcons.values():
             value = pcon.GetValue()
             if value < pcon.min:
                 value = pcon.oldvalue
@@ -281,7 +278,7 @@ class ParamBox(ToolBox):
         self.status = None
         #defbutt = 0;
         #defstore = false;
-        self.diagmode = 0   # diagnostic mode
+        self.diag = 0   # diagnostic mode
         self.mainwin = model.mainwin  # main window link
 
         # modmode = 0;
@@ -315,8 +312,8 @@ class ParamBox(ToolBox):
         # Store Tag
         self.storetag = None
         if self.storemode:
-            if diag: self.DiagWrite("Store Box initialise " + self.boxtag + "\n")
-            self.storetag = TagBox(self.activepanel, "", wx.Size(120, 20), self.boxtag, self.mod.path)
+            if diag: self.DiagWrite("Store Box initialise " + self.tag + "\n")
+            self.storetag = TagBox(self.activepanel, "", wx.Size(120, 20), self.tag, self.mod.path)
             self.storetag.Show(False)
             self.storetag.SetFont(self.confont)
 
@@ -414,7 +411,7 @@ class ParamBox(ToolBox):
             if filetag == "": filetag = self.storetag.GetValue()
             elif filetag != "default": self.storetag.SetValue(filetag)
 
-        filepath = parampath + "/" + filetag + "-" + self.boxtag + "param.dat"
+        filepath = parampath + "/" + filetag + "-" + self.tag + "param.dat"
         if diagmode: DiagWrite("paramload " + filepath + "\n")
         paramfile = TextFile(filepath)
 
@@ -642,8 +639,6 @@ class ParamBox(ToolBox):
     def ParamLayout(self, numcols = 1):                  
         colsize = 0
         numparams = self.paramset.NumParams()
-
-        #self.VBox(numcols)
 
         if numcols == 1: colsize = numparams
         if(numcols >= 2):
