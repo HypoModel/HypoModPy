@@ -47,7 +47,7 @@ class ParamCon(wx.Control):
             label = None
             self.labelwidth = 0
         else:
-            label = ToolText(self, panel.toolbox, tag, labeltext, wx.DefaultPosition, wx.Size(labelwidth, -1), wx.ALIGN_CENTRE)
+            label = ToolText(self, panel.parent, tag, labeltext, wx.DefaultPosition, wx.Size(labelwidth, -1), wx.ALIGN_CENTRE)
             label.SetFont(textfont)
 
         #if ostype == 'Mac' and labelwidth < 40: label.SetFont(smalltextfont)
@@ -411,7 +411,7 @@ class ParamBox(ToolBox):
             if filetag == "": filetag = self.storetag.GetValue()
             elif filetag != "default": self.storetag.SetValue(filetag)
 
-        filepath = parampath + "/" + filetag + "-" + self.boxtag + "param.dat"
+        filepath = parampath + "/" + filetag + "-" + self.tag + "param.dat"
         if diagmode: DiagWrite("paramload " + filepath + "\n")
         paramfile = TextFile(filepath)
 

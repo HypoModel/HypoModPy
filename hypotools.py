@@ -6,7 +6,6 @@ from pubsub import pub
 
 
 
-
 class ToolText(wx.StaticText):
     def __init__(self, parent, toolbox, tag, label, pos, size, style):
         wx.StaticText.__init__(self, parent, wx.ID_ANY, label, pos, size, style)
@@ -39,10 +38,10 @@ class ToolText(wx.StaticText):
 
 
 class ToolPanel(wx.Panel):
-    def __init__(self, toolbox, pos, size, style = wx.TAB_TRAVERSAL | wx.NO_BORDER):
-        wx.Panel.__init__(self, toolbox, wx.ID_ANY, pos, size, style)
+    def __init__(self, parent, pos, size, style = wx.TAB_TRAVERSAL | wx.NO_BORDER):
+        wx.Panel.__init__(self, parent, wx.ID_ANY, pos, size, style)
 
-        self.toolbox = toolbox
+        self.parent = parent
         self.controlborder = 2
 
         self.blackpen = wx.Colour("#000000")
@@ -69,11 +68,14 @@ class ToolPanel(wx.Panel):
 
 
     def OnLeftClick(self, event):
-        pos = self.toolbox.GetPosition()
-        oldpos = self.toolbox.oldpos
-        mpos = self.toolbox.mpos
-        tag = self.toolbox.tag
-        DiagWrite(f"{tag} pos {pos.x} {pos.y} old {oldpos.x} {oldpos.y} mpos {mpos.x} {mpos.y}\n")
+        if type(self.parent) is ToolBox:
+            pos = self.parent.GetPosition()
+            oldpos = self.parent.oldpos
+            mpos = self.parent.mpos
+            tag = self.parent.tag
+            DiagWrite(f"{tag} pos {pos.x} {pos.y} old {oldpos.x} {oldpos.y} mpos {mpos.x} {mpos.y}\n")
+            
+        event.Skip()
 
 
 class ToolButton(wx.Button):

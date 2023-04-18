@@ -81,10 +81,16 @@ class GraphPanel(wx.Panel):
         self.Bind(wx.EVT_RIGHT_DOWN, self.OnRightClick)
         self.Bind(wx.EVT_MENU, self.OnGraphRemove, ID_GraphRemove)
         self.Bind(wx.EVT_MENU, self.OnPlotCon, ID_PlotPanel)
+        self.Bind(wx.EVT_MENU, self.OnGridOutput, ID_Output)
+
 
         self.Bind(wx.EVT_MOTION, self.OnMouseMove)
         self.Bind(wx.EVT_LEFT_DOWN, self.OnLeftDown)
         self.Bind(wx.EVT_LEFT_UP, self.OnLeftUp)
+
+
+    def OnGridOutput(self, event):
+        self.mainwin.mod.GridOutput()
 
 
     def OnPlotCon(self, event):
@@ -290,6 +296,7 @@ class GraphPanel(wx.Panel):
                 menuPlot.Append(ID_PlotPanel, "Plot Panel")
                 menuPlot.Append(ID_UnZoom, "Zoom Undo")
                 menuPlot.Append(ID_GraphRemove, "Delete Graph")
+                menuPlot.Append(ID_Output, "Grid Output")
                 menuPlot.AppendSeparator()
             else:
                 #menuPlot->Append(ID_GraphRemove, "Delete Graph")
