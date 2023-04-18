@@ -1,6 +1,4 @@
 
-
-
 import wx
 import random
 import numpy as np
@@ -33,9 +31,9 @@ class OsmoMod(Mod):
         # link mod owned boxes
         mainwin.gridbox = self.gridbox
 
-        self.modtools[self.osmobox.tag] = self.osmobox
-        self.modtools[self.protobox.tag] = self.protobox
-        self.modtools[self.gridbox.tag] = self.gridbox
+        self.modtools[self.osmobox.boxtag] = self.osmobox
+        self.modtools[self.protobox.boxtag] = self.protobox
+        self.modtools[self.gridbox.boxtag] = self.gridbox
 
         self.osmobox.Show(True)
         self.modbox = self.osmobox
@@ -297,6 +295,10 @@ class OsmoModel(ModThread):
         osmodata.salt.xmax = runtime * 1.1
         osmodata.osmo.xmax = runtime * 1.1
         osmodata.vaso.xmax = runtime * 1.1
+
+
+
+
 
 
 
