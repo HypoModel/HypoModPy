@@ -213,7 +213,7 @@ class OsmoModel(ModThread):
         # weight(g)water(ml)IVF(ml)Na(mmol)salt(mmol)osmo(mmol/ml)vaso(ug/ml)
         # Initialise variables
         weight = 400
-        TBW=0.64*weight
+        TBW = 0.64 * weight
         ECF=0.33*TBW
         ICF=TBW-ECF
         global IVF
