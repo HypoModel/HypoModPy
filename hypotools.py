@@ -116,6 +116,7 @@ class ToolBox(wx.Frame):
         self.diagmode = False
 
         self.tag = tag
+        self.boxtag = tag   # duplicate for backwards compatibility after rename
         self.mpos = pos - parent.GetPosition() 
         self.oldpos = pos
         self.size = size
