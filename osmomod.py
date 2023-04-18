@@ -85,6 +85,46 @@ class OsmoMod(Mod):
         modthread.start()
 
 
+    def GridOutput(self):
+        grid = self.gridbox.grids["Output"]
+        grid.CopyUndo()
+
+        params = self.osmobox.GetParams()
+        steps = int(params["runtime"])
+
+        col = 0
+        grid.ClearCol(col)
+        grid.SetCellValue(0, col, "Time (s)")
+        for i in range(steps): 
+            grid.SetCell(i+1, col, f"{i}") 
+
+        col = 1
+        grid.ClearCol(col)
+        grid.SetCellValue(0, col, "Water")
+        for i in range(steps):
+             grid.SetCell(i+1, col, f"{self.osmodata.water[i]:.4f}")
+
+        col = 2
+        grid.ClearCol(col)
+        grid.SetCellValue(0, col, "Salt")
+        for i in range(steps):
+             grid.SetCell(i+1, col, f"{self.osmodata.salt[i]:.4f}")
+
+        col = 3
+        grid.ClearCol(col)
+        grid.SetCellValue(0, col, "Osmo")
+        for i in range(steps):
+             grid.SetCell(i+1, col, f"{self.osmodata.osmo[i]:.4f}")
+
+        col = 4
+        grid.ClearCol(col)
+        grid.SetCellValue(0, col, "Vaso")
+        for i in range(steps):
+             grid.SetCell(i+1, col, f"{self.osmodata.vaso[i]:.4f}")
+
+        self.gridbox.notebook.ChangeSelection(self.gridbox.gridindex["Output"])
+
+
 
 class OsmoDat():
     def __init__(self):
