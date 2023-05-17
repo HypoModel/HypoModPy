@@ -42,6 +42,7 @@ class ToolPanel(wx.Panel):
         wx.Panel.__init__(self, parent, wx.ID_ANY, pos, size, style)
 
         self.parent = parent
+        self.toolbox = None
         self.controlborder = 2
 
         self.blackpen = wx.Colour("#000000")
@@ -131,6 +132,8 @@ class ToolBox(wx.Frame):
         self.greenpen = wx.Colour("#009900")
         self.bluepen = wx.Colour("#0000dd")
 
+        self.mainbox = wx.BoxSizer(wx.VERTICAL)
+
         if GetSystem() == 'Mac':
             self.buttonheight = 25
             self.boxfont = wx.Font(wx.FontInfo(10).FaceName("Tahoma"))
@@ -142,8 +145,8 @@ class ToolBox(wx.Frame):
 
         self.panel = ToolPanel(self, wx.DefaultPosition, wx.DefaultSize)
         self.panel.SetFont(self.boxfont)
-        self.mainbox = wx.BoxSizer(wx.VERTICAL)
         self.panel.SetSizer(self.mainbox)
+        self.panel.toolbox = self
 
         self.selfstore = False
         self.activepanel = self.panel
