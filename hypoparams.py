@@ -20,6 +20,8 @@ class ParamCon(wx.Control):
         self.pad = panel.controlborder
         self.cycle = False
 
+        self.diagmode = False
+
         if ostype == "Mac": pad = 0
         else: pad = 0
 
@@ -139,7 +141,7 @@ class ParamCon(wx.Control):
 
     def OnSpin(self, event):
         if not self.panel.toolbox == None:
-            #pub.sendMessage("diagbox", message="tool spin click\n")
+            if self.diagmode: pub.sendMessage("diagbox", message="tool spin click\n")
             self.panel.toolbox.SpinClick(self.tag)
         event.Skip()
 
