@@ -62,7 +62,7 @@ class Mod(wx.EvtHandler):
         outfile.Open('w')
 
         for box in self.modtools.values():
-            outfile.WriteLine("{} {} {} {} {} {}".format(box.tag, box.mpos.x, box.mpos.y, box.boxsize.x, box.boxsize.y, box.IsShown()))
+            outfile.WriteLine("{} {} {} {} {} {}".format(box.tag, box.mpos.x, box.mpos.y, box.size.x, box.size.y, box.IsShown()))
             if box.storetag != None: box.storetag.HistStore()
 
         outfile.Close()
@@ -92,12 +92,12 @@ class Mod(wx.EvtHandler):
                 else: visible = False
                 self.modtools[boxtag].visible = visible
                 self.modtools[boxtag].mpos = pos
-                self.modtools[boxtag].boxsize = size
+                self.modtools[boxtag].size = size
 
         infile.Close()
 
         for box in self.modtools.values():
-            box.SetSize(box.boxsize)
+            box.SetSize(box.size)
             box.SetPosition(self.mainwin.GetPosition(), self.mainwin.GetSize())
             box.Show(box.visible)
 
