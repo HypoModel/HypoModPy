@@ -35,6 +35,14 @@ class Mod(wx.EvtHandler):
         self.Bind(EVT_MODTHREAD_COMPLETE, self.OnModThreadComplete)
 
 
+    def OnModThreadComplete(self, event):
+        #runmute->Lock();
+        #runflag = 0;
+        #runmute->Unlock();
+        self.mainwin.scalebox.GraphUpdateAll()
+        #DiagWrite("Model thread OK\n\n")
+
+
     def GetPath(self):
         if self.mainwin.modpath == "": 
             if self.path != "": fullpath = self.path

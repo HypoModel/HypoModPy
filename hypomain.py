@@ -8,6 +8,7 @@ from hypograph import *
 from hyposcale import *
 from hypoparams import *
 from osmomod import *
+from spikemod import *
 
 
 class MainFrame(wx.Frame):
@@ -288,7 +289,9 @@ class HypoMain(MainFrame):
             self.graphsizer.Add(graphpanel, 1, wx.EXPAND)
 
         # Mod Init
-        self.mod = OsmoMod(self, "osmomod")
+        
+        #self.mod = OsmoMod(self, "osmomod")
+        self.mod = SpikeMod(self, "spikemod")
         self.mod.DefaultPlots()
         
         # Scale Box
