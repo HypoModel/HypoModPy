@@ -192,7 +192,7 @@ class OsmoModel(ModThread):
         self.randomflag = self.osmobox.modflags["randomflag"]      # model flags are useful for switching elements of the model code while running
 
         if self.randomflag: random.seed(0)
-        else: random.seed(datetime.now())
+        else: random.seed(datetime.now().microsecond)
 
         self.Model()
         wx.QueueEvent(self.mod, ModThreadEvent(ModThreadCompleteEvent))
