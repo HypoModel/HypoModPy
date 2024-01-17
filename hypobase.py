@@ -125,6 +125,15 @@ def isfloat(num):
         return False
 
 
+def CheckFloat(string):
+    try:
+        float(string)
+        return float(string)
+    except ValueError:
+        return False
+
+
+
 # Button IDs
 ID_Sync = wx.NewIdRef()
 ID_Store = wx.NewIdRef()

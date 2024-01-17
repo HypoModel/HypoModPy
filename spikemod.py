@@ -41,8 +41,10 @@ class SpikeMod(Mod):
         self.ModLoad()
         print("Spike Model OK")
 
-        self.celldata = SpikeDat()
-        self.moddata = SpikeDat()
+        self.celldata = NeuroDat()
+
+        self.cell_anadata = SpikeAnalysisDat()
+        self.mod_anadata = SpikeAnalysisDat()
         self.PlotData()
         self.graphload = True
 
@@ -54,19 +56,16 @@ class SpikeMod(Mod):
         #
         # AddPlot(PlotDat(data array, xfrom, xto, yfrom, yto, label string, plot type, bin size, colour), tag string)
         # ----------------------------------------------------------------------------------
-        self.plotbase.AddPlot(PlotDat(self.celldata.hist1, 0, 2000, 0, 5000, "datahist", "line", 1, "blue"), "datahist")
-        self.plotbase.AddPlot(PlotDat(self.celldata.haz1, 0, 2000, 0, 100, "datahaz", "line", 1, "blue"), "datahaz")
-        self.plotbase.AddPlot(PlotDat(self.moddata.hist1, 0, 2000, 0, 100, "modhist", "line", 1, "green"), "modhist")
-        self.plotbase.AddPlot(PlotDat(self.moddata.haz1, 0, 2000, 0, 100, "modhaz", "line", 1, "green"), "modhaz")
+        self.plotbase.AddPlot(PlotDat(self.cell_anadata.hist1, 0, 2000, 0, 5000, "datahist", "line", 1, "blue"), "datahist")
+        self.plotbase.AddPlot(PlotDat(self.cell_anadata.haz1, 0, 2000, 0, 100, "datahaz", "line", 1, "blue"), "datahaz")
+        self.plotbase.AddPlot(PlotDat(self.mod_anadata.hist1, 0, 2000, 0, 100, "modhist", "line", 1, "green"), "modhist")
+        self.plotbase.AddPlot(PlotDat(self.mod_anadata.haz1, 0, 2000, 0, 100, "modhaz", "line", 1, "green"), "modhaz")
 
 
     def DefaultPlots(self):
         if len(self.mainwin.panelset) > 0: self.mainwin.panelset[0].settag = "datahist"
         if len(self.mainwin.panelset) > 1: self.mainwin.panelset[1].settag = "datahaz"
         if len(self.mainwin.panelset) > 2: self.mainwin.panelset[2].settag = "modhist"
-
-
-
 
 
 

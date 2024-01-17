@@ -466,7 +466,6 @@ class GridBox(ParamBox):
         DiagWrite(f"OnGridSelect {newpageindex} {self.currgrid}\n")
 
 
-
     # AddGrid() in (now default) notebook mode adds a new TextGrid and wxNotebook page
     # initialises grid and links to output controls
 
@@ -585,7 +584,6 @@ class GridBox(ParamBox):
         outfile.Close()
 
 
-
     def GridLoad(self, tag = ""):
         diag = False
 
@@ -685,3 +683,95 @@ class GridBox(ParamBox):
     def RowSelect(self, row):
         self.WriteVDU(f"Row Select {row}\n")
         if self.mod: self.mod.GridRow(row)
+
+
+    def OnNeuroScan(self, event):
+        self.NeuroScan()
+
+
+    def NeuroScan(self):
+
+        self.WriteVDU("Neural data scan...")
+
+        #params = self.neurobox.GetParams()
+        #filterthresh = params["filterthresh"]
+
+        grid = self.grids[self.currgrid]
+        
+        startthresh = 10
+        cellcount = 0
+        col = 0
+        celltext = grid.GetCell(0, 0)
+        celltext.Trim()
+
+        while not celltext.IsEmpty():
+            celltext = self.currgrid.GetCell(0, col)
+            celltext.Trim()
+            #if(celldata->size() <= cellcount) celldata->resize(cellcount + 10);
+            #diagbox->Write(text.Format("cellcount %d  cell data size %d\n", cellcount, (int)mod->celldata.size()));
+            self.mod.celldata[cellcount].name = celltext
+            celltext = self.currgrid.GetCell(1, col)
+            celltext.strip()
+            spikecount = 0
+            spikestart = 0
+            row = 1
+
+            self.mod.celldata[cellcount].filter = 0
+
+            # Skip non-spike time rows
+            while not isfloat(celltext):
+                # diagbox->Write(text.Format("col %d row %d %s\n", col, row, celltext));
+                row += 1
+                celltext = grid.GetCell(row, col);
+                celltext.strip()
+
+            cellval = float(celltext)
+
+            # Read and filter spike time data
+            while not celltext == "":
+			celltext.ToDouble(&cellval);
+			if(startshift && spikecount == 0 && cellval > startthresh) spikestart = floor(cellval);     // shift spike times when there's a long initial silent period
+			spiketime = (cellval - spikestart) * 1000;
+			if(spikecount > 0) {       
+				spikeint = spiketime - (*celldata)[cellcount].times[spikecount-1];
+				//if(spikecount < 10) diagbox->Write(text.Format("col %d spikeint %.2f filter %d\n", col, spikeint, filterthresh));
+			}
+			if(spikecount >= (*celldata)[cellcount].maxspikes) (*celldata)[cellcount].ReSize();
+			if(spikecount == 0 || spikeint > filterthresh) {
+				(*celldata)[cellcount].times[spikecount] = spiketime;
+				spikecount++;
+			}
+			row++;
+			celltext = currgrid->GetCell(row, col);
+			celltext.Trim();
+		}
+
+		// Record spike count and initialise next column
+		(*celldata)[cellcount].spikecount = spikecount;
+		(*celldata)[cellcount].gridcol = col;
+		cellcount++;
+		col++;
+		celltext = currgrid->GetCell(0, col);
+		celltext.Trim();
+	}
+
+	if (!cellcount) {
+		diagbox->Write("Neuro scan: NO DATA\n");
+		//mod->cellbox->datneuron->SetLabel("NO DATA");
+	}
+	else {
+		diagbox->Write(text.Format("Neuro scan: %d cells read OK\n", cellcount));
+		//mod->cellcount = cellcount;
+		if(neurobox->cellpanel->neuroindex > cellcount) neurobox->cellpanel->neuroindex = 0;
+		//neurobox->cellpanel->neurocount = cellcount;
+		neurobox->cellpanel->SetCount(cellcount);
+
+		// multi cell analysis
+		neurobox->cellpanel->MultiCellAnalysis();
+		
+		diagbox->Write(text.Format("Neuro data...."));
+		neurobox->cellpanel->NeuroData();
+		diagbox->Write(text.Format("OK\n"));
+	}
+	WriteVDU("OK\n");
+}

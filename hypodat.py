@@ -30,8 +30,6 @@ class pdata(np.ndarray):
 
     
 
-
-
 class PlotSet():
     def __init__(self):
         self.plottags = []
@@ -72,7 +70,6 @@ class PlotSet():
 
         return plottag
         
-
 
 class PlotDat():
     def __init__(self, data = pdata(0), xf = 0, xt = 500, yf = 0, yt = 1000, label = "", type = None, binsize = 1, colour = "red", xs = 1, xd = 0):
@@ -364,4 +361,8 @@ class PlotBase():
 
     def GetPlot(self, tag):
         return self.plotstore[tag]
+
+
+
+
 

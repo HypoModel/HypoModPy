@@ -10,8 +10,15 @@ from hypodat import *
 from hypogrid import *
 
 
+class NeuroDat():
+    def __init__(self):
+        self.maxspikes = 100000
+        self.times = pdata(self.maxpsikes)
+        self.spikecount = 0
 
-class SpikeDat():
+
+
+class SpikeAnalysisDat():
     def __init__(self):
 
         self.maxspikes = 100000
@@ -28,8 +35,7 @@ class SpikeDat():
         self.haz1 = pdata(self.histsize + 1)
         self.haz5 = pdata(self.histsize + 1)
 
-        self.normscale = 10000
-
+        self.normscale = 10000   # normalise and scale histogram to normscale spikecount 
 
 
     def Analysis(self):
