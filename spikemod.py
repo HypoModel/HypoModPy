@@ -8,6 +8,7 @@ from hypomods import *
 from hypoparams import *
 from hypodat import *
 from hypogrid import *
+from spikedat import *
 
 
 class SpikeMod(Mod):
@@ -40,7 +41,8 @@ class SpikeMod(Mod):
         self.ModLoad()
         print("Spike Model OK")
 
-        self.spikedata = SpikeDat()
+        self.celldata = SpikeDat()
+        self.moddata = SpikeDat()
         self.PlotData()
         self.graphload = True
 
@@ -52,10 +54,10 @@ class SpikeMod(Mod):
         #
         # AddPlot(PlotDat(data array, xfrom, xto, yfrom, yto, label string, plot type, bin size, colour), tag string)
         # ----------------------------------------------------------------------------------
-        self.plotbase.AddPlot(PlotDat(self.spikedata.datahist, 0, 2000, 0, 5000, "datahist", "line", 1, "blue"), "datahist")
-        self.plotbase.AddPlot(PlotDat(self.spikedata.datahaz, 0, 2000, 0, 100, "datahaz", "line", 1, "blue"), "datahaz")
-        self.plotbase.AddPlot(PlotDat(self.spikedata.modhist, 0, 2000, 0, 100, "modhist", "line", 1, "green"), "modhist")
-        self.plotbase.AddPlot(PlotDat(self.spikedata.modhaz, 0, 2000, 0, 100, "modhaz", "line", 1, "green"), "modhaz")
+        self.plotbase.AddPlot(PlotDat(self.celldata.hist1, 0, 2000, 0, 5000, "datahist", "line", 1, "blue"), "datahist")
+        self.plotbase.AddPlot(PlotDat(self.celldata.haz1, 0, 2000, 0, 100, "datahaz", "line", 1, "blue"), "datahaz")
+        self.plotbase.AddPlot(PlotDat(self.moddata.hist1, 0, 2000, 0, 100, "modhist", "line", 1, "green"), "modhist")
+        self.plotbase.AddPlot(PlotDat(self.moddata.haz1, 0, 2000, 0, 100, "modhaz", "line", 1, "green"), "modhaz")
 
 
     def DefaultPlots(self):
@@ -64,15 +66,8 @@ class SpikeMod(Mod):
         if len(self.mainwin.panelset) > 2: self.mainwin.panelset[2].settag = "modhist"
 
 
-class SpikeDat():
-    def __init__(self):
-        self.storesize = 10000
 
-        # initialise arrays for recording model variables (or any model values)
-        self.datahist = pdata(self.storesize + 1)
-        self.datahaz = pdata(self.storesize + 1)
-        self.modhist = pdata(self.storesize + 1)
-        self.modhaz = pdata(self.storesize + 1)
+
 
 
 
