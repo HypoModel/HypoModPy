@@ -13,9 +13,9 @@ from hypogrid import *
 class NeuroDat():
     def __init__(self):
         self.maxspikes = 100000
-        self.times = pdata(self.maxpsikes)
+        self.times = pdata(self.maxspikes)
         self.spikecount = 0
-
+        self.name = ""
 
 
 class SpikeAnalysisDat():
@@ -38,7 +38,7 @@ class SpikeAnalysisDat():
         self.normscale = 10000   # normalise and scale histogram to normscale spikecount 
 
 
-    def Analysis(self):
+    def Analysis(self, neurodata=None):
 
         # reset spike interval analysis stores
         for i in range(self.histsize):
@@ -61,17 +61,21 @@ class SpikeAnalysisDat():
         norm = 1
         binsize = 5
 
+        if neurodata != None:
+            self.spikecount = neurodata.spikecount
+            self.maxspikes = neurodata.maxspikes
+
         if self.spikecount == 0: return
 
         # ISIs, Histogram, Freq, Variance
 
         isicount = self.spikecount - 1
-        # if(neurodat) times[0] = datneuron->times[0];
+        if neurodata != None: self.times[0] = neurodata.times[0]
 
         # 1ms ISI Histogram
         for i in range(isicount):                                   
             if i > self.maxspikes: break
-            # if(neurodat) times[i+1] = datneuron->times[i+1];
+            if neurodata != None: self.times[i+1] = neurodata.times[i+1]
             self.isis[i] = self.times[i+1] - self.times[i]
             if self.hist1.xmax < int(self.isis[i]): self.hist1.xmax = int(self.isis[i])
             self.hist1[int(self.isis[i])] += 1

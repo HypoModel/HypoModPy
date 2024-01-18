@@ -25,26 +25,32 @@ class SpikeMod(Mod):
 
         self.gridbox = GridBox(self, "Data Grid", wx.Point(0, 0), wx.Size(320, 500), 100, 20)
         self.spikebox = SpikeBox(self, "spike", "Spike", wx.Point(0, 0), wx.Size(320, 500))
+        #self.neurobox = NeuroBox(self, "spikedata", "Spike Data", wx.Point(0, 0), wx.Size(320, 500))
+
+        self.gridbox.NeuroButton()
 
         # link mod owned boxes
         mainwin.gridbox = self.gridbox
 
         self.modtools[self.spikebox.boxtag] = self.spikebox
         self.modtools[self.gridbox.boxtag] = self.gridbox
+        #self.modtools[self.neurobox.boxtag] = self.neurobox
 
         self.spikebox.Show(True)
         self.modbox = self.spikebox
 
         mainwin.toolset.AddBox(self.spikebox)  
         mainwin.toolset.AddBox(self.gridbox)  
+        #mainwin.toolset.AddBox(self.neurobox)  
 
         self.ModLoad()
         print("Spike Model OK")
 
-        self.celldata = NeuroDat()
+        self.celldata = []
+        #self.celldata = NeuroDat()
 
-        self.cell_anadata = SpikeAnalysisDat()
-        self.mod_anadata = SpikeAnalysisDat()
+        self.cellanalysis = SpikeAnalysisDat()
+        self.modanalysis = SpikeAnalysisDat()
         self.PlotData()
         self.graphload = True
 
@@ -56,10 +62,10 @@ class SpikeMod(Mod):
         #
         # AddPlot(PlotDat(data array, xfrom, xto, yfrom, yto, label string, plot type, bin size, colour), tag string)
         # ----------------------------------------------------------------------------------
-        self.plotbase.AddPlot(PlotDat(self.cell_anadata.hist1, 0, 2000, 0, 5000, "datahist", "line", 1, "blue"), "datahist")
-        self.plotbase.AddPlot(PlotDat(self.cell_anadata.haz1, 0, 2000, 0, 100, "datahaz", "line", 1, "blue"), "datahaz")
-        self.plotbase.AddPlot(PlotDat(self.mod_anadata.hist1, 0, 2000, 0, 100, "modhist", "line", 1, "green"), "modhist")
-        self.plotbase.AddPlot(PlotDat(self.mod_anadata.haz1, 0, 2000, 0, 100, "modhaz", "line", 1, "green"), "modhaz")
+        self.plotbase.AddPlot(PlotDat(self.cellanalysis.hist1, 0, 2000, 0, 5000, "datahist", "line", 1, "blue"), "datahist")
+        self.plotbase.AddPlot(PlotDat(self.cellanalysis.haz1, 0, 2000, 0, 100, "datahaz", "line", 1, "blue"), "datahaz")
+        self.plotbase.AddPlot(PlotDat(self.modanalysis.hist1, 0, 2000, 0, 100, "modhist", "line", 1, "green"), "modhist")
+        self.plotbase.AddPlot(PlotDat(self.modanalysis.haz1, 0, 2000, 0, 100, "modhaz", "line", 1, "green"), "modhaz")
 
 
     def DefaultPlots(self):
@@ -68,6 +74,13 @@ class SpikeMod(Mod):
         if len(self.mainwin.panelset) > 2: self.mainwin.panelset[2].settag = "modhist"
 
 
+    def NeuroData(self):
+        DiagWrite("NeuroData() call")
+
+        self.cellindex = 0
+        self.cellanalysis.Analysis(self.celldata[self.cellindex])
+        self.cellanalysis.id = self.cellindex
+        self.cellanalysis.name = self.celldata[self.cellindex].name
 
 
 class SpikeBox(ParamBox):
@@ -113,4 +126,35 @@ class SpikeBox(ParamBox):
         self.mainbox.Add(self.buttonbox, 0, wx.ALIGN_CENTRE_HORIZONTAL | wx.ALIGN_CENTRE_VERTICAL | wx.ALL, 0)
         self.mainbox.AddSpacer(5)
         #self.mainbox.AddSpacer(2)
+        self.panel.Layout()
+
+
+class NeuroBox(ParamBox):
+    def __init__(self, mod, tag, title, position, size):
+        ParamBox.__init__(self, mod, title, position, size, tag, 0, 1)
+
+        self.autorun = True
+
+        # Initialise Menu 
+        #self.InitMenu()
+
+        # Model Flags
+    
+
+        # Parameter controls
+        #
+        # AddCon(tag string, display string, initial value, click increment, decimal places)
+        # ----------------------------------------------------------------------------------
+        self.paramset.AddCon("drinkstart", "Drink Start", 0, 1, 0)
+        self.paramset.AddCon("drinkstop", "Drink Stop", 0, 1, 0)
+        self.paramset.AddCon("drinkrate", "Drink Rate", 10, 1, 0)
+
+        self.ParamLayout(3)   # layout parameter controls in two columns
+
+        # ----------------------------------------------------------------------------------
+
+        self.mainbox.AddSpacer(5)
+        self.mainbox.Add(self.pconbox, 1, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 0)
+        self.mainbox.AddStretchSpacer(5)
+        self.mainbox.AddSpacer(2)
         self.panel.Layout()

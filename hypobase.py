@@ -143,6 +143,7 @@ ID_AutoRun = wx.NewIdRef()
 ID_Default = wx.NewIdRef()
 ID_ModBrowse = wx.NewIdRef()
 ID_Print = wx.NewIdRef()
+ID_Neuron = wx.NewIdRef()
 
 # Menu IDs
 ID_GraphEPS = wx.NewIdRef()
