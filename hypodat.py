@@ -3,6 +3,30 @@ from hypobase import *
 import numpy as np
 
 
+
+class datarray():
+    def __init__(self, size):
+        #self.__lib = ...
+        self.data = np.ndarray(size)
+        self.xmax = size
+        self.empty = True
+
+    def __getitem__(self, key): 
+        #self.np_array = np.ndarray(self._lib.get_arr())
+        return self.data.__getitem__(key)
+
+    def __setitem__(self, key, value):
+        self.data.__setitem__(key, value)
+        #self._lib.set_arr(new_arr.ctypes)
+
+    def __getattr__(self, name):
+        """Delegate to NumPy array."""
+        try:
+            return getattr(self.data, name)
+        except AttributeError:
+            raise AttributeError(
+                 "'Array' object has no attribute {}".format(name))
+
 # subclass code from 
 # https://numpy.org/doc/stable/user/basics.subclassing.html#slightly-more-realistic-example-attribute-added-to-existing-array
 
@@ -23,10 +47,22 @@ class pdata(np.ndarray):
         self.info = getattr(obj, 'info', None)
 
 
+    def __array_wrap__(self, out_arr, context=None):
+        print('In __array_wrap__:')
+        print('   self is %s' % repr(self))
+        print('   arr is %s' % repr(out_arr))
+        # then just call the parent
+        return super().__array_wrap__(self, out_arr, context)
+
+
     def clear(self):
         for i in range(len(self)):
             self[i] = 0
         self.empty = False
+
+
+    def resize(self, newsize):
+        np.resize(self, newsize)
 
     
 

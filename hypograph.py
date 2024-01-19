@@ -201,7 +201,7 @@ class GraphPanel(wx.Panel):
     def ScrollUpdate(self, xmax=0):
         plot = self.GetFrontPlot()
         if not plot: return
-        if not np.any(plot.data):
+        if not any(plot.data):
             #mod->diagbox->Write("plot " + plot.gname + " no data\n")
             #return
             max = 1000

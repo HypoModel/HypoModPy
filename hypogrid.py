@@ -704,12 +704,14 @@ class GridBox(ParamBox):
         #params = self.neurobox.GetParams()
         #filterthresh = params["filterthresh"]
         filterthresh = 10
+        timescale = 1000    # 1000 to convert seconds to millseconds
         grid = self.grids[self.currgrid]
         celldata = self.mod.celldata
+
         
         cellcount = 0
         col = 0
-        startthresh = 10
+        startthresh = 10000 / timescale
         startshift = True
 
         celltext = grid.GetCell(0, col)
@@ -737,10 +739,12 @@ class GridBox(ParamBox):
 
             # Read and filter spike time data
             while not celltext == "":
+                # DiagWrite(f"neuroscan celltext {celltext}\n")
                 cellval = float(celltext)
                 if startshift and spikecount == 0 and cellval > startthresh: 
                     spikestart = math.floor(cellval);   # shift spike times when there's a long initial silent period
-                spiketime = (cellval - spikestart) * 1000
+                spiketime = (cellval - spikestart) * timescale
+                # DiagWrite(f"neuroscan cellval {cellval}  spiketime {spiketime}\n")
                 if spikecount > 0:    
                     spikeint = spiketime - celldata[cellcount].times[spikecount - 1]
                     # if(spikecount < 10) diagbox->Write(text.Format("col %d spikeint %.2f filter %d\n", col, spikeint, filterthresh));

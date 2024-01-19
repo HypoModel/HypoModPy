@@ -16,19 +16,22 @@ class NeuroDat():
         self.times = pdata(self.maxspikes)
         self.spikecount = 0
         self.name = ""
+        self.timeform = "s"   # "s" or "ms" for seconds or milliseconds
 
 
-class SpikeAnalysisDat():
+class SpikeDat():
     def __init__(self):
 
         self.maxspikes = 100000
         self.spikecount = 0
         self.times = pdata(self.maxspikes)
         self.isis = pdata(self.maxspikes)
+        self.freq = 0
 
         # initialise arrays for spike interval analysis
-        self.histsize = 10000
-        self.hist1 = pdata(self.histsize + 1)
+        self.histsize = 50000
+        #self.hist1 = pdata(self.histsize + 1)
+        self.hist1 = datarray(self.histsize + 1)
         self.hist5 = pdata(self.histsize + 1)
         self.hist1norm = pdata(self.histsize + 1)
         self.hist5norm = pdata(self.histsize + 1)
@@ -72,19 +75,27 @@ class SpikeAnalysisDat():
         isicount = self.spikecount - 1
         if neurodata != None: self.times[0] = neurodata.times[0]
 
+        DiagWrite(f"SpikeDat Analysis() name {neurodata.name} spikecount {neurodata.spikecount}\n")
+        DiagWrite(f"SpikeDat Analysis() times[0] {neurodata.times[0]}\n")
+        DiagWrite(f"SpikeDat Analysis() times[1] {neurodata.times[1]}\n")
+        DiagWrite(f"SpikeDat Analysis() times[2] {neurodata.times[2]}\n")
+
         # 1ms ISI Histogram
         for i in range(isicount):                                   
             if i > self.maxspikes: break
             if neurodata != None: self.times[i+1] = neurodata.times[i+1]
             self.isis[i] = self.times[i+1] - self.times[i]
             if self.hist1.xmax < int(self.isis[i]): self.hist1.xmax = int(self.isis[i])
+            #if self.hist1.size < self.hist1.xmax + 1: self.hist1.resize(self.hist1.xmax + 1)
+            np.resize(self.hist1, 20000)
+            if self.hist1.size < self.hist1.xmax + 1: np.resize(self.hist1, 20000)
             self.hist1[int(self.isis[i])] += 1
             mean = mean + self.isis[i] / isicount
             variance = self.isis[i] * self.isis[i] / isicount + variance;
 
         # spike interval statistics
         isisd = sqrt(variance - mean * mean)
-        freq = 1000 / mean
+        self.freq = 1000 / mean
         if mean == 0: freq = 0
         meanisi = mean
         isivar = variance
@@ -92,7 +103,7 @@ class SpikeAnalysisDat():
         # 5ms ISI Histogram
         for i in range(self.hist1.xmax + 1):
             if i/binsize > self.hist5.xmax: self.hist5.xmax =  i/binsize
-            self.hist5[i/binsize] = self.hist5[i/binsize] + self.hist1[i]
+            self.hist5[int(i/binsize)] = self.hist5[int(i/binsize)] + self.hist1[i]
 
         # Normalise histograms
         for i in range(self.hist1.xmax + 1):
@@ -114,6 +125,6 @@ class SpikeAnalysisDat():
 
         # 5ms Hazard 
         for i in range(self.hist1.xmax + 1):                                                
-            self.haz5[i/binsize] = self.haz5[i/binsize] + self.haz1[i]
+            self.haz5[int(i/binsize)] = self.haz5[int(i/binsize)] + self.haz1[i]
 
-
+        DiagWrite(f"SpikeDat Analysis() freq {self.freq:.2f}\n")

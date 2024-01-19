@@ -49,8 +49,8 @@ class SpikeMod(Mod):
         self.celldata = []
         #self.celldata = NeuroDat()
 
-        self.cellanalysis = SpikeAnalysisDat()
-        self.modanalysis = SpikeAnalysisDat()
+        self.cellspike = SpikeDat()
+        self.modspike = SpikeDat()
         self.PlotData()
         self.graphload = True
 
@@ -62,10 +62,10 @@ class SpikeMod(Mod):
         #
         # AddPlot(PlotDat(data array, xfrom, xto, yfrom, yto, label string, plot type, bin size, colour), tag string)
         # ----------------------------------------------------------------------------------
-        self.plotbase.AddPlot(PlotDat(self.cellanalysis.hist1, 0, 2000, 0, 5000, "datahist", "line", 1, "blue"), "datahist")
-        self.plotbase.AddPlot(PlotDat(self.cellanalysis.haz1, 0, 2000, 0, 100, "datahaz", "line", 1, "blue"), "datahaz")
-        self.plotbase.AddPlot(PlotDat(self.modanalysis.hist1, 0, 2000, 0, 100, "modhist", "line", 1, "green"), "modhist")
-        self.plotbase.AddPlot(PlotDat(self.modanalysis.haz1, 0, 2000, 0, 100, "modhaz", "line", 1, "green"), "modhaz")
+        self.plotbase.AddPlot(PlotDat(self.cellspike.hist1, 0, 2000, 0, 5000, "datahist", "line", 1, "blue"), "datahist")
+        self.plotbase.AddPlot(PlotDat(self.cellspike.haz1, 0, 2000, 0, 100, "datahaz", "line", 1, "blue"), "datahaz")
+        self.plotbase.AddPlot(PlotDat(self.modspike.hist1, 0, 2000, 0, 100, "modhist", "line", 1, "green"), "modhist")
+        self.plotbase.AddPlot(PlotDat(self.modspike.haz1, 0, 2000, 0, 100, "modhaz", "line", 1, "green"), "modhaz")
 
 
     def DefaultPlots(self):
@@ -75,12 +75,14 @@ class SpikeMod(Mod):
 
 
     def NeuroData(self):
-        DiagWrite("NeuroData() call")
+        DiagWrite("NeuroData() call\n")
 
         self.cellindex = 0
-        self.cellanalysis.Analysis(self.celldata[self.cellindex])
-        self.cellanalysis.id = self.cellindex
-        self.cellanalysis.name = self.celldata[self.cellindex].name
+        self.cellspike.Analysis(self.celldata[self.cellindex])
+        self.cellspike.id = self.cellindex
+        self.cellspike.name = self.celldata[self.cellindex].name
+
+        self.mainwin.scalebox.GraphUpdateAll()
 
 
 class SpikeBox(ParamBox):
