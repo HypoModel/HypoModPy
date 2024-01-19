@@ -128,3 +128,6 @@ class SpikeDat():
             self.haz5[int(i/binsize)] = self.haz5[int(i/binsize)] + self.haz1[i]
 
         DiagWrite(f"SpikeDat Analysis() freq {self.freq:.2f}\n")
+
+        for i in range(1, 50):
+            DiagWrite(f"hist5 bin {i} {self.hist5[i]}\n")

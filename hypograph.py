@@ -435,6 +435,8 @@ class GraphPanel(wx.Panel):
         xbase = self.xbase
         ybase = self.ybase
 
+        DiagWrite("graph paint\n")
+
         for graphdisp in self.dispset:
             for plot in graphdisp.plots:
                 # get plot index
@@ -493,7 +495,7 @@ class GraphPanel(wx.Panel):
                         gc.StrokeLine(xbase + xcoord, ybase + yplot, xbase + xcoord, ybase + yplot + plot.xticklength)
 
 
-                    #DiagWrite(f"xfrom {xfrom}  xto {xto}  xlabels {xlabels} plot.xscale {plot.xscale}  plot.xunitscale {plot.xunitscale}\n")
+                    DiagWrite(f"xfrom {xfrom}  xto {xto}  xlabels {xlabels} plot.xscale {plot.xscale}  plot.xunitscale {plot.xunitscale}\n")
 
                     # Labels
                     if not plot.xlabelmode or xcoord > xaxislength or plot.xlabelmode == 2 and i > 0 and i < xlabels: continue
@@ -629,6 +631,7 @@ class GraphPanel(wx.Panel):
                             if preval <= mpoint or preval < 0.000001: dir = 1 
                             else: dir = 0
                             yval = mpoint
+                            DiagWrite(f"graph yval {yval}\n")
                             preval = mpoint
                             #if(drawdiag) fprintf(ofp, "xdraw %d  preval %.4f  mpoint %.4f  point %.4f\n", i, preval, mpoint, y)
 
@@ -650,6 +653,7 @@ class GraphPanel(wx.Panel):
                             xindex = int(i + xfrom)
                             if maxdex and maxdex < xindex: break     # check for end of recorded data range
                             yval = plot.data[xindex]
+                            DiagWrite(f"graph yval {yval}\n")
 
                             if plot.yscalemode == 1 and yfrom > 0: 
                                 ypos = yplot * (log(yval / yfrom) / log(ylogbase)) / ylogmax  # log scaled y-axis  March 2018

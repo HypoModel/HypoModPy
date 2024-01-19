@@ -62,7 +62,7 @@ class SpikeMod(Mod):
         #
         # AddPlot(PlotDat(data array, xfrom, xto, yfrom, yto, label string, plot type, bin size, colour), tag string)
         # ----------------------------------------------------------------------------------
-        self.plotbase.AddPlot(PlotDat(self.cellspike.hist1, 0, 2000, 0, 5000, "datahist", "line", 1, "blue"), "datahist")
+        self.plotbase.AddPlot(PlotDat(self.cellspike.hist5, 0, 2000, 0, 5000, "datahist", "line", 1, "blue"), "datahist")
         self.plotbase.AddPlot(PlotDat(self.cellspike.haz1, 0, 2000, 0, 100, "datahaz", "line", 1, "blue"), "datahaz")
         self.plotbase.AddPlot(PlotDat(self.modspike.hist1, 0, 2000, 0, 100, "modhist", "line", 1, "green"), "modhist")
         self.plotbase.AddPlot(PlotDat(self.modspike.haz1, 0, 2000, 0, 100, "modhaz", "line", 1, "green"), "modhaz")
@@ -81,6 +81,10 @@ class SpikeMod(Mod):
         self.cellspike.Analysis(self.celldata[self.cellindex])
         self.cellspike.id = self.cellindex
         self.cellspike.name = self.celldata[self.cellindex].name
+
+        for i in range(1, 100):
+            self.cellspike.hist5[i] = 100
+            self.cellspike.haz1[i] = 100
 
         self.mainwin.scalebox.GraphUpdateAll()
 

@@ -49,6 +49,9 @@ class OsmoMod(Mod):
         self.PlotData()
         self.graphload = True
 
+        for i in range(1, 100):
+            self.osmodata.water[i] = 100
+
 
     ## PlotData() defines all the available plots, each linked to a data array in osmodata
     ##
@@ -255,7 +258,6 @@ class OsmoModel(ModThread):
         osmodata.salt.xmax = runtime * 1.1
         osmodata.osmo.xmax = runtime * 1.1
         osmodata.vaso.xmax = runtime * 1.1
-
 
 
 
