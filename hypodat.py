@@ -26,6 +26,11 @@ class datarray():
         except AttributeError:
             raise AttributeError(
                  "'Array' object has no attribute {}".format(name))
+        
+    def clear(self):
+        for i in range(len(self.data)):
+            self.data[i] = 0
+        self.empty = False
 
 # subclass code from 
 # https://numpy.org/doc/stable/user/basics.subclassing.html#slightly-more-realistic-example-attribute-added-to-existing-array

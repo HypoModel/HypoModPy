@@ -44,13 +44,12 @@ class SpikeDat():
     def Analysis(self, neurodata=None):
 
         # reset spike interval analysis stores
-        for i in range(self.histsize):
-            self.hist1[i] = 0
-            self.hist5[i] = 0
-            self.haz1[i] = 0	
-            self.haz5[i] = 0	
-            self.hist1norm[i] = 0
-            self.hist5norm[i] = 0
+        self.hist1.clear()
+        self.hist5.clear()
+        self.haz1.clear()
+        self.haz5.clear()
+        self.hist1norm.clear()
+        self.hist5norm.clear()
 
         self.hist1.xmax = 0
         self.hist5.xmax = 0
@@ -61,7 +60,6 @@ class SpikeDat():
 
         mean = 0
         variance = 0
-        norm = 1
         binsize = 5
 
         if neurodata != None:
@@ -76,9 +74,9 @@ class SpikeDat():
         if neurodata != None: self.times[0] = neurodata.times[0]
 
         DiagWrite(f"SpikeDat Analysis() name {neurodata.name} spikecount {neurodata.spikecount}\n")
-        DiagWrite(f"SpikeDat Analysis() times[0] {neurodata.times[0]}\n")
-        DiagWrite(f"SpikeDat Analysis() times[1] {neurodata.times[1]}\n")
-        DiagWrite(f"SpikeDat Analysis() times[2] {neurodata.times[2]}\n")
+        # DiagWrite(f"SpikeDat Analysis() times[0] {neurodata.times[0]}\n")
+        # DiagWrite(f"SpikeDat Analysis() times[1] {neurodata.times[1]}\n")
+        # DiagWrite(f"SpikeDat Analysis() times[2] {neurodata.times[2]}\n")
 
         # 1ms ISI Histogram
         for i in range(isicount):                                   
@@ -129,5 +127,5 @@ class SpikeDat():
 
         DiagWrite(f"SpikeDat Analysis() freq {self.freq:.2f}\n")
 
-        for i in range(1, 50):
-            DiagWrite(f"hist5 bin {i} {self.hist5[i]}\n")
+        #for i in range(1, 50):
+        #    DiagWrite(f"hist5 bin {i} {self.hist5[i]}\n")

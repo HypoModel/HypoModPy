@@ -62,7 +62,7 @@ class SpikeMod(Mod):
         #
         # AddPlot(PlotDat(data array, xfrom, xto, yfrom, yto, label string, plot type, bin size, colour), tag string)
         # ----------------------------------------------------------------------------------
-        self.plotbase.AddPlot(PlotDat(self.cellspike.hist5, 0, 2000, 0, 5000, "datahist", "line", 1, "blue"), "datahist")
+        self.plotbase.AddPlot(PlotDat(self.cellspike.hist5, 0, 2000, 0, 500, "Hist 5ms", "line", 1, "blue"), "datahist")
         self.plotbase.AddPlot(PlotDat(self.cellspike.haz1, 0, 2000, 0, 100, "datahaz", "line", 1, "blue"), "datahaz")
         self.plotbase.AddPlot(PlotDat(self.modspike.hist1, 0, 2000, 0, 100, "modhist", "line", 1, "green"), "modhist")
         self.plotbase.AddPlot(PlotDat(self.modspike.haz1, 0, 2000, 0, 100, "modhaz", "line", 1, "green"), "modhaz")
@@ -82,18 +82,69 @@ class SpikeMod(Mod):
         self.cellspike.id = self.cellindex
         self.cellspike.name = self.celldata[self.cellindex].name
 
-        for i in range(1, 100):
-            self.cellspike.hist5[i] = 100
-            self.cellspike.haz1[i] = 100
-
         self.mainwin.scalebox.GraphUpdateAll()
+
+
+    def OnModThreadComplete(self, event):
+        self.mainwin.scalebox.GraphUpdateAll()
+        #DiagWrite("Model thread OK\n\n")
+
+
+    def RunModel(self):
+        self.mainwin.SetStatusText("Spike Model Run")
+        modthread = SpikeModel(self)
+        modthread.start()
+
+
+class SpikeModel(ModThread):
+    def __init__(self, mod):
+        ModThread.__init__(self, mod.modbox, mod.mainwin)
+
+        self.mod = mod
+        self.spikebox = mod.spikebox
+        self.mainwin = mod.mainwin
+        self.scalebox = mod.mainwin.scalebox
+
+    # Run() is the thread entry function, used to initialise and call the main Model() function   
+    def Run(self):
+        # Read model flags
+        self.randomflag = self.osmobox.modflags["randomflag"]      # model flags are useful for switching elements of the model code while running
+
+        if self.randomflag: random.seed(0)
+        else: random.seed(datetime.now().microsecond)
+
+        self.Model()
+        wx.QueueEvent(self.mod, ModThreadEvent(ModThreadCompleteEvent))
+
+    # Model() reads in the model parameters, initialises variables, and runs the main model loop
+    def Model(self):
+        spikedata = self.modspike
+        spikebox = self.spikebox
+        params = self.spikebox.GetParams()
+        #protoparams = self.mod.protobox.GetParams()
+
+        # Read parameters
+        runtime = int(params["runtime"])
+        Vthresh = params["Vthresh"]
+        Vrest = params["Vrest"]
+
+        # Initialise variables
+        V = Vrest
+        Vinput = 0
+        HAP = 0
+
+        # Run model loop
+        for i in range(1, runtime + 1):
+            if i%100 == 0: spikebox.SetCount(i * 100 / runtime)     # Update run progress % in model panel
+
+            
 
 
 class SpikeBox(ParamBox):
     def __init__(self, mod, tag, title, position, size):
         ParamBox.__init__(self, mod, title, position, size, tag, 0, 1)
 
-        self.autorun = True
+        self.autorun = False
 
         # Initialise Menu 
         self.InitMenu()
@@ -109,7 +160,13 @@ class SpikeBox(ParamBox):
         # ----------------------------------------------------------------------------------
         self.paramset.AddCon("runtime", "Run Time", 2000, 1, 0)
         self.paramset.AddCon("hstep", "h Step", 1, 0.1, 1)
-        self.paramset.AddCon("waterloss", "Water Loss", 0, 0.00001, 5)
+        self.paramset.AddCon("Vrest", "Vrest", -62, 0.1, 2)
+        self.paramset.AddCon("Vthresh", "Vthresh", -50, 0.1, 2)
+        self.paramset.AddCon("Ire", "Ire", 300, 1, 0)
+        self.paramset.AddCon("Iratio", "Iratio", 1, 0.1, 2)
+        self.paramset.AddCon("pspmag", "pspmag", 3, 0.1, 2)
+        self.paramset.AddCon("kHAP", "kHAP", 60, 0.1, 2)
+        self.paramset.AddCon("halflifeHAP", "halflifeHAP", 8, 0.1, 2)
 
         self.ParamLayout(2)   # layout parameter controls in two columns
 

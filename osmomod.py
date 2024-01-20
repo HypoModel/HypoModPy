@@ -76,6 +76,12 @@ class OsmoMod(Mod):
         #runmute->Lock();
         #runflag = 0;
         #runmute->Unlock();
+
+        # plot store test code
+        # for i in range(1, 100):
+        #     self.osmodata.water[i] = 200
+        #self.osmodata.water.label = "plot test"
+
         self.mainwin.scalebox.GraphUpdateAll()
         #DiagWrite("Model thread OK\n\n")
 
@@ -92,7 +98,7 @@ class OsmoDat():
         self.storesize = 10000
 
         # initialise arrays for recording model variables (or any model values)
-        self.water = pdata(self.storesize + 1)
+        self.water = datarray(self.storesize + 1)
         self.salt = pdata(self.storesize + 1)
         self.osmo = pdata(self.storesize + 1)
         self.vaso = pdata(self.storesize + 1)
