@@ -38,10 +38,14 @@ class SpikeDat():
         self.haz1 = pdata(self.histsize + 1)
         self.haz5 = pdata(self.histsize + 1)
 
+        # initialise arrays for spike rate
+        self.srate1s = datarray(10000)
+
         self.normscale = 10000   # normalise and scale histogram to normscale spikecount 
 
 
     def Analysis(self, neurodata=None):
+        maxtime = 100000
 
         # reset spike interval analysis stores
         self.hist1.clear()
@@ -57,6 +61,9 @@ class SpikeDat():
         self.hist5norm.xmax = 0
         self.haz1.xmax = 0
         self.haz5.xmax = 0
+
+        # reset spike rate stores
+        self.srate1s.clear()
 
         mean = 0
         variance = 0
@@ -124,6 +131,18 @@ class SpikeDat():
         # 5ms Hazard 
         for i in range(self.hist1.xmax + 1):                                                
             self.haz5[int(i/binsize)] = self.haz5[int(i/binsize)] + self.haz1[i]
+
+
+        # Rate Count (1s)
+        spikestep = 0
+        self.srate1s.xmax = int((self.times[self.spikecount - 1] / 1000 + 0.5))
+        #self.srate1s.maxindex = srate1s.max;
+        for i in range(int(self.times[self.spikecount - 1] / 1000)):     # spike rate count (1s)
+            if spikestep > self.spikecount: break
+            while self.times[spikestep] / 1000 < i+1:
+                if i < maxtime: self.srate1s[i] += 1
+                spikestep += 1
+                if spikestep >= self.spikecount: break
 
         DiagWrite(f"SpikeDat Analysis() freq {self.freq:.2f}\n")
 

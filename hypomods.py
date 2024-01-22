@@ -11,6 +11,9 @@ import wx.lib.newevent
 ModThreadCompleteEvent = wx.NewEventType()
 EVT_MODTHREAD_COMPLETE = wx.PyEventBinder(ModThreadCompleteEvent, 0)
 
+ModThreadProgressEvent = wx.NewEventType()
+EVT_MODTHREAD_PROGRESS = wx.PyEventBinder(ModThreadProgressEvent, 0)
+
 class ModThreadEvent(wx.PyCommandEvent):
     def __init__(self, evtType):
         wx.PyCommandEvent.__init__(self, evtType)
@@ -25,6 +28,7 @@ class Mod(wx.EvtHandler):
         self.tag = tag
         self.type = type
         self.graphload = False
+        self.runflag = False
 
         self.modtools = {}
         self.modbox = None
@@ -33,6 +37,7 @@ class Mod(wx.EvtHandler):
         self.settags = []
 
         self.Bind(EVT_MODTHREAD_COMPLETE, self.OnModThreadComplete)
+        self.Bind(EVT_MODTHREAD_PROGRESS, self.OnModThreadProgress)
 
 
     def OnModThreadComplete(self, event):

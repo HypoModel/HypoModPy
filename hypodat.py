@@ -233,7 +233,7 @@ class PlotDat():
     
         strokecolourtext = self.strokecolour.GetAsString(wx.C2S_CSS_SYNTAX)
         fillcolourtext = self.fillcolour.GetAsString(wx.C2S_CSS_SYNTAX)
-        DiagWrite("strokecolourtext: " + strokecolourtext + "\n")
+        #DiagWrite("strokecolourtext: " + strokecolourtext + "\n")
 
         gtext = "v1"
         gtext += f" tag {tag} xf {self.xfrom} xt {self.xto} yf {self.yfrom} yt {self.yto} xl {self.xlabels} xs {self.xstep} xm {self.xtickmode}"

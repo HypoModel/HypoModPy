@@ -24,7 +24,7 @@ class SpikeMod(Mod):
         self.mainwin = mainwin
 
         self.gridbox = GridBox(self, "Data Grid", wx.Point(0, 0), wx.Size(320, 500), 100, 20)
-        self.spikebox = SpikeBox(self, "spike", "Spike", wx.Point(0, 0), wx.Size(320, 500))
+        self.spikebox = SpikeBox(self, "spike", "Spike Model", wx.Point(0, 0), wx.Size(320, 500))
         #self.neurobox = NeuroBox(self, "spikedata", "Spike Data", wx.Point(0, 0), wx.Size(320, 500))
 
         self.gridbox.NeuroButton()
@@ -62,16 +62,20 @@ class SpikeMod(Mod):
         #
         # AddPlot(PlotDat(data array, xfrom, xto, yfrom, yto, label string, plot type, bin size, colour), tag string)
         # ----------------------------------------------------------------------------------
-        self.plotbase.AddPlot(PlotDat(self.cellspike.hist5, 0, 2000, 0, 500, "Hist 5ms", "line", 1, "blue"), "datahist")
-        self.plotbase.AddPlot(PlotDat(self.cellspike.haz1, 0, 2000, 0, 100, "datahaz", "line", 1, "blue"), "datahaz")
-        self.plotbase.AddPlot(PlotDat(self.modspike.hist1, 0, 2000, 0, 100, "modhist", "line", 1, "green"), "modhist")
-        self.plotbase.AddPlot(PlotDat(self.modspike.haz1, 0, 2000, 0, 100, "modhaz", "line", 1, "green"), "modhaz")
+        self.plotbase.AddPlot(PlotDat(self.cellspike.hist5, 0, 2000, 0, 500, "Cell Hist 5ms", "line", 1, "blue"), "datahist5")
+        self.plotbase.AddPlot(PlotDat(self.cellspike.hist5norm, 0, 2000, 0, 500, "Cell Hist 5ms Norm", "line", 1, "blue"), "datahist5norm")
+        self.plotbase.AddPlot(PlotDat(self.cellspike.haz5, 0, 2000, 0, 100, "Cell Haz 5ms", "line", 1, "blue"), "datahaz5")
+        self.plotbase.AddPlot(PlotDat(self.modspike.hist5, 0, 2000, 0, 100, "Mod Hist 5ms", "line", 1, "green"), "modhist5")
+        self.plotbase.AddPlot(PlotDat(self.modspike.hist5norm, 0, 2000, 0, 100, "Mod Hist 5ms Norm", "line", 1, "green"), "modhist5norm")
+        self.plotbase.AddPlot(PlotDat(self.modspike.haz5, 0, 2000, 0, 100, "Mod Haz 5ms", "line", 1, "green"), "modhaz5")
+
+        self.plotbase.AddPlot(PlotDat(self.cellspike.srate1s, 0, 500, 0, 20, "Cell Spike Rate 1s", "spikes", 1, "red"), "cellrate1s")
 
 
     def DefaultPlots(self):
-        if len(self.mainwin.panelset) > 0: self.mainwin.panelset[0].settag = "datahist"
-        if len(self.mainwin.panelset) > 1: self.mainwin.panelset[1].settag = "datahaz"
-        if len(self.mainwin.panelset) > 2: self.mainwin.panelset[2].settag = "modhist"
+        if len(self.mainwin.panelset) > 0: self.mainwin.panelset[0].settag = "datahist5"
+        if len(self.mainwin.panelset) > 1: self.mainwin.panelset[1].settag = "datahaz5"
+        if len(self.mainwin.panelset) > 2: self.mainwin.panelset[2].settag = "modhist5"
 
 
     def NeuroData(self):
@@ -87,13 +91,21 @@ class SpikeMod(Mod):
 
     def OnModThreadComplete(self, event):
         self.mainwin.scalebox.GraphUpdateAll()
-        #DiagWrite("Model thread OK\n\n")
+        DiagWrite(f"Model thread OK, test value {event.GetInt()}\n\n")
+        self.runflag = False
+
+
+    def OnModThreadProgress(self, event):
+        self.spikebox.SetCount(event.GetInt())
+        #DiagWrite(f"Model thread progress, value {event.GetInt()}\n\n")
 
 
     def RunModel(self):
-        self.mainwin.SetStatusText("Spike Model Run")
-        modthread = SpikeModel(self)
-        modthread.start()
+        if not self.runflag:
+            self.mainwin.SetStatusText("Spike Model Run")
+            self.runflag = True
+            modthread = SpikeModel(self)
+            modthread.start()
 
 
 class SpikeModel(ModThread):
@@ -105,39 +117,128 @@ class SpikeModel(ModThread):
         self.mainwin = mod.mainwin
         self.scalebox = mod.mainwin.scalebox
 
-    # Run() is the thread entry function, used to initialise and call the main Model() function   
-    def Run(self):
+
+    # run() is the thread entry function, used to initialise and call the main Model() function   
+    def run(self):
         # Read model flags
-        self.randomflag = self.osmobox.modflags["randomflag"]      # model flags are useful for switching elements of the model code while running
+        self.randomflag = self.spikebox.modflags["randomflag"]      # model flags are useful for switching elements of the model code while running
 
         if self.randomflag: random.seed(0)
         else: random.seed(datetime.now().microsecond)
 
+        DiagWrite("Running Spike Model\n")
+
         self.Model()
-        wx.QueueEvent(self.mod, ModThreadEvent(ModThreadCompleteEvent))
+        completeevent = ModThreadEvent(ModThreadCompleteEvent)
+        wx.QueueEvent(self.mod, completeevent)
+
 
     # Model() reads in the model parameters, initialises variables, and runs the main model loop
     def Model(self):
-        spikedata = self.modspike
+        spikedata = self.mod.modspike
         spikebox = self.spikebox
         params = self.spikebox.GetParams()
         #protoparams = self.mod.protobox.GetParams()
 
+
         # Read parameters
         runtime = int(params["runtime"])
+        hstep = params["hstep"]
         Vthresh = params["Vthresh"]
         Vrest = params["Vrest"]
+        pspmag = params["pspmag"]
+        psprate = params["psprate"]
+        pspratio = params["pspratio"]
+        halflifeMem = params["halflifeMem"]
+        kHAP = params["kHAP"]
+        halflifeHAP = params["halflifeHAP"]
+        #kAHP = params["kAHP"]
+        #halflifeAHP = params["halflifeAHP"]
+
+        epspmag = pspmag
+        ipspmag = pspmag
+        absref = 2
+        
+
+        # Time Constants - conversion from half-life
+        # Spiking 
+        tauMem = math.log(2) / halflifeMem
+        tauHAP = math.log(2) / halflifeHAP
+        #tauAHP = math.log(2) / halflifeAHP
 
         # Initialise variables
+        epsprate = 0
+        ipsprate = 0
+        epspt = 0
+        ipspt = 0
+        ttime = 0
         V = Vrest
-        Vinput = 0
-        HAP = 0
+        inputPSP = 0
+        tPSP = 0
+        tHAP = 0
+        #tAHP = 0
+
+        spikedata.spikecount = 0
+        maxspikes = spikedata.maxspikes
+        neurotime = 0
+        runtime = runtime * 1000
 
         # Run model loop
         for i in range(1, runtime + 1):
-            if i%100 == 0: spikebox.SetCount(i * 100 / runtime)     # Update run progress % in model panel
+            ttime += 1
+            neurotime += 1
+            if i%(runtime/100) == 0: 
+                progevent = ModThreadEvent(ModThreadProgressEvent)
+                progevent.SetInt(math.floor(neurotime / runtime * 100)) 
+                wx.QueueEvent(self.mod, progevent)                        # Update run progress % in model panel
 
-            
+            # PSP input signal
+            nepsp = 0
+            nipsp = 0
+            ipsprate = epsprate * pspratio
+
+            if epsprate > 0: 
+                while epspt < hstep:
+                    erand = random.random()
+                    nepsp += 1
+                    epspt = -math.log(1 - erand) / epsprate + epspt
+                epspt = epspt - hstep
+
+            if ipsprate > 0: 
+                while ipspt < hstep:
+                    irand = random.random()
+                    nipsp += 1
+                    ipspt = -math.log(1 - irand) / ipsprate + ipspt
+                ipspt = ipspt - hstep
+
+            inputPSP = nepsp * epspmag - nipsp * ipspmag
+
+
+            # Spiking Model
+            tPSP = tPSP + inputPSP - tPSP * tauMem
+
+            tHAP = tHAP - tHAP * tauHAP
+
+            #tAHP = tAHP - tAHP * tauAHP
+
+            V = Vrest + tPSP - tHAP # - tAHP
+
+
+            # Spiking
+            if V > Vthresh and ttime >= absref:
+
+                # record spike time
+                if spikedata.spikecount < maxspikes: 
+                    spikedata.times[spikedata.spikecount] = neurotime
+                    spikedata.spikecount += 1
+    
+                # Spike incremented variable
+                # afterpotentials
+                tHAP = tHAP + kHAP
+                #tAHP = tAHP + kAHP
+
+        freq = spikedata.spikecount / (runtime / 1000)
+        DiagWrite(f"Spike Model OK, generated {spikedata.spikecount} spikes, freq {freq:.2f}\n")
 
 
 class SpikeBox(ParamBox):
@@ -162,9 +263,10 @@ class SpikeBox(ParamBox):
         self.paramset.AddCon("hstep", "h Step", 1, 0.1, 1)
         self.paramset.AddCon("Vrest", "Vrest", -62, 0.1, 2)
         self.paramset.AddCon("Vthresh", "Vthresh", -50, 0.1, 2)
-        self.paramset.AddCon("Ire", "Ire", 300, 1, 0)
-        self.paramset.AddCon("Iratio", "Iratio", 1, 0.1, 2)
-        self.paramset.AddCon("pspmag", "pspmag", 3, 0.1, 2)
+        self.paramset.AddCon("psprate", "PSP Rate", 300, 1, 0)
+        self.paramset.AddCon("pspratio", "PSP ratio", 1, 0.1, 2)
+        self.paramset.AddCon("pspmag", "PSP mag", 3, 0.1, 2)
+        self.paramset.AddCon("halflifeMem", "halflifeMem", 7.5, 0.1, 2)
         self.paramset.AddCon("kHAP", "kHAP", 60, 0.1, 2)
         self.paramset.AddCon("halflifeHAP", "halflifeHAP", 8, 0.1, 2)
 
@@ -184,12 +286,16 @@ class SpikeBox(ParamBox):
         self.mainbox.AddStretchSpacer(5)
         self.mainbox.Add(runbox, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 0)
         self.mainbox.AddSpacer(5)
-        self.mainbox.Add(paramfilebox, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 0)	
+        self.mainbox.Add(paramfilebox, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 0)    
         #self.mainbox.AddStretchSpacer()
         self.mainbox.Add(self.buttonbox, 0, wx.ALIGN_CENTRE_HORIZONTAL | wx.ALIGN_CENTRE_VERTICAL | wx.ALL, 0)
         self.mainbox.AddSpacer(5)
         #self.mainbox.AddSpacer(2)
         self.panel.Layout()
+
+
+    def SetCount(self, value):
+        self.runcount.SetLabel(f"{value} %")
 
 
 class NeuroBox(ParamBox):

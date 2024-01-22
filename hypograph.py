@@ -3,6 +3,7 @@ import wx
 from math import log, isinf, isnan
 from hypotools import *
 from hypoparams import *
+import math
 
 
 
@@ -683,6 +684,75 @@ class GraphPanel(wx.Panel):
                             oldy = int(yplot + ybase - ypos)
 
                     gc.DrawPath(path)
+
+                
+                xbinoffset = (xfrom - math.floor(xfrom)) * xrange
+                partbin = math.ceil(xfrom - math.floor(xfrom))
+                binsize = plot.binsize
+                burstdata = None
+
+                if plot.type == "spikes":                          # spike rate data with optional burst colouring
+                    spikestep = 0;
+                    burstcolour = 0;
+                
+                    for i in range(0, math.ceil(xto - xfrom - partbin)):  # account for extra bin with unaligned xfrom
+                        y = plot.data[i + int(xfrom)]
+                        res = 0
+                        if binsize == 1: res = 0
+                        if binsize == 0.1: res = 1
+                        if binsize == 0.01: res = 2
+                        if binsize == 0.001: res = 3
+
+                        if burstdata == None or burstdata.burstdisp == 0:
+                            gc.SetPen(wx.Pen(self.colourpen["red"]))
+                 
+                        else:                  # burst colouring
+                            burstcolour = 0
+                            if binsize == 0.1 or binsize == 0.01:          # not yet implemented for 10ms and 100ms rate bins
+                                burstcolour = 0
+                            
+                            if binsize > 1:                          
+                                timepoint = (xfrom + i + 1) * binsize * 1000
+                                while timepoint < burstdata.maxtime and burstdata.times[spikestep] < timepoint + 0.0005:
+                                    if burstcolour == 0: burstcolour = burstdata.spikes[spikestep]
+                                    spikestep += 1
+
+                            if binsize == 1:
+                                #fprintf(ofp, "i = %d, time = %.3f, spikestep before = %d\n", i, (i+xfrom)*binsize, spikestep);
+                                timepoint = (xfrom + i + 1) * binsize * 1000
+                                while spikestep < burstdata.spikedata.spikecount and burstdata.times[spikestep] < timepoint + 0.0005:
+                                    if burstcolour == 0: burstcolour = burstdata.spikes[spikestep]
+                                    spikestep += 1
+
+                            if binsize == 0.001:
+                                #fprintf(ofp, "i = %d, time = %.3f, spikestep before = %d\n", i, (i+xfrom)*binsize, spikestep);
+                                timepoint = (xfrom + i + 0.5) * binsize * 1000
+                                while spikestep < burstdata.spikedata.spikecount and burstdata.times[spikestep] < timepoint - 0.0005:
+                                    burstcolour = burstdata.spikes[spikestep]
+                                    spikestep  += 1
+
+                            if burstcolour == 0:
+                                gc.SetPen(wx.Pen(self.colourpen["red"]))
+                            elif burstcolour % 2 == 0:
+                                gc.SetPen(wx.Pen(self.colourpen["blue"]))
+                            elif burstcolour % 2 == 1:
+                                gc.SetPen(wx.Pen(self.colourpen["green"]))
+
+
+                        # correctly align large bins with non-zero xfrom
+
+                        if i == 0: xposstart = 0
+                        else: xposstart = int(i * xrange - xbinoffset)
+                        if i == math.ceil(xto - xfrom + partbin - 1):
+                             xposend = int(((i + 1 - partbin) * xrange))   # last bin, 0.05 to guard against fp error
+                        else: xposend = int(((i+1) * xrange - xbinoffset - 1))
+
+                        xpos = i * xrange + xbase
+                        if int(xrange) <= 1:
+                            gc.StrokeLine(xpos, ybase + yplot, xpos, ybase + yplot - int((yrange * (y - yfrom))))
+                        else: 
+                            for xpos in range(xposstart, xposend): 
+                                gc.StrokeLine(xbase+1 + xpos, ybase + yplot, xbase+1 + xpos, ybase + yplot - int((yrange * (y - yfrom))))    # large bin align 19/12/20
 
 
 
