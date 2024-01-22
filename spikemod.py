@@ -195,6 +195,7 @@ class SpikeModel(ModThread):
             # PSP input signal
             nepsp = 0
             nipsp = 0
+            epsprate = psprate / 1000
             ipsprate = epsprate * pspratio
 
             if epsprate > 0: 
@@ -222,6 +223,8 @@ class SpikeModel(ModThread):
             #tAHP = tAHP - tAHP * tauAHP
 
             V = Vrest + tPSP - tHAP # - tAHP
+
+            #print(f"SpikeModel step {i}  V {V:.2f}  tPSP {tPSP:.2f}  inputPSP {inputPSP:.2f}  nepsp {nepsp}")
 
 
             # Spiking

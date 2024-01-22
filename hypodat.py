@@ -349,9 +349,10 @@ class PlotBase():
 
             plottag, readline = ParseString(readline, 'g')     # parse plot tag
             #DiagWrite(f"ptag {ptag}\n")
-            plot = self.plotstore[plottag]                     # access plot from store
-            if plot: plot.LoadDat(readline, version)        # parse plot parameters
-            pcount += 1                                     # count only for diagnostics
+            if plottag in self.plotstore: 
+                plot = self.plotstore[plottag]                     # access plot from store
+                plot.LoadDat(readline, version)        # parse plot parameters
+                pcount += 1                                     # count only for diagnostics
 
         infile.Close()
         DiagWrite(f"BaseLoad {pcount} graphs\n")
