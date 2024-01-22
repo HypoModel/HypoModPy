@@ -47,6 +47,8 @@ class SpikeDat():
     def Analysis(self, neurodata=None):
         maxtime = 100000
 
+        DiagWrite("Analysis() call\n")
+
         # reset spike interval analysis stores
         self.hist1.clear()
         self.hist5.clear()
@@ -72,15 +74,17 @@ class SpikeDat():
         if neurodata != None:
             self.spikecount = neurodata.spikecount
             self.maxspikes = neurodata.maxspikes
+            #DiagWrite(f"SpikeDat Analysis() name {neurodata.name} spikecount {neurodata.spikecount}\n")
 
-        if self.spikecount == 0: return
+        if self.spikecount == 0: 
+            DiagWrite("Analysis() No spikes found\n")
+            return
 
         # ISIs, Histogram, Freq, Variance
 
         isicount = self.spikecount - 1
         if neurodata != None: self.times[0] = neurodata.times[0]
 
-        DiagWrite(f"SpikeDat Analysis() name {neurodata.name} spikecount {neurodata.spikecount}\n")
         # DiagWrite(f"SpikeDat Analysis() times[0] {neurodata.times[0]}\n")
         # DiagWrite(f"SpikeDat Analysis() times[1] {neurodata.times[1]}\n")
         # DiagWrite(f"SpikeDat Analysis() times[2] {neurodata.times[2]}\n")

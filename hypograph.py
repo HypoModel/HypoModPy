@@ -566,6 +566,7 @@ class GraphPanel(wx.Panel):
 
                 # Set plot colour
                 gc.SetPen(wx.Pen(self.colourpen[plot.colour]))
+                #DiagWrite(f"OnPaint() name {plot.label}  colour {plot.colour}\n")
 
                 # Set drawing scales
                 xto /= plot.binsize

@@ -45,8 +45,19 @@ class ScaleBox(ToolPanel):
         vbox.AddSpacer(5)
         self.vconbox = wx.BoxSizer(wx.VERTICAL)
 
+        panelindex = 0
+
         for graphpanel in self.mainwin.panelset:
             self.AddGraphConsole(graphpanel)
+
+            if panelindex == 2:
+                DiagWrite("ScaleBox panel 2\n")
+                hbox = wx.BoxSizer(wx.HORIZONTAL)
+                self.ScaleButton(ID_Overlay, "Overlay", 48, hbox).Bind(wx.EVT_BUTTON, self.OnOverlay)
+                graphpanel.consolebox.Add(hbox, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 2)
+        
+            panelindex += 1
+        
             #gsync[i] = NULL;
             
         vbox.Add(self.vconbox, 1)
@@ -72,6 +83,74 @@ class ScaleBox(ToolPanel):
         pub.subscribe(self.Scale_Listener, "scale_listener")
 
         self.Bind(wx.EVT_TEXT_ENTER, self.OnEnter)
+
+        #Connect(ID_overlay, wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(ScaleBox::OnOverlay));
+
+
+
+    def OnOverlay(self, event):
+        DiagWrite("OnOverlay()\n")
+    #     overlay = overset.GetOver(event.GetId());
+    #     if(!overlay) {
+    #         mod->diagbox->Write("ScaleBox overlay ID not found\n");
+    #         return;
+    #     }    
+    #     // Graph panel indexes
+    #     pan1 = overlay->panel1;
+    #     pan2 = overlay->panel2;
+        
+    #     // Overlay, add panel1 plot(s) to panel2
+    #     if(!overlay->toggle) {    
+    #         overlay->numdisps = graphwin[pan1]->numdisps;
+    #         if(!overlay->numdisps) return;
+            
+    #         // Synchronise axis scales in panel2
+    #         refgraph = graphwin[pan1]->dispset[0]->plot[0];
+    #         if(refgraph->oversync) {
+    #             mod->diagbox->Write("ScaleBox overlay synch\n");
+    #             for(i=0; i<graphwin[pan2]->numdisps; i++) {
+    #                 graph = graphwin[pan2]->dispset[i]->plot[0];
+    #                 graph->yto = refgraph->yto;
+    #                 graph->yfrom = refgraph->yfrom;
+    #                 graph->xto = refgraph->xto;
+    #                 graph->xfrom = refgraph->xfrom;
+    #             }
+    #         }
+            
+    #         // Move GraphDisps down
+    #         for(i=0; i<overlay->numdisps; i++) {
+    #             disp = graphwin[pan1]->dispset[i];
+    #             graph = graphwin[pan1]->dispset[i]->plot[0];
+    #             graphwin[pan2]->AddGraph(disp);
+    #             graphwin[pan1]->numdisps--;
+    #         }
+    #     }
+    #     // Reverse overlay, return added plot(s) to panel1
+    #     else {
+    #         numdisps = graphwin[pan2]->numdisps;
+    #         //if(!numdisps) return;
+    #         // Move GraphDisps up
+    #         for(i=numdisps-overlay->numdisps; i<numdisps; i++) {
+    #             disp = graphwin[pan2]->dispset[i];
+    #             graphwin[pan1]->AddGraph(disp);
+    #             graphwin[pan2]->numdisps--;
+    #         }        
+    #     }    
+
+        
+    #     mod->diagbox->Write(text.Format("Overlay pan1 %d numdisps %d\n", pan1, overlay->numdisps));
+    #     //mod->diagbox->Write(text.Format("%s", pan1, overlay->numdisps));
+    #     for(i=0; i<graphwin[pan1]->numdisps; i++) mod->diagbox->Write(graphwin[pan1]->dispset[i]->plot[0]->gname + " ");
+    #     mod->diagbox->Write("\n");
+    #     for(i=0; i<graphwin[pan2]->numdisps; i++) mod->diagbox->Write(graphwin[pan2]->dispset[i]->plot[0]->gname + " ");
+    #     mod->diagbox->Write("\n\n");
+        
+
+    #     overlay->toggle = 1 - overlay->toggle;
+        
+    #     //if(refgraph->oversync) ScaleUpdate();
+    #     //else GraphUpdate();
+    #     ScaleUpdate(); 
 
 
     def OnGStore(self, event):

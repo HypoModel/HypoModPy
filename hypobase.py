@@ -144,6 +144,8 @@ ID_Default = wx.NewIdRef()
 ID_ModBrowse = wx.NewIdRef()
 ID_Print = wx.NewIdRef()
 ID_Neuron = wx.NewIdRef()
+ID_Overlay = wx.NewIdRef()
+ID_Pos = wx.NewIdRef()
 
 # Menu IDs
 ID_GraphEPS = wx.NewIdRef()

@@ -52,7 +52,7 @@ class SpikeMod(Mod):
         self.cellspike = SpikeDat()
         self.modspike = SpikeDat()
         self.PlotData()
-        self.graphload = True
+        self.graphload = False
 
 
     ## PlotData() defines all the available plots, each linked to a data array in osmodata
@@ -70,6 +70,8 @@ class SpikeMod(Mod):
         self.plotbase.AddPlot(PlotDat(self.modspike.haz5, 0, 2000, 0, 100, "Mod Haz 5ms", "line", 1, "green"), "modhaz5")
 
         self.plotbase.AddPlot(PlotDat(self.cellspike.srate1s, 0, 500, 0, 20, "Cell Spike Rate 1s", "spikes", 1, "red"), "cellrate1s")
+        self.plotbase.AddPlot(PlotDat(self.modspike.srate1s, 0, 500, 0, 20, "Mod Spike Rate 1s", "spikes", 1, "purple"), "modrate1s")
+
 
 
     def DefaultPlots(self):
@@ -89,10 +91,18 @@ class SpikeMod(Mod):
         self.mainwin.scalebox.GraphUpdateAll()
 
 
+    def ModelData(self):
+        DiagWrite("ModelData() call\n")
+
+        self.modspike.Analysis()
+        self.mainwin.scalebox.GraphUpdateAll()
+
+
     def OnModThreadComplete(self, event):
         self.mainwin.scalebox.GraphUpdateAll()
         DiagWrite(f"Model thread OK, test value {event.GetInt()}\n\n")
         self.runflag = False
+        self.ModelData()
 
 
     def OnModThreadProgress(self, event):

@@ -60,7 +60,7 @@ class MainFrame(wx.Frame):
         self.colourpen = {}
         self.colourpen["black"] = wx.Colour("#000000")
         self.colourpen["red"] = wx.Colour("#F50000")
-        self.colourpen["green"] = wx.Colour("#000000")
+        self.colourpen["green"] = wx.Colour("#00F500")
         self.colourpen["blue"] = wx.Colour("#0000F5")
         self.colourpen["yellow"] = wx.Colour("#F5F500")
         self.colourpen["purple"] = wx.Colour("#F500F5")
@@ -231,7 +231,6 @@ class SystemPanel(wx.Dialog):
     def OnClose(self, event):
         self.mainwin.OptionStore()
         self.Show(False)
-
 
 
 
@@ -474,7 +473,7 @@ class HypoMain(MainFrame):
         if(self.mod != None):
             self.mod.ModStore()
             self.mod.modbox.Close()
-            self.mod.Destroy()
+            #self.mod.Destroy()
         event.Skip()
 
 
