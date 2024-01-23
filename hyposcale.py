@@ -4,6 +4,15 @@ from hypotools import *
 
 
 
+class OverDat():
+    def __init__(self, overlayID, panel1, panel2):
+        self.overlayID = overlayID
+        self.panel1 = panel1
+        self.panel2 = panel2
+        self.toggle = False
+        self.numdisps = 0
+
+
 class ScaleBox(ToolPanel):
     def __init__(self, parent, size, numdraw):
         ToolPanel.__init__(self, parent, wx.DefaultPosition, size)
@@ -18,6 +27,7 @@ class ScaleBox(ToolPanel):
         self.redtag = ""    # store box overwrite warning tag
         self.mod = parent.mod
         self.mainwin = parent
+        self.overset = {}
 
         # Default scale parameter limits
         self.xmin = -1000000
@@ -55,6 +65,7 @@ class ScaleBox(ToolPanel):
                 hbox = wx.BoxSizer(wx.HORIZONTAL)
                 self.ScaleButton(ID_Overlay, "Overlay", 48, hbox).Bind(wx.EVT_BUTTON, self.OnOverlay)
                 graphpanel.consolebox.Add(hbox, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 2)
+                self.overset[ID_Overlay] = OverDat(ID_Overlay, 2, 3)
         
             panelindex += 1
         
@@ -90,19 +101,23 @@ class ScaleBox(ToolPanel):
 
     def OnOverlay(self, event):
         DiagWrite("OnOverlay()\n")
-    #     overlay = overset.GetOver(event.GetId());
-    #     if(!overlay) {
-    #         mod->diagbox->Write("ScaleBox overlay ID not found\n");
-    #         return;
-    #     }    
-    #     // Graph panel indexes
-    #     pan1 = overlay->panel1;
-    #     pan2 = overlay->panel2;
+        overlay = self.overset[event.GetId()]
+        if overlay == None:
+            DiagWrite("ScaleBox overlay ID not found\n")
+            return
+ 
+        # Graph panel indexes
+        pan1 = overlay.panel1
+        pan2 = overlay.panel2
+
+        dispset1 = self.mainwin.panelset[pan1]
+        dispset2 = self.mainwin.panelset[pan2]
         
-    #     // Overlay, add panel1 plot(s) to panel2
-    #     if(!overlay->toggle) {    
-    #         overlay->numdisps = graphwin[pan1]->numdisps;
-    #         if(!overlay->numdisps) return;
+        # Overlay, add panel1 plot(s) to panel2
+        if not overlay.toggle:  
+            # overlay->numdisps = graphwin[pan1]->numdisps;
+            overlay.numdisps = len(dispset1)
+            if overlay.numdisps == 0: return
             
     #         // Synchronise axis scales in panel2
     #         refgraph = graphwin[pan1]->dispset[0]->plot[0];
