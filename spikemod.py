@@ -52,7 +52,7 @@ class SpikeMod(Mod):
         self.cellspike = SpikeDat()
         self.modspike = SpikeDat()
         self.PlotData()
-        self.graphload = False
+        self.graphload = True
 
 
     ## PlotData() defines all the available plots, each linked to a data array in osmodata
@@ -71,6 +71,9 @@ class SpikeMod(Mod):
 
         self.plotbase.AddPlot(PlotDat(self.cellspike.srate1s, 0, 500, 0, 20, "Cell Spike Rate 1s", "spikes", 1, "red"), "cellrate1s")
         self.plotbase.AddPlot(PlotDat(self.modspike.srate1s, 0, 500, 0, 20, "Mod Spike Rate 1s", "spikes", 1, "purple"), "modrate1s")
+
+        self.IoDGraph(self.cellspike.IoDdata, self.cellspike.IoDdataX, "IoD Cell", "iodcell", "lightblue", 10)
+        self.IoDGraph(self.modspike.IoDdata, self.modspike.IoDdataX, "IoD Mod", "iodmod", "lightgreen", 0)
 
 
 

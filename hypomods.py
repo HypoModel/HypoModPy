@@ -40,6 +40,14 @@ class Mod(wx.EvtHandler):
         self.Bind(EVT_MODTHREAD_PROGRESS, self.OnModThreadProgress)
 
 
+    def IoDGraph(self, IoDdata, IoDdataX, label, tag, colour, barshift):
+        self.plotbase.AddPlot(PlotDat(IoDdata, 0, 70, 0, 2, label, "barX", 1, colour), tag)
+        self.plotbase.GetPlot(tag).xdata = IoDdataX
+        self.plotbase.GetPlot(tag).xcount = 7
+        self.plotbase.GetPlot(tag).synchx = False
+        self.plotbase.GetPlot(tag).barshift  = barshift
+
+
     def OnModThreadComplete(self, event):
         #runmute->Lock();
         #runflag = 0;

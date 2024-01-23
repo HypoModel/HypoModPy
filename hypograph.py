@@ -210,7 +210,7 @@ class GraphPanel(wx.Panel):
         else: plot.xmax = plot.data.xmax / plot.xscale
         if plot.xdata != None: 
             if xmax: plot.xmax = xmax
-            else: plot.xmax = len(plot.xdata)
+            else: plot.xmax = plot.xdata.xmax
 
         #plot.xmax = 5000
 
@@ -271,7 +271,8 @@ class GraphPanel(wx.Panel):
 
 
     def GetFrontPlot(self):
-        return self.dispset[0].plots[0]
+        if len(self.dispset) == 0: return None
+        else: return self.dispset[0].plots[0]
 
 
     def SetFrontPlot(self, plot):
@@ -439,6 +440,7 @@ class GraphPanel(wx.Panel):
         #DiagWrite("graph paint\n")
 
         for graphdisp in self.dispset:
+            gdisp = self.dispset.index(graphdisp)
             for plot in graphdisp.plots:
                 # get plot index
                 gplot = graphdisp.plots.index(plot)
@@ -562,7 +564,7 @@ class GraphPanel(wx.Panel):
                 # Plot Label
                 if self.yplot < 150: gc.SetFont(self.textfont, self.colourpen['black'])
                 textsize = gc.GetTextExtent(plot.label)
-                gc.DrawText(plot.label, xbase + xplot - textsize[0], 30 + 15 * gplot)
+                gc.DrawText(plot.label, xbase + xplot - textsize[0], 30 + 15 * gplot + 15 * gdisp)
 
                 # Set plot colour
                 gc.SetPen(wx.Pen(self.colourpen[plot.colour]))
@@ -586,7 +588,6 @@ class GraphPanel(wx.Panel):
 
 
                 if plot.type == "line":                          # line graph with scaling fix
-                    # mod->diagbox->Write(text.Format("line plot xrange %.4f  yscalemode %d  ylogbase %.4f  ylogmax %.4f\n", xrange, plot.yscalemode, ylogbase, ylogmax))
                     dir = 1
                     pdir = 0
                     xindex = int(plot.xfrom)
@@ -685,12 +686,12 @@ class GraphPanel(wx.Panel):
                             oldy = int(yplot + ybase - ypos)
 
                     gc.DrawPath(path)
-
-                
+  
                 xbinoffset = (xfrom - math.floor(xfrom)) * xrange
                 partbin = math.ceil(xfrom - math.floor(xfrom))
                 binsize = plot.binsize
                 burstdata = None
+
 
                 if plot.type == "spikes":                          # spike rate data with optional burst colouring
                     spikestep = 0;
@@ -755,6 +756,26 @@ class GraphPanel(wx.Panel):
                             for xpos in range(xposstart, xposend): 
                                 gc.StrokeLine(xbase+1 + xpos, ybase + yplot, xbase+1 + xpos, ybase + yplot - int((yrange * (y - yfrom))))    # large bin align 19/12/20
 
+
+                barshift = plot.barshift
+                numdisps = len(self.dispset)
+
+                # bar chart with X data 
+                if plot.type == "barX":  
+                    #DiagWrite("OnPaint() barX plot\n")                        
+                    #mainwin->diagbox->Write(text.Format("\n XY bar graph maxindex %d xcount %d\n", graph->gdatax->maxindex, graph->xcount));
+                    for i in range(plot.xcount):
+                        xval = plot.xdata[i]
+                        if xval >= xfrom and xval <= xto:
+                            xpos = int((xval - xfrom) * xrange)
+                            barshift = (plot.barwidth * numdisps + (numdisps - 1) * plot.bargap) / 2
+                            barpos = xbase + xpos - barshift + gdisp * (plot.barwidth + plot.bargap);
+                            y = plot.data[i]
+                            #mainwin->diagbox->Write(text.Format("\n XY graph line X %.4f Y %.4f\n", xval, y));
+                            gc.SetPen(wx.Pen(self.colourpen[plot.colour]))
+                            for k in range(int(plot.barwidth)):
+                                gc.StrokeLine(barpos + k, yplot + ybase, barpos + k, yplot + ybase - int((yrange * (y - yfrom))))
+                    
 
 
 class PlotCon(ToolBox):

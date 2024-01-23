@@ -9,7 +9,7 @@ class OverDat():
         self.overlayID = overlayID
         self.panel1 = panel1
         self.panel2 = panel2
-        self.toggle = False
+        self.toggle = 0
         self.numdisps = 0
 
 
@@ -66,6 +66,13 @@ class ScaleBox(ToolPanel):
                 self.ScaleButton(ID_Overlay, "Overlay", 48, hbox).Bind(wx.EVT_BUTTON, self.OnOverlay)
                 graphpanel.consolebox.Add(hbox, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 2)
                 self.overset[ID_Overlay] = OverDat(ID_Overlay, 2, 3)
+
+            if panelindex == 4:
+                DiagWrite("ScaleBox panel 4\n")
+                hbox = wx.BoxSizer(wx.HORIZONTAL)
+                self.ScaleButton(ID_Overlay2, "Overlay", 48, hbox).Bind(wx.EVT_BUTTON, self.OnOverlay)
+                graphpanel.consolebox.Add(hbox, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 2)
+                self.overset[ID_Overlay2] = OverDat(ID_Overlay, 4, 5)
         
             panelindex += 1
         
@@ -100,7 +107,7 @@ class ScaleBox(ToolPanel):
 
 
     def OnOverlay(self, event):
-        DiagWrite("OnOverlay()\n")
+        #DiagWrite("OnOverlay()\n")
         overlay = self.overset[event.GetId()]
         if overlay == None:
             DiagWrite("ScaleBox overlay ID not found\n")
@@ -112,59 +119,42 @@ class ScaleBox(ToolPanel):
         
         # Overlay, add panel1 plot(s) to panel2
         if not overlay.toggle:  
-            # overlay->numdisps = graphwin[pan1]->numdisps;
-            overlay.numdisps = len(pan1.dispset)
+            overlay.numdisps = len(pan1.dispset)  # records how many disps were moved
             if overlay.numdisps == 0: return
             
             # Synchronise axis scales in panel2
-            #refgraph = graphwin[pan1]->dispset[0]->plot[0];
             refplot = pan1.GetFrontPlot()
             if refplot.oversync:
-                DiagWrite("ScaleBox overlay synch\n")
+                #DiagWrite("ScaleBox overlay synch\n")
                 for disp in pan2.dispset:
                     plot = disp.GetFront()
-                    plot.xfrom = refplot.xfrom
-                    plot.xto = refplot.xto
-                    plot.yfrom  = refplot.yfrom
-                    plot.yto = refplot.yto
-                  
-            
+                    plot.SyncAxes(refplot)
+
             # Move GraphDisps down
-            for(i=0; i<overlay->numdisps; i++) {
             for disp in pan1.dispset:
-                #disp = graphwin[pan1]->dispset[i];
-                graph = graphwin[pan1]->dispset[i]->plot[0];
-                plot = disp.GetFront()
-                graphwin[pan2]->AddGraph(disp);
-                graphwin[pan1]->numdisps--;
-            }
-        }
-    #     // Reverse overlay, return added plot(s) to panel1
-    #     else {
-    #         numdisps = graphwin[pan2]->numdisps;
-    #         //if(!numdisps) return;
-    #         // Move GraphDisps up
-    #         for(i=numdisps-overlay->numdisps; i<numdisps; i++) {
-    #             disp = graphwin[pan2]->dispset[i];
-    #             graphwin[pan1]->AddGraph(disp);
-    #             graphwin[pan2]->numdisps--;
-    #         }        
-    #     }    
+                pan2.dispset.append(disp)
+                pan1.dispset.remove(disp)
+        
+        # Reverse overlay, return added plot(s) to panel1
+        else:
+            numdisps = len(pan2.dispset)
+            if numdisps == 0: return
+            # Move GraphDisps up
+            for i in range(numdisps - overlay.numdisps, numdisps):
+                disp = pan2.dispset[i]
+                pan1.dispset.append(disp)
+                pan2.dispset.remove(disp)
+             
+        # DiagWrite(f"Overlay pan1 {overlay.panel1} numdisps {overlay.numdisps}\n")
+        # DiagWrite("pan1 ")
+        # for disp in pan1.dispset: DiagWrite(disp.GetFront().label + " ")
+        # DiagWrite("end\n")
+        # DiagWrite("pan2 ")
+        # for disp in pan2.dispset: DiagWrite(disp.GetFront().label + " ")
+        # DiagWrite("end\n")
 
-        
-    #     mod->diagbox->Write(text.Format("Overlay pan1 %d numdisps %d\n", pan1, overlay->numdisps));
-    #     //mod->diagbox->Write(text.Format("%s", pan1, overlay->numdisps));
-    #     for(i=0; i<graphwin[pan1]->numdisps; i++) mod->diagbox->Write(graphwin[pan1]->dispset[i]->plot[0]->gname + " ");
-    #     mod->diagbox->Write("\n");
-    #     for(i=0; i<graphwin[pan2]->numdisps; i++) mod->diagbox->Write(graphwin[pan2]->dispset[i]->plot[0]->gname + " ");
-    #     mod->diagbox->Write("\n\n");
-        
-
-    #     overlay->toggle = 1 - overlay->toggle;
-        
-    #     //if(refgraph->oversync) ScaleUpdate();
-    #     //else GraphUpdate();
-    #     ScaleUpdate(); 
+        overlay.toggle = 1 - overlay.toggle
+        self.ScaleUpdate()
 
 
     def OnGStore(self, event):
@@ -303,6 +293,7 @@ class ScaleBox(ToolPanel):
     def XSynch(self, pos = -1):
         if self.gsynch:
             plotzero = self.mainwin.panelset[self.synchcon].GetFrontPlot()
+            if not plotzero: return
             if not plotzero.synchx: return
             for graphpanel in self.mainwin.panelset:
                 # sync check box code goes here
@@ -359,9 +350,9 @@ class ScaleBox(ToolPanel):
             
     # PanelUpdate() - update scale panel after changing plot scale parameters
     def PanelUpdate(self, graphpanel):
-            if len(graphpanel.dispset) > 0:
-                plot = graphpanel.dispset[0].plots[0]
-                if not plot: return
+            if len(graphpanel.dispset) == 0: return
+            plot = graphpanel.dispset[0].plots[0]
+            if not plot: return
 
             graphpanel.yf.SetNumValue(plot.yfrom, abs(plot.yto - plot.yfrom))
             graphpanel.yt.SetNumValue(plot.yto, abs(plot.yto - plot.yfrom))
@@ -370,7 +361,7 @@ class ScaleBox(ToolPanel):
 
             # overlay sync
             for i in range(1, len(graphpanel.dispset)):
-                overplot = graphpanel.dispset[i].plot[0]
+                overplot = graphpanel.dispset[i].plots[0]
                 if overplot.oversync:
                     overplot.yfrom = plot.yfrom
                     overplot.yto = plot.yto

@@ -38,6 +38,10 @@ class SpikeDat():
         self.haz1 = pdata(self.histsize + 1)
         self.haz5 = pdata(self.histsize + 1)
 
+        # IoD data
+        self.IoDdata = datarray(100)
+        self.IoDdataX = datarray(100)
+
         # initialise arrays for spike rate
         self.srate1s = datarray(10000)
 
@@ -148,7 +152,51 @@ class SpikeDat():
                 spikestep += 1
                 if spikestep >= self.spikecount: break
 
+
+        # Index of Dispersion Range
+        self.IoDdata.clear()
+        self.IoDdata[0] = self.dispcalc(500)
+        self.IoDdata[1] = self.dispcalc(1000)
+        self.IoDdata[2] = self.dispcalc(2000)
+        self.IoDdata[3] = self.dispcalc(4000)
+        self.IoDdata[4] = self.dispcalc(6000)
+        self.IoDdata[5] = self.dispcalc(8000)
+        self.IoDdata[6] = self.dispcalc(10000)             
+
+        self.IoDdataX[0] = 5
+        self.IoDdataX[1] = 15
+        self.IoDdataX[2] = 25
+        self.IoDdataX[3] = 35
+        self.IoDdataX[4] = 45
+        self.IoDdataX[5] = 55
+        self.IoDdataX[6] = 65
+
         DiagWrite(f"SpikeDat Analysis() freq {self.freq:.2f}\n")
 
         #for i in range(1, 50):
         #    DiagWrite(f"hist5 bin {i} {self.hist5[i]}\n")
+
+    def dispcalc(self, binsize):
+        maxbin = 10000
+        spikerate = datarray(10000)
+        dispersion = 0
+        timeshift = 0
+
+        # calculate spike rate for binsize
+        spikerate.clear()
+        for i in range(self.spikecount):
+            if (self.times[i] - timeshift) / binsize < maxbin: spikerate[int(((self.times[i] - timeshift) + 0.5) / binsize)] += 1
+           
+        laststep = int((self.times[self.spikecount - 1] - timeshift) / binsize) - 4
+        if laststep > maxbin: laststep = maxbin
+
+        # calculate index of dispersion
+        mean = 0;
+        variance = 0;
+        for i in range(laststep): mean = mean +  spikerate[i]    # mean
+        mean = mean / laststep;
+        for i in range(laststep): variance += (mean - spikerate[i]) * (mean - spikerate[i]);	# variance
+        variance = variance / laststep;
+        dispersion = variance / mean        # dispersion
+
+        return dispersion

@@ -3,7 +3,6 @@ from hypobase import *
 import numpy as np
 
 
-
 class datarray():
     def __init__(self, size):
         #self.__lib = ...
@@ -141,8 +140,17 @@ class PlotDat():
         self.binsize = binsize
 
         self.oversync = True
+        self.barwidth = 10
+        self.bargap = 10
 
         self.Default()
+
+
+    def SyncAxes(self, source):
+        self.xfrom = source.xfrom
+        self.xto = source.xto
+        self.yfrom = source.yfrom
+        self.yto = source.yto
 
 
     def Default(self):

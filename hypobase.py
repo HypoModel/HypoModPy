@@ -146,6 +146,8 @@ ID_Print = wx.NewIdRef()
 ID_Neuron = wx.NewIdRef()
 ID_Overlay = wx.NewIdRef()
 ID_Pos = wx.NewIdRef()
+ID_Overlay2 = wx.NewIdRef()
+ID_Pos2 = wx.NewIdRef()
 
 # Menu IDs
 ID_GraphEPS = wx.NewIdRef()
