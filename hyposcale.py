@@ -107,39 +107,38 @@ class ScaleBox(ToolPanel):
             return
  
         # Graph panel indexes
-        pan1 = overlay.panel1
-        pan2 = overlay.panel2
-
-        dispset1 = self.mainwin.panelset[pan1]
-        dispset2 = self.mainwin.panelset[pan2]
+        pan1 = self.mainwin.panelset[overlay.panel1]
+        pan2 = self.mainwin.panelset[overlay.panel2]
         
         # Overlay, add panel1 plot(s) to panel2
         if not overlay.toggle:  
             # overlay->numdisps = graphwin[pan1]->numdisps;
-            overlay.numdisps = len(dispset1)
+            overlay.numdisps = len(pan1.dispset)
             if overlay.numdisps == 0: return
             
-    #         // Synchronise axis scales in panel2
-    #         refgraph = graphwin[pan1]->dispset[0]->plot[0];
-    #         if(refgraph->oversync) {
-    #             mod->diagbox->Write("ScaleBox overlay synch\n");
-    #             for(i=0; i<graphwin[pan2]->numdisps; i++) {
-    #                 graph = graphwin[pan2]->dispset[i]->plot[0];
-    #                 graph->yto = refgraph->yto;
-    #                 graph->yfrom = refgraph->yfrom;
-    #                 graph->xto = refgraph->xto;
-    #                 graph->xfrom = refgraph->xfrom;
-    #             }
-    #         }
+            # Synchronise axis scales in panel2
+            #refgraph = graphwin[pan1]->dispset[0]->plot[0];
+            refplot = pan1.GetFrontPlot()
+            if refplot.oversync:
+                DiagWrite("ScaleBox overlay synch\n")
+                for disp in pan2.dispset:
+                    plot = disp.GetFront()
+                    plot.xfrom = refplot.xfrom
+                    plot.xto = refplot.xto
+                    plot.yfrom  = refplot.yfrom
+                    plot.yto = refplot.yto
+                  
             
-    #         // Move GraphDisps down
-    #         for(i=0; i<overlay->numdisps; i++) {
-    #             disp = graphwin[pan1]->dispset[i];
-    #             graph = graphwin[pan1]->dispset[i]->plot[0];
-    #             graphwin[pan2]->AddGraph(disp);
-    #             graphwin[pan1]->numdisps--;
-    #         }
-    #     }
+            # Move GraphDisps down
+            for(i=0; i<overlay->numdisps; i++) {
+            for disp in pan1.dispset:
+                #disp = graphwin[pan1]->dispset[i];
+                graph = graphwin[pan1]->dispset[i]->plot[0];
+                plot = disp.GetFront()
+                graphwin[pan2]->AddGraph(disp);
+                graphwin[pan1]->numdisps--;
+            }
+        }
     #     // Reverse overlay, return added plot(s) to panel1
     #     else {
     #         numdisps = graphwin[pan2]->numdisps;

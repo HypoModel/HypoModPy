@@ -140,6 +140,8 @@ class PlotDat():
         self.colour = colour
         self.binsize = binsize
 
+        self.oversync = True
+
         self.Default()
 
 
