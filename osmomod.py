@@ -86,6 +86,10 @@ class OsmoMod(Mod):
         #DiagWrite("Model thread OK\n\n")
 
 
+    def OnModThreadProgress(self, event):
+        self.osmobox.SetCount(event.GetInt())
+
+
     def RunModel(self):
         self.mainwin.SetStatusText("Osmo Model Run")
         modthread = OsmoModel(self)
@@ -223,7 +227,7 @@ class OsmoModel(ModThread):
         water = 50
         salt = 2000
         osmo = salt / water
-        vaso=0
+        vaso = 0
 
         # Initialise model variable recording arrays
         osmodata.water.clear()
@@ -236,9 +240,10 @@ class OsmoModel(ModThread):
         osmodata.salt[0] = salt
         osmodata.osmo[0] = osmo
         osmodata.vaso[0] = vaso
-        osmo_thresh=280
-        v_grad=0.2
-        v_max=20
+        osmo_thresh = 280
+        v_grad = 0.2
+        v_max = 20
+
         # Run model loop
         for i in range(1, runtime + 1):
 
@@ -247,10 +252,10 @@ class OsmoModel(ModThread):
             water = water - (water * waterloss)
             salt = salt
             osmo = salt / water
-            if osmo<osmo_thresh: vaso=0
+            if osmo < osmo_thresh: vaso = 0
             else: 
-                vaso= v_grad*(osmo-osmo_thresh)
-                if vaso>v_max: vaso=v_max
+                vaso = v_grad * (osmo - osmo_thresh)
+                if vaso > v_max: vaso = v_max
 
             # Record model variables
             osmodata.water[i] = water

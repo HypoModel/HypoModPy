@@ -149,7 +149,6 @@ class SpikeModel(ModThread):
     # Model() reads in the model parameters, initialises variables, and runs the main model loop
     def Model(self):
         spikedata = self.mod.modspike
-        spikebox = self.spikebox
         params = self.spikebox.GetParams()
         #protoparams = self.mod.protobox.GetParams()
 
@@ -285,6 +284,8 @@ class SpikeBox(ParamBox):
         self.paramset.AddCon("halflifeMem", "halflifeMem", 7.5, 0.1, 2)
         self.paramset.AddCon("kHAP", "kHAP", 60, 0.1, 2)
         self.paramset.AddCon("halflifeHAP", "halflifeHAP", 8, 0.1, 2)
+        #self.paramset.AddCon("kAHP", "kAHP", 0.5, 0.01, 2)
+        #self.paramset.AddCon("halflifeAHP", "halflifeAHP", 500, 1, 2)
 
         self.ParamLayout(2)   # layout parameter controls in two columns
 

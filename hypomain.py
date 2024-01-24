@@ -493,6 +493,7 @@ class HypoMain(MainFrame):
 
     def HypoLoad(self):
         infile = TextFile(self.initpath + "/hypoprefs.ini")
+        DiagWrite("init path " + self.initpath + "\n")
         check = infile.Open('r')
         if check == False: return
         filetext = infile.ReadLines()
