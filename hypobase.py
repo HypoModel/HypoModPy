@@ -166,6 +166,7 @@ ID_Undo = wx.NewIdRef()
 ID_Insert = wx.NewIdRef()
 ID_Bold = wx.NewIdRef()
 ID_PlotPanel = wx.NewIdRef()
+ID_Delete = wx.NewIdRef()
 
 # Check IDs
 ID_ClipMode = wx.NewIdRef()

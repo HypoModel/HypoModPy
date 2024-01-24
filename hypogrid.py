@@ -40,6 +40,7 @@ class TextGrid(wx.grid.Grid):
         self.rightmenu.Append(ID_PasteTranspose, "Paste Transpose", "Paste Clipboard", wx.ITEM_NORMAL)
         self.rightmenu.Append(ID_Undo, "Undo", "Undo", wx.ITEM_NORMAL)
         self.rightmenu.Append(ID_Insert, "Insert Col", "Insert Column", wx.ITEM_NORMAL)
+        self.rightmenu.Append(ID_Delete, "Delete", "Delete", wx.ITEM_NORMAL)
 
         self.Bind(wx.grid.EVT_GRID_CELL_RIGHT_CLICK, self.OnRightClick)
         self.Bind(wx.grid.EVT_GRID_CELL_LEFT_CLICK, self.OnLeftClick)
@@ -53,6 +54,7 @@ class TextGrid(wx.grid.Grid):
         self.Bind(wx.EVT_MENU, self.OnUndo, ID_Undo)
         self.Bind(wx.EVT_MENU, self.OnBold, ID_Bold)
         self.Bind(wx.EVT_MENU, self.OnInsertColumn, ID_Insert)
+        self.Bind(wx.EVT_MENU, self.OnDelete, ID_Delete)
 
         self.Bind(wx.EVT_KEY_DOWN, self.OnKey)
 
@@ -133,6 +135,8 @@ class TextGrid(wx.grid.Grid):
 
         elif event.ControlDown() and event.GetKeyCode() == 90: self.Undo()      # 90 = Z
 
+        elif event.ControlDown() and event.GetKeyCode() == 8: self.Delete()      # 8 = Mac Delete
+
         elif event.GetKeyCode() == wx.WXK_DELETE:
             self.Delete()
             return
@@ -179,6 +183,10 @@ class TextGrid(wx.grid.Grid):
 
     def OnBold(self, event):
         self.SetBold()
+
+    
+    def OnDelete(self, event):
+        self.Delete()
 
 
     def OnInsertColumn(self, event):
@@ -304,7 +312,6 @@ class TextGrid(wx.grid.Grid):
     def Paste(self, mode = 0):
         # grid paste code from wxwidgets forum
 
-        
         self.CopyUndo()
 
         if self.vdu and mode == 1: self.vdu.AppendText("Transpose Pasting...\n")
