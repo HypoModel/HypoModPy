@@ -260,6 +260,7 @@ class ScaleBox(ToolPanel):
             if mode == "panel":
                 index = int(readdata[0])    # panel index
                 if index >= len(self.mainwin.panelset): break
+                if len(readdata) < 2: break
                 tag = readdata[1]  # plot set tag
                 if tag in pbase.plotstore or tag in pbase.setstore: 
                     self.mainwin.panelset[index].settag = tag
