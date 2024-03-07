@@ -1,8 +1,8 @@
 
 import wx
 from math import log, isinf, isnan
-from hypotools import *
-from hypoparams import *
+from HypoModPy.hypotools import *
+from HypoModPy.hypoparams import *
 import math
 
 

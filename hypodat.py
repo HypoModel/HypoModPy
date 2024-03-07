@@ -1,5 +1,5 @@
 
-from hypobase import *
+from HypoModPy.hypobase import *
 import numpy as np
 
 

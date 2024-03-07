@@ -1,14 +1,14 @@
 
 
 
-from hypobase import *
-from hypobase import *
-from hypotools import *
-from hypograph import *
-from hyposcale import *
-from hypoparams import *
-from osmomod import *
-from spikemod import *
+from HypoModPy.hypobase import *
+#from hypobase import *
+from HypoModPy.hypotools import *
+from HypoModPy.hypograph import *
+from HypoModPy.hyposcale import *
+from HypoModPy.hypoparams import *
+from OsmoModPy.osmomod import *
+from SpikeModPy.spikemod import *
 
 
 class MainFrame(wx.Frame):
