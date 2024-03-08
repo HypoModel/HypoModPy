@@ -8,7 +8,7 @@ from io import StringIO
 import wx.py.buffer
 import pyperclip
 import math
-from spikedat import *
+from HypoModPy.hypospikes import *
 
 
 class TextGrid(wx.grid.Grid):

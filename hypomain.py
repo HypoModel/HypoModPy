@@ -235,7 +235,7 @@ class SystemPanel(wx.Dialog):
 
 
 class HypoMain(MainFrame):
-    def __init__(self, title, pos, size, respath, mainpath):
+    def __init__(self, title, pos, size, respath, mainpath, modname):
         super(HypoMain, self).__init__(title, pos, size, respath, mainpath)
 
         # Default Prefs
@@ -288,8 +288,8 @@ class HypoMain(MainFrame):
             self.graphsizer.Add(graphpanel, 1, wx.EXPAND)
 
         # Mod Init
-        #self.mod = OsmoMod(self, "osmomod")
-        self.mod = SpikeMod(self, "spikemod")
+        if modname == "Osmo": self.mod = OsmoMod(self, "osmomod")
+        if modname == "Spike": self.mod = SpikeMod(self, "spikemod")
         self.mod.DefaultPlots()
         
         # Scale Box
