@@ -28,7 +28,9 @@ class MainFrame(wx.Frame):
         self.respath = rpath;  # defaults to "" for Windows, bundle resource path for OSX
         #self.mainpath = mpath
         self.app_path = os.getcwd()
-        self.respath = self.app_path + "/HypoModPy/Resource"
+        # self.respath = self.app_path + "/HypoModPy/Resource"
+        self.respath = self.app_path + "/Resource"
+
         self.diagbox.Write("MainFrame respath " + self.respath + "\n")
 
         stdpaths = wx.StandardPaths.Get()
