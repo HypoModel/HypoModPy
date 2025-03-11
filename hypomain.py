@@ -28,10 +28,11 @@ class MainFrame(wx.Frame):
         self.respath = rpath;  # defaults to "" for Windows, bundle resource path for OSX
         #self.mainpath = mpath
         self.app_path = os.getcwd()
-        # self.respath = self.app_path + "/HypoModPy/Resource"
-        self.respath = self.app_path + "/Resource"
+        if self.ostype == "Windows": self.respath = self.app_path + "/HypoModPy/Resource"
+        else: self.respath = self.app_path + "/Resource"
 
-        self.diagbox.Write("MainFrame respath " + self.respath + "\n")
+
+        self.diagbox.Write("ostype " + self.ostype + "\nMainFrame respath " + self.respath + "\n")
 
         stdpaths = wx.StandardPaths.Get()
         userpath = stdpaths.GetUserConfigDir()
@@ -452,7 +453,7 @@ class HypoMain(MainFrame):
 
 
     def OnAbout(self, event):
-        message = "HypoMod Modelling Toolkit\n\nDuncan MacGregor 2010-2023\n\nSystem: {}".format(wx.GetOsDescription())
+        message = "HypoMod Modelling Toolkit\n\nDuncan MacGregor 2010-2025\n\nSystem: {}".format(wx.GetOsDescription())
         wx.MessageBox(message, "About HypoMod", wx.OK | wx.ICON_INFORMATION, self)
 
         
