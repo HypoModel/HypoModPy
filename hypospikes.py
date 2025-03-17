@@ -10,6 +10,48 @@ from HypoModPy.hypodat import *
 from HypoModPy.hypogrid import *
 
 
+
+
+class SpikeDataBox(ParamBox):
+    def __init__(self, mod, title, pos, size):      
+        ParamBox.__init__(self, mod, title, pos, size, "spikedatabox")
+        cellpanel = None
+        self.notebook = wx.Notebook(self.panel, -1, wx.Point(-1,-1), wx.Size(-1, 400), wx.NB_TOP)
+
+
+        cellpanel = SpikeDataPanel(self.notebook)
+        #cellpanel->cellmode = true;
+        #cellpanel->ratetag = "cellspikes";
+        self.notebook.AddPage(cellpanel, "Cell")
+        self.mainbox.Add(self.notebook, 1, wx.EXPAND)
+
+
+class SpikeDataPanel(ToolPanel):
+    def __init__(self, parent):
+        ToolPanel.__init__(self, parent, wx.DefaultPosition, wx.DefaultSize)
+
+        # Neuron selection
+        datwidth = 50
+        labelwidth = 70
+        label = neurobox->NumPanel(labelwidth, wxALIGN_CENTRE);
+        spikes = neurobox->NumPanel(datwidth, wxALIGN_RIGHT);
+        freq = neurobox->NumPanel(datwidth, wxALIGN_RIGHT);
+        selectspikecount = neurobox->NumPanel(datwidth, wxALIGN_RIGHT);
+        selectfreq = neurobox->NumPanel(datwidth, wxALIGN_RIGHT);
+
+        datagrid = wx.GridSizer(2, 5, 5)
+        datagrid.Add(wx.StaticText(this, -1, "Name"), 0, wxALIGN_CENTRE);
+        datagrid->Add(label);
+        datagrid->Add(new wxStaticText(this, -1, "Spikes"), 0, wxALIGN_CENTRE);
+        datagrid->Add(spikes);
+        datagrid->Add(new wxStaticText(this, -1, "Freq"), 0, wxALIGN_CENTRE|wxST_NO_AUTORESIZE);
+        datagrid->Add(freq);
+        datagrid->Add(new wxStaticText(this, -1, "Select Spikes"), 0, wxALIGN_CENTRE|wxST_NO_AUTORESIZE);
+        datagrid->Add(selectspikecount);
+        datagrid->Add(new wxStaticText(this, -1, "Select Freq"), 0, wxALIGN_CENTRE|wxST_NO_AUTORESIZE);
+        datagrid->Add(selectfreq);
+
+
 class NeuroDat():
     def __init__(self):
         self.maxspikes = 100000

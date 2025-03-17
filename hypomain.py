@@ -24,6 +24,7 @@ class MainFrame(wx.Frame):
         self.diagbox.Write('Diagnostic Box OK\n')
         self.gridbox = None
         self.plotcon = None
+        self.spikedatabox = None
 
         self.respath = rpath;  # defaults to "" for Windows, bundle resource path for OSX
         #self.mainpath = mpath
@@ -380,6 +381,7 @@ class HypoMain(MainFrame):
         #menuTools.Append(ID_Plot, "Plot Box")
         #menuTools.Append(ID_Sound, "Sound Box")
         itemModBox = menuTools.Append(wx.ID_ANY, "Mod Box")
+        itemSpikeDataBox = menuTools.Append(wx.ID_ANY, "Spike Data Box")
         #menuTools.Append(ID_Burst, "Burst Box")
 
         itemOptions = menuSystem.Append(wx.ID_ANY, "Options")
@@ -399,7 +401,12 @@ class HypoMain(MainFrame):
         self.Bind(wx.EVT_MENU, self.OnGraphAdd, itemAddGraph)
         self.Bind(wx.EVT_MENU, self.OnOptions, itemOptions)
         self.Bind(wx.EVT_MENU, self.OnModBox, itemModBox)
+        self.Bind(wx.EVT_MENU, self.OnSpikeDataBox, itemSpikeDataBox)
 
+
+    def OnSpikeDataBox(self, event):
+        if(self.spikedatabox): self.spikedatabox.Show()  
+        
 
     def OnModBox(self, event):
         if self.mod: self.mod.modbox.Show(True)
