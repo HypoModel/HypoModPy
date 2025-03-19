@@ -15,41 +15,125 @@ from HypoModPy.hypogrid import *
 class SpikeDataBox(ParamBox):
     def __init__(self, mod, title, pos, size):      
         ParamBox.__init__(self, mod, title, pos, size, "spikedatabox")
-        cellpanel = None
+
+        self.mod = mod
+        self.cellpanel = None
         self.notebook = wx.Notebook(self.panel, -1, wx.Point(-1,-1), wx.Size(-1, 400), wx.NB_TOP)
 
-
-        cellpanel = SpikeDataPanel(self.notebook)
+        self.cellpanel = SpikeDataPanel(self)
         #cellpanel->cellmode = true;
         #cellpanel->ratetag = "cellspikes";
-        self.notebook.AddPage(cellpanel, "Cell")
+        self.notebook.AddPage(self.cellpanel, "Cell")
         self.mainbox.Add(self.notebook, 1, wx.EXPAND)
 
 
 class SpikeDataPanel(ToolPanel):
     def __init__(self, parent):
-        ToolPanel.__init__(self, parent, wx.DefaultPosition, wx.DefaultSize)
+        ToolPanel.__init__(self, parent.notebook, wx.DefaultPosition, wx.DefaultSize)
+        self.databox = parent
+
+        # Panel layout annd formatting
+        self.SetFont(parent.boxfont)
+        mainbox = wx.BoxSizer(wx.VERTICAL)
+        self.SetSizer(mainbox)
+        parent.activepanel = self
+        parent.paramset.panel = self
+
+        # Panel data
+        self.cellcount = 10
+        self.cellindex = 0
 
         # Neuron selection
         datwidth = 50
         labelwidth = 70
-        label = neurobox->NumPanel(labelwidth, wxALIGN_CENTRE);
-        spikes = neurobox->NumPanel(datwidth, wxALIGN_RIGHT);
-        freq = neurobox->NumPanel(datwidth, wxALIGN_RIGHT);
-        selectspikecount = neurobox->NumPanel(datwidth, wxALIGN_RIGHT);
-        selectfreq = neurobox->NumPanel(datwidth, wxALIGN_RIGHT);
+        self.label = parent.NumPanel(labelwidth, wx.ALIGN_CENTRE)
+        self.spikes = parent.NumPanel(datwidth, wx.ALIGN_RIGHT)
+        self.freq = parent.NumPanel(datwidth, wx.ALIGN_RIGHT)
+        self.selectspikecount = parent.NumPanel(datwidth, wx.ALIGN_RIGHT)
+        self.selectfreq = parent.NumPanel(datwidth, wx.ALIGN_RIGHT)
 
         datagrid = wx.GridSizer(2, 5, 5)
-        datagrid.Add(wx.StaticText(this, -1, "Name"), 0, wxALIGN_CENTRE);
-        datagrid->Add(label);
-        datagrid->Add(new wxStaticText(this, -1, "Spikes"), 0, wxALIGN_CENTRE);
-        datagrid->Add(spikes);
-        datagrid->Add(new wxStaticText(this, -1, "Freq"), 0, wxALIGN_CENTRE|wxST_NO_AUTORESIZE);
-        datagrid->Add(freq);
-        datagrid->Add(new wxStaticText(this, -1, "Select Spikes"), 0, wxALIGN_CENTRE|wxST_NO_AUTORESIZE);
-        datagrid->Add(selectspikecount);
-        datagrid->Add(new wxStaticText(this, -1, "Select Freq"), 0, wxALIGN_CENTRE|wxST_NO_AUTORESIZE);
-        datagrid->Add(selectfreq);
+        datagrid.Add(wx.StaticText(self, wx.ID_STATIC, "Name"), 0, wx.ALIGN_CENTRE)
+        datagrid.Add(self.label)
+        datagrid.Add(wx.StaticText(self, wx.ID_STATIC, "Spikes"), 0, wx.ALIGN_CENTRE)
+        datagrid.Add(self.spikes)
+        datagrid.Add(wx.StaticText(self, wx.ID_STATIC, "Freq"), 0, wx.ALIGN_CENTRE|wx.ST_NO_AUTORESIZE)
+        datagrid.Add(self.freq)
+        datagrid.Add(wx.StaticText(self, wx.ID_STATIC, "Select Spikes"), 0, wx.ALIGN_CENTRE|wx.ST_NO_AUTORESIZE)
+        datagrid.Add(self.selectspikecount)
+        datagrid.Add(wx.StaticText(self, wx.ID_STATIC, "Select Freq"), 0, wx.ALIGN_CENTRE|wx.ST_NO_AUTORESIZE)
+        datagrid.Add(self.selectfreq)
+
+        self.datneuron = wx.TextCtrl(self, wx.ID_ANY, "---", wx.DefaultPosition, wx.Size(50, -1), wx.ALIGN_LEFT|wx.BORDER_SUNKEN|wx.ST_NO_AUTORESIZE|wx.TE_PROCESS_ENTER)
+        datspin = wx.SpinButton(self, wx.ID_ANY, wx.DefaultPosition, wx.Size(-1, -1), wx.SP_HORIZONTAL|wx.SP_ARROW_KEYS)
+        datspin.SetRange(-1000000, 1000000)
+        datspin.Bind(wx.EVT_SPIN_UP, self.OnNext)
+        datspin.Bind(wx.EVT_SPIN_DOWN, self.OnPrev)
+
+        datbox = wx.BoxSizer(wx.HORIZONTAL)
+        datbox.Add(datspin, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL)
+        datbox.AddSpacer(5)
+
+        cellbox = wx.BoxSizer(wx.HORIZONTAL)
+        cellbox.Add(wx.StaticText(self, wx.ID_ANY, "Neuron"), 1, wx.ALIGN_CENTRE|wx.ST_NO_AUTORESIZE)
+        cellbox.Add(self.datneuron, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 5)
+
+        databox = wx.StaticBoxSizer(wx.VERTICAL, self, "")
+        databox.AddSpacer(2)
+        databox.Add(cellbox, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL| wx.ALL, 5)
+        databox.AddSpacer(5)
+        databox.Add(datbox, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL| wx.ALL, 0)
+        databox.AddSpacer(5)
+        databox.Add(datagrid, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 5)
+
+        mainbox.Add(databox, 1, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL)
+
+        self.Layout()
+
+
+    def OnNext(self, event):
+        if self.cellcount == 0: return
+        if self.cellindex < self.cellcount - 1: self.cellindex += 1
+        else: self.cellindex = 0
+        self.CellData()
+
+
+    def OnPrev(self, event):
+        if self.cellcount == 0: return
+        if self.cellindex > 0: self.cellindex -= 1
+        else: self.cellindex = self.cellcount - 1
+        self.CellData()
+
+
+    def CellData(self):
+        self.databox.mod.NeuroData()
+        #self.PanelData()
+
+
+    def PanelData(self, cellspike):
+        self.datneuron.SetLabel(numstring(self.cellindex))
+        self.label.SetLabel(cellspike.name)
+        self.spikes.SetLabel(numstring(cellspike.spikecount))
+        self.freq.SetLabel(numstring(cellspike.freq, 2))
+	#selectspikecount->SetLabel(snum.Format("%d", currneuron->selectdata->intraspikes));
+	#selectfreq->SetLabel(snum.Format("%.2f", currneuron->selectdata->freq));
+
+       
+
+
+
+
+
+        # Store rate X-axis position
+        #graphwin = neurobox->mod->GetGraphWin(ratetag);
+        #if(graphwin) currneuron->neurodata->xscrollpos = graphwin->xscrollpos;
+
+        # Store select grids
+        #for(int i=0; i<selectcount; i++) {
+	    #currneuron->selectdata->spikes = selectspikes[i].data();
+	#   currneuron->SelectScan(i);  // store current cell's select grid to NeuroDat
+        
+       
 
 
 class NeuroDat():
