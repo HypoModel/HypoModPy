@@ -13,8 +13,8 @@ from HypoModPy.hypogrid import *
 
 
 class SpikeDataBox(ParamBox):
-    def __init__(self, mod, title, pos, size):      
-        ParamBox.__init__(self, mod, title, pos, size, "spikedatabox")
+    def __init__(self, mod, tag, title, pos, size):      
+        ParamBox.__init__(self, mod, title, pos, size, tag)
 
         self.mod = mod
         self.cellpanel = None
@@ -91,6 +91,12 @@ class SpikeDataPanel(ToolPanel):
         self.Layout()
 
 
+    def SetCount(self, count):
+       self.cellcount = count
+       if self.cellindex > self.cellcount: self.cellindex = 0
+       #neuropop.numneurons = count;
+
+
     def OnNext(self, event):
         if self.cellcount == 0: return
         if self.cellindex < self.cellcount - 1: self.cellindex += 1
@@ -115,14 +121,8 @@ class SpikeDataPanel(ToolPanel):
         self.label.SetLabel(cellspike.name)
         self.spikes.SetLabel(numstring(cellspike.spikecount))
         self.freq.SetLabel(numstring(cellspike.freq, 2))
-	#selectspikecount->SetLabel(snum.Format("%d", currneuron->selectdata->intraspikes));
-	#selectfreq->SetLabel(snum.Format("%.2f", currneuron->selectdata->freq));
-
-       
-
-
-
-
+    	#selectspikecount->SetLabel(snum.Format("%d", currneuron->selectdata->intraspikes));
+	    #selectfreq->SetLabel(snum.Format("%.2f", currneuron->selectdata->freq));
 
         # Store rate X-axis position
         #graphwin = neurobox->mod->GetGraphWin(ratetag);
@@ -134,8 +134,6 @@ class SpikeDataPanel(ToolPanel):
 	#   currneuron->SelectScan(i);  // store current cell's select grid to NeuroDat
         
        
-
-
 class NeuroDat():
     def __init__(self):
         self.maxspikes = 100000

@@ -714,6 +714,7 @@ class GridBox(ParamBox):
         timescale = 1000    # 1000 to convert seconds to millseconds
         grid = self.grids[self.currgrid]
         celldata = self.mod.celldata
+        cellpanel = self.mod.spikedatabox.cellpanel
 
         
         cellcount = 0
@@ -776,8 +777,7 @@ class GridBox(ParamBox):
             #mod->cellbox->datneuron->SetLabel("NO DATA");
         else:
             DiagWrite(f"Neuro scan: {cellcount} cells read OK\n")
-            #if(neurobox->cellpanel->neuroindex > cellcount) neurobox->cellpanel->neuroindex = 0;
-            #neurobox->cellpanel->SetCount(cellcount);
+            cellpanel.SetCount(cellcount)
 
         # multi cell analysis
         # neurobox->cellpanel->MultiCellAnalysis();

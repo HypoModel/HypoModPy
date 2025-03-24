@@ -71,10 +71,14 @@ class Mod(wx.EvtHandler):
             os.mkdir(fullpath)
 
         return fullpath
+    
 
+    def AddTool(self, toolbox):
+        self.modtools[toolbox.boxtag] = toolbox
+        self.mainwin.toolset.AddBox(toolbox)  
+      
 
     def ModStore(self):
-        #filepath = self.GetPath()
         filepath = self.path
         
         # box store
@@ -91,7 +95,6 @@ class Mod(wx.EvtHandler):
 
  
     def ModLoad(self):
-        #filepath = self.GetPath()
         filepath = self.path
 
         # box load
