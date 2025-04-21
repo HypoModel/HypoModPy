@@ -7,8 +7,10 @@ from HypoModPy.hypotools import *
 from HypoModPy.hypograph import *
 from HypoModPy.hyposcale import *
 from HypoModPy.hypoparams import *
+
 from OsmoModPy.osmomod import *
 from SpikeModPy.spikemod import *
+from AgentModPy.agentmod import *
 
 
 class MainFrame(wx.Frame):
@@ -30,7 +32,7 @@ class MainFrame(wx.Frame):
         #self.mainpath = mpath
         self.app_path = os.getcwd()
         if self.ostype == "Windows": self.respath = self.app_path + "/HypoModPy/Resource"
-        else: self.respath = self.app_path + "/Resource"
+        else: self.respath = self.app_path + "/HypoModPy/Resource"
 
 
         self.diagbox.Write("ostype " + self.ostype + "\nMainFrame respath " + self.respath + "\n")
@@ -294,6 +296,7 @@ class HypoMain(MainFrame):
         # Mod Init
         if modname == "Osmo": self.mod = OsmoMod(self, "osmomod")
         if modname == "Spike": self.mod = SpikeMod(self, "spikemod")
+        if modname == "Agent": self.mod = AgentMod(self, "agentmod")
         self.mod.DefaultPlots()
         
         # Scale Box
