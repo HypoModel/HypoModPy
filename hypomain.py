@@ -1,8 +1,6 @@
 
 
-
 from HypoModPy.hypobase import *
-#from hypobase import *
 from HypoModPy.hypotools import *
 from HypoModPy.hypograph import *
 from HypoModPy.hyposcale import *
@@ -11,6 +9,13 @@ from HypoModPy.hypoparams import *
 from OsmoModPy.osmomod import *
 from SpikeModPy.spikemod import *
 from AgentModPy.agentmod import *
+
+
+from Cocoa import NSApp, NSApplication
+
+def go_foreground():
+    NSApplication.sharedApplication()
+    NSApp().activateIgnoringOtherApps_(True)
 
 
 class MainFrame(wx.Frame):
@@ -32,7 +37,7 @@ class MainFrame(wx.Frame):
         #self.mainpath = mpath
         self.app_path = os.getcwd()
         if self.ostype == "Windows": self.respath = self.app_path + "/HypoModPy/Resource"
-        else: self.respath = self.app_path + "/HypoModPy/Resource"
+        else: self.respath = self.app_path + "/../HypoModPy/Resource"
 
 
         self.diagbox.Write("ostype " + self.ostype + "\nMainFrame respath " + self.respath + "\n")
