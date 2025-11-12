@@ -11,11 +11,11 @@ from SpikeModPy.spikemod import *
 from AgentModPy.agentmod import *
 
 
-from Cocoa import NSApp, NSApplication
+#from Cocoa import NSApp, NSApplication
 
-def go_foreground():
-    NSApplication.sharedApplication()
-    NSApp().activateIgnoringOtherApps_(True)
+#def go_foreground():
+#    NSApplication.sharedApplication()
+#    NSApp().activateIgnoringOtherApps_(True)
 
 
 class MainFrame(wx.Frame):
