@@ -713,7 +713,7 @@ class GridBox(ParamBox):
         filterthresh = 10
         timescale = 1000    # 1000 to convert seconds to millseconds
         grid = self.grids[self.currgrid]
-        celldata = self.mod.celldata
+        spikedata = self.mod.spikedata
         cellpanel = self.mod.spikedatabox.cellpanel
 
         
@@ -728,9 +728,9 @@ class GridBox(ParamBox):
         while not celltext == "":
             #if(celldata->size() <= cellcount) celldata->resize(cellcount + 10);
             #diagbox->Write(text.Format("cellcount %d  cell data size %d\n", cellcount, (int)mod->celldata.size()));
-            celldata.append(NeuroDat())
-            celldata[cellcount].name = celltext
-            celldata[cellcount].filter = 0
+            spikedata.append(NeuroDat())
+            spikedata[cellcount].name = celltext
+            spikedata[cellcount].filter = 0
             spikecount = 0
             spikestart = 0
             row = 1
@@ -752,21 +752,26 @@ class GridBox(ParamBox):
                 if startshift and spikecount == 0 and cellval > startthresh: 
                     spikestart = math.floor(cellval);   # shift spike times when there's a long initial silent period
                 spiketime = (cellval - spikestart) * timescale
-                # DiagWrite(f"neuroscan cellval {cellval}  spiketime {spiketime}\n")
+                #DiagWrite(f"neuroscan spike {spikecount}  cellval {cellval}  spiketime {spiketime}\n")
                 if spikecount > 0:    
-                    spikeint = spiketime - celldata[cellcount].times[spikecount - 1]
+                    spikeint = spiketime - spikedata[cellcount].times[spikecount - 1]
                     # if(spikecount < 10) diagbox->Write(text.Format("col %d spikeint %.2f filter %d\n", col, spikeint, filterthresh));
-                #if spikecount >= (*celldata)[cellcount].maxspikes) (*celldata)[cellcount].ReSize();
+                if spikecount >= spikedata[cellcount].maxspikes: spikedata[cellcount].SetSize(spikecount + 10000)
                 if spikecount == 0 or spikeint > filterthresh:
-                    celldata[cellcount].times[spikecount] = spiketime
+                    try:
+                        spikedata[cellcount].times[spikecount] = spiketime
+                    except Exception:
+                        DiagWrite(f"NeuroScan spikecount {spikecount} spikedata max {spikedata[cellcount].maxspikes} array size {spikedata[cellcount].times.size}\n")
                     spikecount += 1
+                #else: DiagWrite(f"neuroscan filter interval\n")
                 row += 1 
                 celltext = grid.GetCell(row, col)
                 celltext.strip()
 
             # Record spike count and initialise next column
-            celldata[cellcount].spikecount = spikecount
-            celldata[cellcount].gridcol = col
+            spikedata[cellcount].spikecount = spikecount
+            spikedata[cellcount].gridcol = col
+            spikedata[cellcount].index = cellcount
             cellcount += 1
             col += 1
             celltext = grid.GetCell(0, col)

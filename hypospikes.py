@@ -10,8 +10,6 @@ from HypoModPy.hypodat import *
 from HypoModPy.hypogrid import *
 
 
-
-
 class SpikeDataBox(ParamBox):
     def __init__(self, mod, tag, title, pos, size):      
         ParamBox.__init__(self, mod, title, pos, size, tag)
@@ -141,6 +139,12 @@ class NeuroDat():
         self.spikecount = 0
         self.name = ""
         self.timeform = "s"   # "s" or "ms" for seconds or milliseconds
+        self.index = -1
+
+    def SetSize(self, newsize):
+        self.times.resize(newsize)
+        self.maxspikes = newsize
+        DiagWrite(f"NeuroDat setsize {newsize}\n")
 
 
 class SpikeDat():
@@ -153,7 +157,7 @@ class SpikeDat():
         self.freq = 0
 
         # initialise arrays for spike interval analysis
-        self.histsize = 50000
+        self.histsize = 20000
         #self.hist1 = pdata(self.histsize + 1)
         self.hist1 = datarray(self.histsize + 1)
         self.hist5 = pdata(self.histsize + 1)
@@ -198,6 +202,8 @@ class SpikeDat():
         mean = 0
         variance = 0
         binsize = 5
+        binmax1 = 20000
+        binmax5 = 10000
 
         if neurodata != None:
             self.spikecount = neurodata.spikecount
@@ -222,11 +228,16 @@ class SpikeDat():
             if i > self.maxspikes: break
             if neurodata != None: self.times[i+1] = neurodata.times[i+1]
             self.isis[i] = self.times[i+1] - self.times[i]
+            if self.isis[i] >= self.histsize: continue  # skip if spike interval is very large
             if self.hist1.xmax < int(self.isis[i]): self.hist1.xmax = int(self.isis[i])
-            #if self.hist1.size < self.hist1.xmax + 1: self.hist1.resize(self.hist1.xmax + 1)
-            np.resize(self.hist1, 20000)
-            if self.hist1.size < self.hist1.xmax + 1: np.resize(self.hist1, 20000)
-            self.hist1[int(self.isis[i])] += 1
+            #if self.hist1.size < self.hist1.xmax + 1: self.hist1.resize(self.hist1.xmax + 1) np.resize(self.hist1, 20000)
+            #if self.hist1.size < self.hist1.xmax + 1: self.hist1.resize(20000)
+            try:
+                if self.isis[i] < self.histsize: self.hist1[int(self.isis[i])] += 1
+            except Exception:
+                DiagWrite(f"Analysis hist1 bad ISI bin index {i} bin {int(self.isis[i])}\n")
+                DiagWrite(f"spiketime {self.times[i+1]} previous {self.times[i]}\n")
+                return
             mean = mean + self.isis[i] / isicount
             variance = self.isis[i] * self.isis[i] / isicount + variance;
 
@@ -238,9 +249,15 @@ class SpikeDat():
         isivar = variance
 
         # 5ms ISI Histogram
+        DiagWrite(f"Analysis hist5 size {self.hist5.size} hist1max {self.hist1.xmax}\n")
         for i in range(self.hist1.xmax + 1):
-            if i/binsize > self.hist5.xmax: self.hist5.xmax =  i/binsize
-            self.hist5[int(i/binsize)] = self.hist5[int(i/binsize)] + self.hist1[i]
+            bin = int(i / binsize)
+            if bin > self.hist5.xmax: self.hist5.xmax =  bin
+            try:
+                if bin < self.histsize: self.hist5[bin] = self.hist5[bin] + self.hist1[i]
+            except Exception:
+                DiagWrite(f"Analysis hist5 bad bin {bin} size {self.histsize} index {i} hist1 {self.hist1[i]}\n")
+                return
 
         # Normalise histograms
         for i in range(self.hist1.xmax + 1):

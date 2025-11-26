@@ -65,8 +65,9 @@ class pdata(np.ndarray):
         self.empty = False
 
 
-    def resize(self, newsize):
-        np.resize(self, newsize)
+    """ def resize(self, newsize):
+        #np.resize(self, newsize)
+        self.resize(newsize) """
 
     
 
