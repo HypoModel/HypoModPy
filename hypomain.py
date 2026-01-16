@@ -469,7 +469,7 @@ class HypoMain(MainFrame):
 
 
     def OnAbout(self, event):
-        message = "HypoMod Modelling Toolkit\n\nDuncan MacGregor 2010-2025\n\nSystem: {}".format(wx.GetOsDescription())
+        message = "HypoMod Modelling Toolkit\n\nDuncan MacGregor 2010-2026\n\nSystem: {}".format(wx.GetOsDescription())
         wx.MessageBox(message, "About HypoMod", wx.OK | wx.ICON_INFORMATION, self)
 
         

@@ -119,7 +119,7 @@ class TextGrid(wx.grid.Grid):
 
 
     def OnKey(self, event):
-        #if event.ControlDown(): DiagWrite(f"Control {event.GetKeyCode()}\n")
+        if event.ControlDown(): DiagWrite(f"Control {event.GetKeyCode()}\n")
 
         if event.ControlDown() and event.GetKeyCode() == 67: self.Copy()        # 67 = C
                
@@ -358,25 +358,27 @@ class TextGrid(wx.grid.Grid):
 
         if mode == 2: rowstring = "\n\n"
         else: rowstring = "\n"
-        
+
         newrows = len(data.split(rowstring))
         if newrows > numrows: self.AppendRows(newrows - numrows)
-        #print(f"Paste() add rows {numrows} {newrows}")
-        #DiagWrite(f"Paste() add rows {rowmax} {newrows}")
         
-        for row, line in enumerate(data.split(rowstring)):
-            target_row = rowstart + row
-            #if target_row > rowmax:
-            #    break
-
-            for col, value in enumerate(line.split('\t')):
-                target_col = colstart + col
-                #if target_col > colmax:
+        if mode == 0 or mode == 2:
+            #print(f"Paste() add rows {numrows} {newrows}")
+            #DiagWrite(f"Paste() add rows {rowmax} {newrows}")
+            
+            for row, line in enumerate(data.split(rowstring)):
+                target_row = rowstart + row
+                #if target_row > rowmax:
                 #    break
 
-                #if mode == 0 or mode == 2:
-                self.SetCell(target_row, target_col, value.strip())
-                #if mode == 1: 
+                for col, value in enumerate(line.split('\t')):
+                    target_col = colstart + col
+                    #if target_col > colmax:
+                    #    break
+
+                    #if mode == 0 or mode == 2:
+                    self.SetCell(target_row, target_col, value.strip())
+                    #if mode == 1:        
 
         if self.vdu: self.vdu.AppendText("OK\n")
     
