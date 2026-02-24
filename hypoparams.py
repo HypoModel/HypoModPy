@@ -567,14 +567,44 @@ class ParamBox(ToolBox):
         else: toolbox.Show(True)
 
 
-    def AddFlag(self, id, flagtag, flagtext, state = False, menu = None):
+    """ def AddFlag(self, id, flagtag, flagtext, state = False, menu = None):
         if menu == None: menu = self.menuModel
         self.modflags[flagtag] = state
         self.flagtags[id] = flagtag
         self.flagIDs[flagtag] = id
         menu.Append(id, flagtext, "Toggle " + flagtext, wx.ITEM_CHECK)
         menu.Check(id, state)
-        self.Bind(wx.EVT_MENU, self.OnFlag, id)
+        self.Bind(wx.EVT_MENU, self.OnFlag, id) """
+
+
+    """ def AddFlag(self, flagtag, flagtext, state=False, menu=None):
+        if menu is None: menu = self.menuModel
+        item = menu.AppendCheckItem(wx.ID_ANY, flagtext, "Toggle " + flagtext)
+        item.Check(bool(state))
+        self.modflags[flagtag] = bool(state)
+        item.flagtag = flagtag
+        self.Bind(wx.EVT_MENU, self.OnFlag, item)
+        return item """
+    
+
+    """ def AddFlag(self, flagtag, flagtext, state=False, menu=None):
+        if menu is None: menu = self.menuModel
+        item = menu.AppendCheckItem(wx.ID_ANY, flagtext, "Toggle " + flagtext)
+        item.Check(bool(state))
+        self.modflags[flagtag] = bool(state)
+        self.Bind(wx.EVT_MENU, lambda evt, tag=flagtag: self.OnFlag(evt, tag), source=item)
+        return item """
+    
+
+    def AddFlag(self, flagtag, flagtext, state=False, menu=None):
+        if menu is None: menu = self.menuModel
+        item = menu.AppendCheckItem(wx.ID_ANY, flagtext, "Toggle " + flagtext)
+        item.Check(bool(state))
+        id = item.GetId()
+        self.modflags[flagtag] = bool(state)
+        self.flagtags[id] = flagtag
+        self.Bind(wx.EVT_MENU, self.OnFlag, id=id)
+        return item
 
 
     def AddCheck(self, id, checktag, checktext, state):
@@ -588,12 +618,38 @@ class ParamBox(ToolBox):
         return newcheck
 
 
-    def OnFlag(self, event):
+    """ def OnFlag(self, event):
         id = event.GetId()
         flagtag = self.flagtags[id]
         if self.modflags[flagtag] == 0: self.modflags[flagtag] = 1
         else: self.modflags[flagtag] = 0
         if self.autorun: self.OnRun(event)
+
+
+    def OnFlag(self, event):
+        item = event.GetEventObject()
+        flagtag = getattr(item, "flagtag", None)
+
+        if flagtag is None:
+            event.Skip()
+            return
+
+        self.modflags[flagtag] = item.IsChecked() 
+        
+        
+    def OnFlag(self, event, flagtag):
+	    item = event.GetEventObject()
+	    self.modflags[flagtag] = item.IsChecked()
+        
+        """
+
+
+ 
+    def OnFlag(self, event):
+        id = event.GetId()
+        flagtag = self.flagtags[id]
+        item = self.menuModel.FindItemById(id)
+        self.modflags[flagtag] = item.IsChecked()
         
 
     def OnCheck(self, event):
