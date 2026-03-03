@@ -1,7 +1,7 @@
 
 import wx
 import os
-from hypobase import *
+from HypoModPy.hypobase import *
 from pubsub import pub
 
 

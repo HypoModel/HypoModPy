@@ -1,7 +1,7 @@
 
 import wx
-from hypoparams import *
-from hypodat import *
+from HypoModPy.hypoparams import *
+from HypoModPy.hypodat import *
 from threading import Thread
 from datetime import datetime
 import wx.lib.newevent

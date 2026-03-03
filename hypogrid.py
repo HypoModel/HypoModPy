@@ -1,7 +1,7 @@
 
 import wx.grid
-from hypobase import *
-from hypoparams import *
+from HypoModPy.hypobase import *
+from HypoModPy.hypoparams import *
 #from wx.lib.sheet import *
 import wx.richtext
 from io import StringIO 

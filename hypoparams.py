@@ -1,6 +1,6 @@
 
 import wx
-from hypotools import *
+from HypoModPy.hypotools import *
 
 
 

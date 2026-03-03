@@ -1,12 +1,11 @@
 
 
 
-from hypobase import *
-from hypobase import *
-from hypotools import *
-from hypograph import *
-from hyposcale import *
-from hypoparams import *
+from HypoModPy.hypobase import *
+from HypoModPy.hypotools import *
+from HypoModPy.hypograph import *
+from HypoModPy.hyposcale import *
+from HypoModPy.hypoparams import *
 from osmomod import *
 
 
