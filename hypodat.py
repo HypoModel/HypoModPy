@@ -4,19 +4,19 @@ import numpy as np
 
 
 class datarray():
-    def __init__(self, size):
-        #self.__lib = ...
-        self.data = np.ndarray(size)
+    def __init__(self, size, dtype=float):
+        self.data = np.zeros(size, dtype=dtype)
         self.xmax = size
         self.empty = True
 
-    def __getitem__(self, key): 
-        #self.np_array = np.ndarray(self._lib.get_arr())
+
+    def __getitem__(self, key):      
         return self.data.__getitem__(key)
+
 
     def __setitem__(self, key, value):
         self.data.__setitem__(key, value)
-        #self._lib.set_arr(new_arr.ctypes)
+
 
     def __getattr__(self, name):
         """Delegate to NumPy array."""
@@ -26,9 +26,9 @@ class datarray():
             raise AttributeError(
                  "'Array' object has no attribute {}".format(name))
         
+    
     def clear(self):
-        for i in range(len(self.data)):
-            self.data[i] = 0
+        self.data.fill(0)
         self.empty = False
 
 # subclass code from 
@@ -60,8 +60,7 @@ class pdata(np.ndarray):
 
 
     def clear(self):
-        for i in range(len(self)):
-            self[i] = 0
+        self.fill(0)
         self.empty = False
 
 
@@ -78,7 +77,7 @@ class PlotSet():
         self.label = ""
         self.tag = ""
         self.modeflags = []           # Set of flags is used to control the selected, displayed graph 
-        self.modeweights = {}
+        self.modeweights = []
         self.single = True
         self.submenu = 0
         self.modesum = 0
@@ -107,7 +106,8 @@ class PlotSet():
         plottag = self.plottags[0]
         for modeflag in self.modeflags: self.modesum = self.modesum + gflags[modeflag] * self.modeweights[modeflag]
         for tag in self.plottags:
-            if self.plotcodes[tag] == self.modesum: plottag = self.plottags[tag]
+            #if self.plotcodes[tag] == self.modesum: plottag = self.plottags[tag]
+            if self.plotcodes[tag] == self.modesum: plottag = tag    # ChatGPT bug pick up and suggested fix 4/3/26
 
         return plottag
         
