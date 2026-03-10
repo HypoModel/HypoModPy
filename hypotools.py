@@ -209,7 +209,7 @@ class ToolBox(wx.Frame):
     def InitPosition(self, mpos):
         mainpos = self.parent.GetPosition()
         mainsize = self.parent.GetSize()
-        self.Move(mainpos.x + mainsize.x + mpos.x, mainpos.y + mpos.y + 5)
+        self.Move(mainpos.x + mainsize.x + mpos.x, mainpos.y + mpos.y)   # + 5
         self.oldpos = self.GetPosition()
         self.mpos = mpos
 
@@ -218,9 +218,16 @@ class ToolBox(wx.Frame):
 
 
     def SetPosition(self, mainpos, mainsize):
-        self.Move(mainpos.x + mainsize.x + self.mpos.x, mainpos.y + self.mpos.y)
+        newpos = wx.Point(mainpos.x + mainsize.x + self.mpos.x, mainpos.y + self.mpos.y)
+
+        if self.GetPosition() != newpos: self.Move(newpos)
+
         self.oldpos = self.GetPosition()
-        return wx.Point(mainpos.x + mainsize.x + self.mpos.x, mainpos.y + self.mpos.y)
+        return newpos
+        
+        #self.Move(mainpos.x + mainsize.x + self.mpos.x, mainpos.y + self.mpos.y)
+        #self.oldpos = self.GetPosition()
+        #return wx.Point(mainpos.x + mainsize.x + self.mpos.x, mainpos.y + self.mpos.y)
 
 
     def OnMove(self, event):

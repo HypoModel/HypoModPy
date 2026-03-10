@@ -11,12 +11,22 @@ from SpikeModPy.spikemod import *
 from AgentModPy.agentmod import *
 
 
-#from Cocoa import NSApp, NSApplication
+import sys
 
-#def go_foreground():
+NSApp = None
+NSApplication = None
 
-    #NSApplication.sharedApplication()
-    #NSApp().activateIgnoringOtherApps_(True)
+if sys.platform == "darwin":
+    try:
+        from AppKit import NSApp, NSApplication
+    except ImportError:
+        pass
+
+
+def go_foreground():
+    if NSApp is None or NSApplication is None: return
+    NSApplication.sharedApplication()
+    NSApp.activateIgnoringOtherApps_(True)
 
 
 class MainFrame(wx.Frame):
@@ -38,10 +48,10 @@ class MainFrame(wx.Frame):
         #self.mainpath = mpath
         self.app_path = os.getcwd()
         if self.ostype == "Windows": self.respath = self.app_path + "/HypoModPy/Resource"
-        #else: self.respath = self.app_path + "/../HypoModPy/Resource"
-        else: self.respath = self.app_path + "/HypoModPy/Resource"
+        else: self.respath = self.app_path + "/../HypoModPy/Resource"
+        #else: self.respath = self.app_path + "/HypoModPy/Resource"
 
-        #self.diagbox.Write("MainFrame apppath " + self.app_path + "\n")
+        self.diagbox.Write("MainFrame app_path " + self.app_path + "\n")
         self.diagbox.Write("ostype " + self.ostype + "\nMainFrame respath " + self.respath + "\n")
 
         stdpaths = wx.StandardPaths.Get()
@@ -169,10 +179,24 @@ class MainFrame(wx.Frame):
             else: box.Show(True)
 
 
+    # def OnMove(self, event):
+    #     for tool in self.toolset.tools.values():
+    #         if tool.box: tool.box.SetPosition(self.GetPosition(), self.GetSize())
+    #     event.Skip()
+
+    
     def OnMove(self, event):
-        for tool in self.toolset.tools.values():
-            if tool.box: tool.box.SetPosition(self.GetPosition(), self.GetSize())
         event.Skip()
+        if wx.Platform == "__WXMAC__": delay = 200  
+        else: delay = 1
+        self.movetimer.StartOnce(delay)
+       
+
+    def OnMoveTimer(self, event):
+        mainpos = self.GetPosition()
+        mainsize = self.GetSize()
+        for tool in self.toolset.tools.values():
+            if tool.box: tool.box.SetPosition(mainpos, mainsize)
 
 
     def OnSize(self, event):
@@ -326,6 +350,10 @@ class HypoMain(MainFrame):
         # Event Binds
         self.Bind(wx.EVT_CLOSE, self.OnClose)
         self.Bind(wx.EVT_SIZE, self.OnHypoSize)
+
+        # Window Drag Smoothing
+        self.movetimer = wx.Timer(self)
+        self.Bind(wx.EVT_TIMER, self.OnMoveTimer, self.movetimer)
 
 
     def SetMenuFlag(self, id, flagtag, flagtext, state, menu):
