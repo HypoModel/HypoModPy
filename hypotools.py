@@ -110,7 +110,7 @@ class ToolButton(wx.Button):
 
 class ToolBox(wx.Frame):
     def __init__(self, parent, tag, title, pos, size, type = 0, 
-    style = wx.FRAME_FLOAT_ON_PARENT | wx.FRAME_TOOL_WINDOW | wx.RESIZE_BORDER | wx.SYSTEM_MENU | wx.CAPTION | wx.CLOSE_BOX):
+    style = wx.FRAME_FLOAT_ON_PARENT | wx.FRAME_TOOL_WINDOW | wx.RESIZE_BORDER | wx.SYSTEM_MENU | wx.CAPTION | wx.CLOSE_BOX | wx.MINIMIZE_BOX):
 
         wx.Frame.__init__(self, parent, title = title, pos = pos, size = size, style = style)
 
@@ -155,6 +155,7 @@ class ToolBox(wx.Frame):
         self.Bind(wx.EVT_CLOSE, self.OnClose)
         self.Bind(wx.EVT_MOVE, self.OnMove)
         self.Bind(wx.EVT_SIZE, self.OnSize)
+        self.Bind(wx.EVT_ICONIZE, self.OnIconize)
 
         self.SetPosition(parent.GetPosition(), parent.GetSize())
 
@@ -261,6 +262,12 @@ class ToolBox(wx.Frame):
         else:
             pub.sendMessage("toolclose_listener", message=self.boxtag)
             event.Skip()
+
+    
+    def OnIconize(self, event):
+        DiagWrite("tool iconize call\n")
+        event.Skip()
+
     
 
 # mpos give the position relative to the main plot window

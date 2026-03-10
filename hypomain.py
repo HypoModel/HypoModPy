@@ -48,8 +48,8 @@ class MainFrame(wx.Frame):
         #self.mainpath = mpath
         self.app_path = os.getcwd()
         if self.ostype == "Windows": self.respath = self.app_path + "/HypoModPy/Resource"
-        else: self.respath = self.app_path + "/../HypoModPy/Resource"
-        #else: self.respath = self.app_path + "/HypoModPy/Resource"
+        #else: self.respath = self.app_path + "/../HypoModPy/Resource". # depends on folder open in vscode
+        else: self.respath = self.app_path + "/HypoModPy/Resource"
 
         self.diagbox.Write("MainFrame app_path " + self.app_path + "\n")
         self.diagbox.Write("ostype " + self.ostype + "\nMainFrame respath " + self.respath + "\n")
@@ -104,6 +104,7 @@ class MainFrame(wx.Frame):
         self.Bind(wx.EVT_LEFT_UP, self.OnLeftClick)
         self.Bind(wx.EVT_MOVE, self.OnMove)
         self.Bind(wx.EVT_SIZE, self.OnSize)
+        self.Bind(wx.EVT_ICONIZE, self.OnIconize)
 
         self.ToolLoad()    # main window tool configuration
 
@@ -211,10 +212,44 @@ class MainFrame(wx.Frame):
         event.Skip()
 
 
+    # def OnIconize(self, event):
+    #     iconized = event.IsIconized()
+    #     event.Skip()
+    #     if not iconized: wx.CallAfter(self.RestoreFromMinimize)
+    #     self.diagbox.Write('Icon Event\n')
+
+
+    def OnIconize(self, event):
+        iconized = event.IsIconized()
+
+        for tool in self.toolset.tools.values():
+            if tool.box:
+                if iconized:
+                    tool.box.Show(False)
+                else:
+                    if tool.visible:
+                        tool.box.Show(True)
+                        tool.box.SetPosition(self.GetPosition(), self.GetSize())
+
+        #event.Skip()
+
+    
+    # def RestoreFromMinimize(self):
+    #     if self.IsIconized():
+    #         self.Restore()
+    #     self.Raise()
+    #     for tool in self.toolset.tools.values():
+    #         if tool.box and tool.visible:
+    #             tool.box.Show(True)
+    #             tool.box.SetPosition(self.GetPosition(), self.GetSize())
+    #     if hasattr(self, "systempanel") and self.systempanel and self.systempanel.IsShown():
+    #         self.systempanel.Raise()
+
+
 
 class SystemPanel(wx.Dialog):
     def __init__(self, mainwin, title):
-        super(SystemPanel, self).__init__(None, -1, title, wx.DefaultPosition, wx.Size(470, 450), 
+        super(SystemPanel, self).__init__(mainwin, -1, title, wx.DefaultPosition, wx.Size(470, 450), 
                                           wx.FRAME_FLOAT_ON_PARENT | wx.FRAME_TOOL_WINDOW | wx.CAPTION | wx.SYSTEM_MENU | wx.CLOSE_BOX | wx.RESIZE_BORDER)
 
         self.mainwin = mainwin

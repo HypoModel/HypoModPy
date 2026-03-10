@@ -129,7 +129,7 @@ class GraphPanel(wx.Panel):
         self.anchorpos = pos
         if self.anchorpos.x < self.xbase: self.anchorpos.x = self.xbase
         if self.anchorpos.x > self.xbase + self.xplot: self.anchorpos.x = self.xbase + self.xplot
-        if self.anchorpos.y < self.ybase: self.currentpos.y = self.ybase
+        if self.anchorpos.y < self.ybase: self.anchorpos.y = self.ybase
         if self.anchorpos.y > self.ybase + self.yplot: self.anchorpos.y = self.ybase + self.yplot
 
 
