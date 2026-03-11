@@ -534,10 +534,10 @@ class ScaleBox(ToolPanel):
         oldxto = plot.xto
         diff = plot.xto - plot.xfrom
         plot.xto = plot.xto + diff
-        if plot.xto < plot.xmin or plot.xto > plot.xmax:
-            #mainwin->SetStatusText("X To, out of range, max 100000");
-            plot.xto = oldxto
-            return
+        # if plot.xto < plot.xmin or plot.xto > plot.xmax:
+        #     #mainwin->SetStatusText("X To, out of range, max 100000");
+        #     plot.xto = oldxto
+        #     return
         graphpanel.XYSynch
         self.synchcon = graphpanel.index
         self.ScaleUpdate()
