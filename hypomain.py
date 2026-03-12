@@ -187,10 +187,14 @@ class MainFrame(wx.Frame):
 
     
     def OnMove(self, event):
+        if GetSystem() == 'Mac':
+            self.movetimer.StartOnce(200)
+        else:
+            mainpos = self.GetPosition()
+            mainsize = self.GetSize()
+            for tool in self.toolset.tools.values():
+                if tool.box: tool.box.SetPosition(mainpos, mainsize)
         event.Skip()
-        if wx.Platform == "__WXMAC__": delay = 200  
-        else: delay = 1
-        self.movetimer.StartOnce(delay)
        
 
     def OnMoveTimer(self, event):
