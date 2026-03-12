@@ -332,12 +332,12 @@ class SpikeDat():
         if laststep > maxbin: laststep = maxbin
 
         # calculate index of dispersion
-        mean = 0;
-        variance = 0;
+        mean = 0
+        variance = 0
         for i in range(laststep): mean = mean +  spikerate[i]    # mean
-        mean = mean / laststep;
-        for i in range(laststep): variance += (mean - spikerate[i]) * (mean - spikerate[i]);	# variance
-        variance = variance / laststep;
+        mean = mean / laststep
+        for i in range(laststep): variance += (mean - spikerate[i]) * (mean - spikerate[i]) 	# variance
+        variance = variance / laststep
         dispersion = variance / mean        # dispersion
 
         return dispersion
