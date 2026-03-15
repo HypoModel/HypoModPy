@@ -103,7 +103,7 @@ def ParseInt(readline, chartag = None):
     if chartag: readline = readline.partition(chartag)[2]         # NULL tag just reads next int
     readline = readline.strip()
     numstring = readline.partition(' ')[0]
-    numdat = int(numstring)
+    numdat = int(float(numstring))
     readline = readline.partition(' ')[2]
     return (numdat, readline)
 

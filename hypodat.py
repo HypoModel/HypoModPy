@@ -46,27 +46,22 @@ class pdata(np.ndarray):
         # Finally, we must return the newly created object:
         return obj
     
+    
     def __array_finalize__(self, obj):
         if obj is None: return
         self.info = getattr(obj, 'info', None)
+        self.xmax = getattr(obj, 'xmax', len(self))
+        self.empty = getattr(obj, 'empty', True)
 
 
-    def __array_wrap__(self, out_arr, context=None):
-        print('In __array_wrap__:')
-        print('   self is %s' % repr(self))
-        print('   arr is %s' % repr(out_arr))
-        # then just call the parent
-        return super().__array_wrap__(self, out_arr, context)
-
-
-    def clear(self):
-        self.fill(0)
+    def __setitem__(self, key, value):
+        super().__setitem__(key, value)
         self.empty = False
 
 
-    """ def resize(self, newsize):
-        #np.resize(self, newsize)
-        self.resize(newsize) """
+    def reset(self):
+        self.fill(0)
+        self.empty = True
 
     
 
@@ -247,8 +242,8 @@ class PlotDat():
         #DiagWrite("strokecolourtext: " + strokecolourtext + "\n")
 
         gtext = "v1"
-        gtext += f" tag {tag} xf {self.xfrom} xt {self.xto} yf {self.yfrom} yt {self.yto} xl {self.xlabels} xs {self.xstep} xm {self.xtickmode}"
-        gtext += f" yl {self.ylabels} ys {self.ystep} ym {self.ytickmode} c {self.colour} srgb {strokecolourtext} xs {self.xshift} xu {self.xunitscale}"
+        gtext += f" tag {tag} xf {self.xfrom} xt {self.xto} yf {self.yfrom} yt {self.yto} xl {self.xlabels:d} xs {self.xstep} xm {self.xtickmode:d}"
+        gtext += f" yl {self.ylabels:d} ys {self.ystep} ym {self.ytickmode:d} c {self.colour} srgb {strokecolourtext} xs {self.xshift} xu {self.xunitscale}"
         gtext += f" ps {self.plotstroke} name {storetitle} xtag {storextitle} ytag {storeytitle} xp {self.xplot} yp {self.yplot} pf {self.labelfontsize}"
         gtext += f" cm {self.clipmode} type {self.type} xd {self.xunitdscale} xsam {self.xsample} bw {self.barwidth} bg {self.bargap} yu {self.yunitscale}" 
         gtext += f" xl {self.xlabelplaces} yl {self.ylabelplaces} xm {self.xlabelmode} ym {self.ylabelmode} xs {self.xscalemode} ys {self.yscalemode}"

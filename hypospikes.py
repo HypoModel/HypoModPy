@@ -146,6 +146,16 @@ class NeuroDat():
         self.maxspikes = newsize
         DiagWrite(f"NeuroDat setsize {newsize}\n")
 
+    # 15/3/26 ChatGPT suggested safe resize with new pdata
+    def SetSizeSafe(self, newsize):
+        newtimes = pdata(newsize)
+        copylen = min(len(self.times), newsize)
+        newtimes[:copylen] = self.times[:copylen]
+        newtimes.xmax = newsize
+        newtimes.empty = self.times.empty if hasattr(self.times, "empty") else True
+        self.times = newtimes
+        self.maxspikes = newsize
+
 
 class SpikeDat():
     def __init__(self):
@@ -182,12 +192,12 @@ class SpikeDat():
         DiagWrite("Analysis() call\n")
 
         # reset spike interval analysis stores
-        self.hist1.clear()
-        self.hist5.clear()
-        self.haz1.clear()
-        self.haz5.clear()
-        self.hist1norm.clear()
-        self.hist5norm.clear()
+        self.hist1.reset()
+        self.hist5.reset()
+        self.haz1.reset()
+        self.haz5.reset()
+        self.hist1norm.reset()
+        self.hist5norm.reset()
 
         self.hist1.xmax = 0
         self.hist5.xmax = 0
@@ -197,7 +207,7 @@ class SpikeDat():
         self.haz5.xmax = 0
 
         # reset spike rate stores
-        self.srate1s.clear()
+        self.srate1s.reset()
 
         mean = 0
         variance = 0
@@ -295,7 +305,7 @@ class SpikeDat():
 
 
         # Index of Dispersion Range
-        self.IoDdata.clear()
+        self.IoDdata.reset()
         self.IoDdata[0] = self.dispcalc(500)
         self.IoDdata[1] = self.dispcalc(1000)
         self.IoDdata[2] = self.dispcalc(2000)
@@ -324,7 +334,7 @@ class SpikeDat():
         timeshift = 0
 
         # calculate spike rate for binsize
-        spikerate.clear()
+        spikerate.reset()
         for i in range(self.spikecount):
             if (self.times[i] - timeshift) / binsize < maxbin: spikerate[int(((self.times[i] - timeshift) + 0.5) / binsize)] += 1
            
