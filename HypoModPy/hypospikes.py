@@ -182,7 +182,6 @@ class SpikeDat():
 
         # initialise arrays for spike interval analysis
         self.histsize = 20000
-        #self.hist1 = pdata(self.histsize + 1)
         self.hist1 = pdata(self.histsize + 1)
         self.hist5 = pdata(self.histsize + 1)
         self.hist1norm = pdata(self.histsize + 1)
