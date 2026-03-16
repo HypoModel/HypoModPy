@@ -168,8 +168,7 @@ class SpikeDat():
 
         # initialise arrays for spike interval analysis
         self.histsize = 20000
-        #self.hist1 = pdata(self.histsize + 1)
-        self.hist1 = datarray(self.histsize + 1)
+        self.hist1 = pdata(self.histsize + 1)
         self.hist5 = pdata(self.histsize + 1)
         self.hist1norm = pdata(self.histsize + 1)
         self.hist5norm = pdata(self.histsize + 1)
@@ -177,11 +176,11 @@ class SpikeDat():
         self.haz5 = pdata(self.histsize + 1)
 
         # IoD data
-        self.IoDdata = datarray(100)
-        self.IoDdataX = datarray(100)
+        self.IoDdata = pdata(100)
+        self.IoDdataX = pdata(100)
 
         # initialise arrays for spike rate
-        self.srate1s = datarray(10000)
+        self.srate1s = pdata(10000)
 
         self.normscale = 10000   # normalise and scale histogram to normscale spikecount 
 
@@ -329,7 +328,7 @@ class SpikeDat():
 
     def dispcalc(self, binsize):
         maxbin = 10000
-        spikerate = datarray(10000)
+        spikerate = pdata(10000)
         dispersion = 0
         timeshift = 0
 
