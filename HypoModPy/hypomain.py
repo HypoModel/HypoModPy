@@ -1,25 +1,16 @@
 
-
-#from HypoModPy.hypobase import *
-#from HypoModPy.hypotools import *
-#from HypoModPy.hypograph import *
-#from HypoModPy.hyposcale import *
-#from HypoModPy.hypoparams import *
-
 import os
 import sys
 
 import wx
 from pubsub import pub
 
-from HypoModPy.hypobase import GetSystem, DiagWrite
-from HypoModPy.hypotools import TextFile, ToolSet, DiagBox, ToolPanel
+from HypoModPy.hypobase import GetSystem
+from HypoModPy.hypotools import TextFile, ToolSet, DiagBox, ToolPanel, DiagWrite, SetDiagBoxTarget
 from HypoModPy.hypograph import GraphDisp, GraphPanel
 from HypoModPy.hyposcale import ScaleBox
 from HypoModPy.hypoparams import ParamCon, ID_ModBrowse
 from HypoModPy.hypodat import PlotDat
-
-
 
 
 NSApp = None
@@ -229,13 +220,6 @@ class MainFrame(wx.Frame):
         event.Skip()
 
 
-    # def OnIconize(self, event):
-    #     iconized = event.IsIconized()
-    #     event.Skip()
-    #     if not iconized: wx.CallAfter(self.RestoreFromMinimize)
-    #     self.diagbox.Write('Icon Event\n')
-
-
     def OnIconize(self, event):
         iconized = event.IsIconized()
 
@@ -248,21 +232,7 @@ class MainFrame(wx.Frame):
                         tool.box.Show(True)
                         tool.box.SetPosition(self.GetPosition(), self.GetSize())
 
-        #event.Skip()
-
     
-    # def RestoreFromMinimize(self):
-    #     if self.IsIconized():
-    #         self.Restore()
-    #     self.Raise()
-    #     for tool in self.toolset.tools.values():
-    #         if tool.box and tool.visible:
-    #             tool.box.Show(True)
-    #             tool.box.SetPosition(self.GetPosition(), self.GetSize())
-    #     if hasattr(self, "systempanel") and self.systempanel and self.systempanel.IsShown():
-    #         self.systempanel.Raise()
-
-
 
 class SystemPanel(wx.Dialog):
     def __init__(self, mainwin, title):

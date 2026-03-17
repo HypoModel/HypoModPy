@@ -5,8 +5,6 @@ import wx
 from pathlib import Path
 from pubsub import pub
 
-#from hypotools import *
-
 
 # Preference Flags
 basicmode = 0
@@ -36,12 +34,6 @@ class DiagEvent(wx.PyCommandEvent):
     def __init__(self, text=""):
         super().__init__(DiagEventType)
         self.text = text
-
-
-
-# def DiagWrite(text):
-#     #pub.sendMessage("diagbox", message=text)
-#     test = 1
 
 
 class TextFile():
