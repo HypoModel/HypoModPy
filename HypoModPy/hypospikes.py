@@ -63,14 +63,28 @@ class SpikeDataPanel(ToolPanel):
         datagrid.Add(self.selectfreq)
 
         self.datneuron = wx.TextCtrl(self, wx.ID_ANY, "---", wx.DefaultPosition, wx.Size(50, -1), wx.ALIGN_LEFT|wx.BORDER_SUNKEN|wx.ST_NO_AUTORESIZE|wx.TE_PROCESS_ENTER)
-        datspin = wx.SpinButton(self, wx.ID_ANY, wx.DefaultPosition, wx.Size(-1, -1), wx.SP_HORIZONTAL|wx.SP_ARROW_KEYS)
-        datspin.SetRange(-1000000, 1000000)
-        datspin.Bind(wx.EVT_SPIN_UP, self.OnNext)
-        datspin.Bind(wx.EVT_SPIN_DOWN, self.OnPrev)
+        
+        if GetSystem() == "Mac":
+            prevbtn = wx.Button(self, wx.ID_ANY, "<", wx.DefaultPosition, wx.Size(28, 24))
+            nextbtn = wx.Button(self, wx.ID_ANY, ">", wx.DefaultPosition, wx.Size(28, 24))
 
-        datbox = wx.BoxSizer(wx.HORIZONTAL)
-        datbox.Add(datspin, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL)
-        datbox.AddSpacer(5)
+            prevbtn.Bind(wx.EVT_BUTTON, self.OnPrev)
+            nextbtn.Bind(wx.EVT_BUTTON, self.OnNext)
+
+            datbox = wx.BoxSizer(wx.HORIZONTAL)
+            datbox.Add(prevbtn, 0, wx.ALIGN_CENTRE_HORIZONTAL | wx.ALIGN_CENTRE_VERTICAL)
+            datbox.AddSpacer(4)
+            datbox.Add(nextbtn, 0, wx.ALIGN_CENTRE_HORIZONTAL | wx.ALIGN_CENTRE_VERTICAL)
+            datbox.AddSpacer(5)
+        else:
+            datspin = wx.SpinButton(self, wx.ID_ANY, wx.DefaultPosition, wx.Size(-1, -1), wx.SP_HORIZONTAL|wx.SP_ARROW_KEYS)
+            datspin.SetRange(-1000000, 1000000)
+            datspin.Bind(wx.EVT_SPIN_UP, self.OnNext)
+            datspin.Bind(wx.EVT_SPIN_DOWN, self.OnPrev)
+
+            datbox = wx.BoxSizer(wx.HORIZONTAL)
+            datbox.Add(datspin, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL)
+            datbox.AddSpacer(5)
 
         cellbox = wx.BoxSizer(wx.HORIZONTAL)
         cellbox.Add(wx.StaticText(self, wx.ID_ANY, "Neuron"), 1, wx.ALIGN_CENTRE|wx.ST_NO_AUTORESIZE)
@@ -115,7 +129,7 @@ class SpikeDataPanel(ToolPanel):
 
 
     def PanelData(self, cellspike):
-        self.datneuron.SetLabel(numstring(self.cellindex))
+        self.datneuron.ChangeValue(numstring(self.cellindex))
         self.label.SetLabel(cellspike.name)
         self.spikes.SetLabel(numstring(cellspike.spikecount))
         self.freq.SetLabel(numstring(cellspike.freq, 2))
@@ -168,6 +182,7 @@ class SpikeDat():
 
         # initialise arrays for spike interval analysis
         self.histsize = 20000
+        #self.hist1 = pdata(self.histsize + 1)
         self.hist1 = pdata(self.histsize + 1)
         self.hist5 = pdata(self.histsize + 1)
         self.hist1norm = pdata(self.histsize + 1)
@@ -214,7 +229,7 @@ class SpikeDat():
         binmax1 = 20000
         binmax5 = 10000
 
-        if neurodata != None:
+        if neurodata is not None:
             self.spikecount = neurodata.spikecount
             self.maxspikes = neurodata.maxspikes
             #DiagWrite(f"SpikeDat Analysis() name {neurodata.name} spikecount {neurodata.spikecount}\n")
@@ -226,21 +241,15 @@ class SpikeDat():
         # ISIs, Histogram, Freq, Variance
 
         isicount = self.spikecount - 1
-        if neurodata != None: self.times[0] = neurodata.times[0]
-
-        # DiagWrite(f"SpikeDat Analysis() times[0] {neurodata.times[0]}\n")
-        # DiagWrite(f"SpikeDat Analysis() times[1] {neurodata.times[1]}\n")
-        # DiagWrite(f"SpikeDat Analysis() times[2] {neurodata.times[2]}\n")
+        if neurodata is not None: self.times[0] = neurodata.times[0]
 
         # 1ms ISI Histogram
         for i in range(isicount):                                   
-            if i > self.maxspikes: break
-            if neurodata != None: self.times[i+1] = neurodata.times[i+1]
+            if i+1 >= self.maxspikes: break
+            if neurodata is not None: self.times[i+1] = neurodata.times[i+1]
             self.isis[i] = self.times[i+1] - self.times[i]
             if self.isis[i] >= self.histsize: continue  # skip if spike interval is very large
             if self.hist1.xmax < int(self.isis[i]): self.hist1.xmax = int(self.isis[i])
-            #if self.hist1.size < self.hist1.xmax + 1: self.hist1.resize(self.hist1.xmax + 1) np.resize(self.hist1, 20000)
-            #if self.hist1.size < self.hist1.xmax + 1: self.hist1.resize(20000)
             try:
                 if self.isis[i] < self.histsize: self.hist1[int(self.isis[i])] += 1
             except Exception:
@@ -323,8 +332,6 @@ class SpikeDat():
 
         DiagWrite(f"SpikeDat Analysis() freq {self.freq:.2f}\n")
 
-        #for i in range(1, 50):
-        #    DiagWrite(f"hist5 bin {i} {self.hist5[i]}\n")
 
     def dispcalc(self, binsize):
         maxbin = 10000

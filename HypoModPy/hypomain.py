@@ -1,26 +1,14 @@
 
 
-#from HypoModPy.hypobase import *
-#from HypoModPy.hypotools import *
-#from HypoModPy.hypograph import *
-#from HypoModPy.hyposcale import *
-#from HypoModPy.hypoparams import *
+from HypoModPy.hypobase import *
+from HypoModPy.hypotools import *
+from HypoModPy.hypograph import *
+from HypoModPy.hyposcale import *
+from HypoModPy.hypoparams import *
 
-import os
+from spikemod import *
+
 import sys
-
-import wx
-from pubsub import pub
-
-from HypoModPy.hypobase import GetSystem, DiagWrite
-from HypoModPy.hypotools import TextFile, ToolSet, DiagBox, ToolPanel
-from HypoModPy.hypograph import GraphDisp, GraphPanel
-from HypoModPy.hyposcale import ScaleBox
-from HypoModPy.hypoparams import ParamCon, ID_ModBrowse
-from HypoModPy.hypodat import PlotDat
-
-
-
 
 NSApp = None
 NSApplication = None
@@ -43,25 +31,23 @@ class MainFrame(wx.Frame):
         super(MainFrame, self).__init__(None, wx.ID_ANY, title, pos, size)
         self.ostype = GetSystem()
         self.statusbar = self.CreateStatusBar()
+        #self.SetBackgroundColour(wx.WHITE)
+        #errorCode = ctypes.windll.shcore.SetProcessDpiAwareness(2)
 
         # Initialise ToolBoxes
         self.diagbox = DiagBox(self, "Diagnostic", wx.Point(0, 0), wx.Size(400, 500))
+        SetDiagBoxTarget(self.diagbox)
         self.diagbox.Write('Diagnostic Box OK\n')
         self.gridbox = None
         self.plotcon = None
         self.spikedatabox = None
 
-        # self.respath = rpath;  # defaults to "" for Windows, bundle resource path for OSX
-        # #self.mainpath = mpath
-        # self.app_path = os.getcwd()
-        # if self.ostype == "Windows": self.respath = self.app_path + "/HypoModPy/Resource"
-        # #else: self.respath = self.app_path + "/../HypoModPy/Resource". # depends on folder open in vscode
-        # else: self.respath = self.app_path + "/HypoModPy/Resource"
-
-        # self.respath = rpath
-
-        self.app_path = os.path.dirname(os.path.abspath(__file__))
-        self.respath = os.path.join(self.app_path, "Resource")
+        self.respath = rpath;  # defaults to "" for Windows, bundle resource path for OSX
+        #self.mainpath = mpath
+        self.app_path = os.getcwd()
+        if self.ostype == "Windows": self.respath = self.app_path + "/HypoModPy/Resource"
+        #else: self.respath = self.app_path + "/../HypoModPy/Resource". # depends on folder open in vscode
+        else: self.respath = self.app_path + "/HypoModPy/Resource"
 
         self.diagbox.Write("MainFrame app_path " + self.app_path + "\n")
         self.diagbox.Write("ostype " + self.ostype + "\nMainFrame respath " + self.respath + "\n")
@@ -376,18 +362,9 @@ class HypoMain(MainFrame):
             self.graphsizer.Add(graphpanel, 1, wx.EXPAND)
 
         # Mod Init
-        if modname == "Osmo":
-            from OsmoModPy.osmomod import OsmoMod
-            self.mod = OsmoMod(self, "osmomod")
-
-        if modname == "Spike":
-            from SpikeModPy.spikemod import SpikeMod
-            self.mod = SpikeMod(self, "spikemod")
-
-        if modname == "Agent":
-            from AgentModPy.agentmod import AgentMod
-            self.mod = AgentMod(self, "agentmod")
-
+        if modname == "Osmo": self.mod = OsmoMod(self, "osmomod")
+        if modname == "Spike": self.mod = SpikeMod(self, "spikemod")
+        if modname == "Agent": self.mod = AgentMod(self, "agentmod")
         self.mod.DefaultPlots()
         
         # Scale Box
@@ -578,7 +555,7 @@ class HypoMain(MainFrame):
         self.scalebox.storetag.HistStore()
         #if(project.mod): 
         #    project.Store()
-        if(self.mod != None):
+        if(self.mod is not None):
             self.mod.ModStore()
             self.mod.modbox.Close()
             #self.mod.Destroy()

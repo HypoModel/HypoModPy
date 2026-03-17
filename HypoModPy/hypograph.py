@@ -138,6 +138,7 @@ class GraphPanel(wx.Panel):
 
         if self.mainwin.hypoflags["xypos"]:
             plot = self.GetFrontPlot()
+            if plot is None: return
 
             # 27/11/20 fixed scaling using adjusted axis unit scales, still need to fix for measure
 
@@ -201,7 +202,7 @@ class GraphPanel(wx.Panel):
 
     def ScrollUpdate(self, xmax=0):
         plot = self.GetFrontPlot()
-        if not plot: return
+        if plot is None: return
         if not any(plot.data):
             #mod->diagbox->Write("plot " + plot.gname + " no data\n")
             #return
@@ -272,6 +273,7 @@ class GraphPanel(wx.Panel):
 
     def GetFrontPlot(self):
         if len(self.dispset) == 0: return None
+        if len(self.dispset[0].plots) == 0: return None
         else: return self.dispset[0].plots[0]
 
 
@@ -314,7 +316,8 @@ class GraphPanel(wx.Panel):
         for settag in mod.plotbase.setstore:
             plotset = mod.plotbase.setstore[settag]
             if not plotset.submenu:
-                menuitem = wx.MenuItem(menuPlot, wx.ID_ANY, settag, "", wx.ITEM_CHECK)
+                menuitem = wx.MenuItem(menuPlot, wx.ID_ANY, plotset.label, "", wx.ITEM_CHECK)
+                DiagWrite(f"right click {settag}\n")
 #ifndef OSX
                 #menuitem->SetBitmaps(radio_on, radio_off)
 #endif
@@ -326,14 +329,15 @@ class GraphPanel(wx.Panel):
                 #menuPlot->AppendRadioItem(1000 + i, graphset->name)
             else:
                 subPlot = wx.Menu()
-                for plottag in plotset.plottags:
-                    menuitem = wx.MenuItem(subPlot, wx.ID_ANY, plottag, "", wx.ITEM_CHECK)
+                for plot in plotset:
+                    menuitem = wx.MenuItem(subPlot, wx.ID_ANY, plot.label, "", wx.ITEM_CHECK)
+                    DiagWrite(f"right click {plot.label}\n")
 #ifndef OSX
                     #menuitem->SetBitmaps(radio_on, radio_off)
 #endif
                     subPlot.Append(menuitem)
                     menuitem.Check(False)
-                    self.menuIdPlotMap[menuitem.GetId()] = plottag
+                    self.menuIdPlotMap[menuitem.GetId()] = plot.plottag
                     self.Bind(wx.EVT_MENU, self.OnGraphSelectPlot, menuitem)
 
                 #subPlot->AppendRadioItem(2000 + graphset->gindex[j], graphset->GetPlot(j)->gname)
