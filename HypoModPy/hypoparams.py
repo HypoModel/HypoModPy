@@ -19,6 +19,7 @@ class ParamCon(wx.Control):
         self.panel = panel
         self.pad = panel.controlborder
         self.cycle = False
+        self.oldvalue = initval
 
         self.diagmode = False
 
@@ -532,6 +533,7 @@ class ParamBox(ToolBox):
     def SetCount(self, value):
         if self.runcount is not None:
             self.runcount.SetLabel(f"{value} %")
+            #DiagWrite(f"Set count, value {value}\n\n")
 
 
     def InitMenu(self, type = "menu_model"):
@@ -550,10 +552,6 @@ class ParamBox(ToolBox):
             menuBar.Append(self.menuMode, "Mode")
 
         self.SetMenuBar(menuBar)
-
-
-    def SetCount(self, count):
-        self.runcount.SetLabel("{} %%".format(count))
        
 
     def AddPanelButton(self, id, label, toolbox):
@@ -563,6 +561,7 @@ class ParamBox(ToolBox):
         self.panelrefs[id] = toolbox
         button = self.AddButton(id, label, self.buttonwidth, self.buttonbox)
         button.Bind(wx.EVT_BUTTON, self.OnPanel)
+        self.panelbuttoncount += 1
        
 
     def OnPanel(self, event):
