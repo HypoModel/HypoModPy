@@ -21,11 +21,12 @@ class ModThreadEvent(wx.PyCommandEvent):
 
 # Mod Class
 class Mod(wx.EvtHandler):
-    def __init__(self, mainwin, tag):
+    def __init__(self, mainwin, tag, label="", type=""):
         wx.EvtHandler.__init__(self)
 
         self.mainwin = mainwin
         self.tag = tag
+        self.label = label
         self.type = type
         self.graphload = False
         self.runflag = False
@@ -35,6 +36,14 @@ class Mod(wx.EvtHandler):
 
         self.plotbase = PlotBase(mainwin)
         self.settags = []
+
+        if mainwin.modpath != "": self.path = mainwin.modpath + "/" + self.label
+        else: self.path = self.label
+
+        if os.path.exists(self.path) == False: 
+            os.mkdir(self.path)
+
+        self.mainwin = mainwin
 
         self.Bind(EVT_MODTHREAD_COMPLETE, self.OnModThreadComplete)
         self.Bind(EVT_MODTHREAD_PROGRESS, self.OnModThreadProgress)

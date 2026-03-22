@@ -11,6 +11,7 @@ from HypoModPy.hypograph import GraphDisp, GraphPanel
 from HypoModPy.hyposcale import ScaleBox
 from HypoModPy.hypoparams import ParamCon, ID_ModBrowse
 from HypoModPy.hypodat import PlotDat
+from HypoModPy.hypoproject import Project
 
 
 NSApp = None
@@ -308,6 +309,7 @@ class HypoMain(MainFrame):
 
         self.SetMinSize(wx.Size(500, 400))
 
+
         # Load Prefs
         self.HypoLoad()
         self.SetSize(self.prefs["viewwidth"], self.prefs["viewheight"])
@@ -331,7 +333,25 @@ class HypoMain(MainFrame):
         self.UserMenu()
         self.SetTitle("HypoMod")
 
-        # Graph Disps
+        # Mod Init
+        if modname == "Osmo":
+            from OsmoModPy.osmomod import OsmoMod
+            self.mod = OsmoMod(self, "osmomod", modname)
+
+        if modname == "Spike":
+            from SpikeModPy.spikemod import SpikeMod
+            self.mod = SpikeMod(self, "spikemod", modname)
+
+        if modname == "Agent":
+            from AgentModPy.agentmod import AgentMod
+            self.mod = AgentMod(self, "agentmod", modname)
+
+        # Project Init
+        self.project = Project(self, "default", self.modpath)
+        self.project.SetMainMod(self.mod)
+        self.project.Init("default", self.mod)
+
+         # Graph Disps
         self.dispset = []
         for i in range(self.numgraphs):
             self.dispset.append(GraphDisp())
@@ -346,21 +366,8 @@ class HypoMain(MainFrame):
             self.panelset.append(graphpanel)
             self.graphsizer.Add(graphpanel, 1, wx.EXPAND)
 
-        # Mod Init
-        if modname == "Osmo":
-            from OsmoModPy.osmomod import OsmoMod
-            self.mod = OsmoMod(self, "osmomod")
-
-        if modname == "Spike":
-            from SpikeModPy.spikemod import SpikeMod
-            self.mod = SpikeMod(self, "spikemod")
-
-        if modname == "Agent":
-            from AgentModPy.agentmod import AgentMod
-            self.mod = AgentMod(self, "agentmod")
-
         self.mod.DefaultPlots()
-        
+
         # Scale Box
         self.scalebox = ScaleBox(self, wx.Size(self.scalewidth, -1), self.numdraw)
         if self.mod.graphload: self.scalebox.GLoad()
