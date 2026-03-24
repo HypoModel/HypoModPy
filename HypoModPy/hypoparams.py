@@ -283,6 +283,7 @@ class ParamBox(ToolBox):
         #defstore = false;
         self.diag = 0   # diagnostic mode
         self.mainwin = model.mainwin  # main window link
+        self.ostype = GetSystem()
 
         # modmode = 0;
         
@@ -387,14 +388,12 @@ class ParamBox(ToolBox):
         paramfile.WriteLine("")
         for flagtag in self.flagtags.values():
             outline = f"{self.modflags[flagtag]}"
-            #outline = "%.0f".format(self.modflags[flagtag])
             paramfile.WriteLine(flagtag + " " + outline)
 
         # Write Check Values
         paramfile.WriteLine("")
         for checktag in self.checktags.values():
             outline = f"{self.modflags[checktag]}"
-            #outline = "%.0f".format(self.modflags[checktag])
             paramfile.WriteLine(checktag + " " + outline)
   
         # Close File
