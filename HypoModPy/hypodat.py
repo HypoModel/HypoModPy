@@ -65,6 +65,12 @@ class pdata(np.ndarray):
         self.empty = True
 
     
+    def clear(self):        # deprecated, use reset instead
+        self.fill(0)
+        self.empty = True
+
+
+    
 
 class PlotSet():
     def __init__(self):
@@ -154,6 +160,7 @@ class PlotDat():
 
         self.xtitle = "X"
         self.ytitle = "Y"
+        self.gtitle = 1
 
         self.xaxis = 1
         self.yaxis = 1

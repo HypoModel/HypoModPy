@@ -1,5 +1,9 @@
 
+from hashlib import new
 from math import log, pow
+from xxlimited import new
+from HypoModPy.hypobase import TextFile, numstring
+from HypoModPy.hypotools import DiagWrite
 
 
 class GraphEPS:
@@ -10,7 +14,7 @@ class GraphEPS:
 		pass
 
 
-class GraphWindow3:
+class GraphEPS:
 
 	def EPSColour(self, colour):
 		if hasattr(colour, "Red"):
@@ -24,6 +28,7 @@ class GraphWindow3:
 				return f"{c.Red() / 255:.4f} {c.Green() / 255:.4f} {c.Blue() / 255:.4f}"
 		return "0 0 0"
 
+
 	def EPSNum(self, x, places=-1):
 		if places != -1: return numstring(x, places)
 		ax = abs(x)
@@ -32,14 +37,278 @@ class GraphWindow3:
 		if ax < 10: return f"{x:.1f}"
 		return f"{x:.0f}"
 
+
 	def EPSHeader(self, out):
 		out.WriteLine("%!PS-Adobe-3.0 EPSF-3.0")
 		out.WriteLine("%%BoundingBox: 0 0 1000 500")
-		out.WriteLine("/pu {1 mul} def")
+		out.WriteLine("/pu {1 mul} def")	# pu = plot units, set scaling to points
 		out.WriteLine("0 0 0 setrgbcolor")
 		out.WriteLine("1 setlinecap")
 		out.WriteLine("1 setlinejoin")
 		out.WriteLine("")
+
+
+	def WriteEPS(self, xb=-1, yb=-1, ofp=None):
+
+		mod = self.mod
+		mainwin = self.mainwin
+
+		DiagWrite(f"Graph EPS {self.index}\n")
+
+		if xb < 0: xbase = 100
+		else: xbase = xb
+		if yb < 0: ybase = 100
+		else: ybase = yb
+
+		xplot = 500  #self.xplot
+		yplot = 200  #self.yplot
+		xstretch = self.xstretch
+		axisstroke = 0.75
+		yoffset = 0
+
+		frontplot = self.dispset[0].plots[0]
+		filepath = mainwin.outpath
+		filetag = mod.modbox.storetag.GetValue()
+		filename = filepath + "/" + filetag + "-" + frontplot.label + ".eps"
+
+		if ofp is None:
+			out = TextFile()
+			out.Open(filename, 'w')
+			self.EPSHeader(out)
+		else: out = ofp
+
+		xlogbase = 2.71828182845904523536028747135266250
+		ylogbase = 2.71828182845904523536028747135266250
+
+
+		for graphdisp in self.dispset:
+			for plot in graphdisp.plots:
+
+				# Get Plot parameters
+				xfrom = plot.xfrom * plot.xscale
+				xto = plot.xto * plot.xscale
+				yfrom = plot.yfrom * plot.yscale
+				yto = plot.yto * plot.yscale
+
+				xplot = plot.xplot
+				yplot = plot.yplot
+				xlabels = plot.xlabels
+				ylabels = plot.ylabels
+				xscale = plot.xscale
+				yscale = plot.yscale
+				xdis = plot.xdis
+				xsample = plot.xsample
+
+				if plot.xscalemode == 1 and xfrom > 0: xlogmax = log(xto / xfrom) / log(xlogbase)
+				else: xlogmax = 0
+				if plot.yscalemode == 1 and yfrom > 0: ylogmax = log(yto / yfrom) / log(ylogbase)
+				else: ylogmax = 0
+
+				out.WriteLine(f"{self.EPSColour(plot.strokecolour)} setrgbcolor")
+
+				# Set drawing scales
+				xtoAxis = xto
+				xfromAxis = xfrom
+				xto = xto / plot.binsize
+				xfrom = xfrom / plot.binsize
+
+				yrange = yplot / (yto - yfrom)
+				xrange = xplot / (xto - xfrom)
+				xnum = (xto - xfrom) / xplot
+
+				xticklength = 5;
+				yticklength = 5;
+				# Auto tick length 
+				if xplot < 200: yticklength = 3
+				if yplot < 100: xticklength = 3
+
+				out.WriteLine("gsave")
+
+				if plot.clipmode:
+					out.WriteLine("newpath")
+					out.MoveTo(xbase, ybase)
+					out.LineTo(xbase, ybase + yplot)
+					out.LineTo(xbase + xplot, ybase + yplot)
+					out.LineTo(xbase + xplot, ybase)
+					out.WriteLine("closepath")
+					out.WriteLine("clip")
+
+				# Draw graph data
+				out.WriteLine(f"{plot.plotstroke:.2f} setlinewidth")
+
+				if hasattr(plot.data, "empty") and plot.data.empty:
+					out.WriteLine("grestore")
+					continue
+
+				if plot.type == "line":
+					xoffset = 0;
+					out.WriteLine("newpath")
+					out.WriteLine(f"{self.EPSColour(plot.strokecolour)} setrgbcolor")
+
+					yval = plot.data[int(plot.xfrom)]
+					oldx = xbase
+					oldy = ybase + yrange * (yval - yfrom)      # TODO proper start coordinates
+
+					for i in range(1, int((xto - xfrom) / xsample)):
+						xindex = int(i * xsample + xfrom)
+						if xindex >= len(plot.data): break
+
+						xpos = (xindex - xfrom) * xrange
+						yval = plot.data[xindex]
+
+						if plot.yscalemode == 1 and yfrom > 0:
+							ypos = (int)(yplot * (log(yval / yfrom) / log(ylogbase)) / ylogmax)  # log scaled y-axis  March 2018
+							if yval < yfrom: ypos = -yfrom * yrange     # set below range values to xfrom
+						else: ypos = yrange * (yval - yfrom)
+
+						out.DrawLine(oldx, oldy, xpos + xbase + xoffset, ybase + ypos)
+						oldx = xpos + xbase + xoffset
+						oldy = ybase + ypos
+
+					out.WriteLine("stroke")
+
+				out.WriteLine("grestore")
+
+		
+
+
+
+
+		DiagWrite(f"Font index {plot.labelfont} name {mainwin.fontset.GetName(plot.labelfont)}\n")
+
+		out.WriteLine(f"/{mainwin.fontset.GetName(plot.labelfont)} findfont {plot.labelfontsize:.2f} scalefont setfont")
+
+
+		xto = xtoAxis
+		xfrom = xfromAxis
+		ybase = ybase - yoffset
+		xaxislength = xplot
+
+		#if(graph->axistrace && graph->drawX != -1) xaxislength = graph->drawX * binsize / (xto - xfrom) * xplot;
+
+		out.WriteLine(f"{self.EPSColour(self.colourpen['black'])} setrgbcolor")
+		out.WriteLine(f"{axisstroke:.2f} setlinewidth")
+		out.WriteLine("newpath")
+		if plot.yaxis: out.DrawLine(xbase, ybase, xbase, ybase + yplot)
+		if plot.xaxis: out.DrawLine(xbase, ybase, xbase + xaxislength + xstretch, ybase)
+		out.WriteLine("")
+		out.WriteLine("")
+
+		# Draw Ticks
+
+		# new tickmode 0 = off, 1 = count, 2 = step
+
+		# Coding Note: ticks and labels in separate loops, unlike hypograph.cpp
+
+		xplotstep = 0
+		yplotstep = 0
+		xtickstart = 0
+		xtickshift = 0
+		if xfrom != 0: xtickshift = xfrom
+
+		if plot.xtickmode == 2:
+			xlabels = int((xto - xfrom) / (plot.xscale * plot.xstep))
+			xplotstep = (xplot * plot.xstep) / (xto - xfrom)
+			xtickstart = abs(xtickshift) * xplotstep
+
+		if plot.ytickmode == 2 and plot.ystep > 0:
+			ylabels = int((yto - yfrom) / (yscale * plot.ystep))
+			yplotstep = (yplot * plot.ystep) / (yto - yfrom)
+
+		if plot.ytickmode == 2 and plot.yscalemode == 1:
+			ylogrange = log(yto - yfrom) / log(ylogbase)
+			ylabels = int(ylogrange / plot.ystep)
+			yplotstep = (yplot * plot.ystep) / ylogrange
+
+		for i in range(0, xlabels + 1):
+			if plot.xtickmode == 2: xcoord = xplotstep * i + xtickstart
+			else: xcoord = i * xplot / xlabels if xlabels else 0
+			if plot.xtickmode and xcoord <= xaxislength: out.DrawLine(xbase + xcoord, ybase, xbase + xcoord, ybase - plot.xticklength)
+
+		for i in range(0, ylabels + 1):
+			ycoord = i * yplot / ylabels if ylabels else 0
+			if plot.ytickmode == 2: ycoord = yplotstep * i
+			if plot.ytickmode: out.DrawLine(xbase, ybase + ycoord, xbase - plot.yticklength, ybase + ycoord)
+
+		out.WriteLine("stroke")
+
+		# Draw Tick Labels
+		for i in range(0, xlabels + 1):
+			if plot.xlabelmode == 0: break
+
+			if plot.xtickmode == 2: xcoord = xplotstep * i + xtickstart
+			else: xcoord = i * xplot / xlabels if xlabels else 0
+
+			if not plot.xlabelmode or xcoord > xaxislength or plot.xlabelmode == 2 and i > 0 and i < xlabels: continue
+
+			if plot.xtickmode == 2: xval = (xfrom + plot.xstep * i) * plot.xunitscale / plot.xunitdscale - plot.xshift - xtickshift
+			else: xval = ((xto - xfrom) / xlabels * i + xfrom) / plot.xscale * plot.xunitscale / plot.xunitdscale - plot.xshift if xlabels else xfrom
+
+			if plot.xscalemode == 1 and xfrom > 0: xval = xfrom * pow(xlogbase, xlogmax * xval / xto)
+
+			srangex = abs((xto - xfrom) / plot.xscale * plot.xunitscale / plot.xunitdscale)
+			if plot.xlabelplaces == -1:
+				if srangex < 0.1: snum = f"{xval + xdis:.3f}"
+				elif srangex < 1: snum = f"{xval + xdis:.2f}"
+				elif srangex < 10: snum = f"{xval + xdis:.1f}"
+				else: snum = f"{xval + xdis:.0f}"
+			else: snum = numstring(xval + xdis, plot.xlabelplaces)
+
+			out.WriteLine("newpath")
+			out.MoveTo(xbase + xcoord, ybase - 15)
+			out.WriteLine(f"({snum}) dup stringwidth pop 2 div neg 0 rmoveto show")
+			out.WriteLine("stroke")
+
+		xylab = 8
+
+		for i in range(0, ylabels + 1):
+			if plot.ylabelmode == 0: break
+			if plot.ylabelmode == 2 and i > 0 and i < ylabels: continue
+
+			ycoord = i * yplot / ylabels if ylabels else 0
+			if plot.ytickmode == 2: ycoord = yplotstep * i
+
+			if plot.ytickmode == 1: yval = (((yto - yfrom) / ylabels * i + yfrom) / yscale) * plot.yunitscale / plot.yunitdscale - plot.yshift if ylabels else yfrom
+			elif plot.ytickmode == 2: yval = (yfrom + plot.ystep * i) * plot.yunitscale / plot.yunitdscale - plot.yshift
+			else: yval = (((yto - yfrom) / ylabels * i + yfrom) / yscale) * plot.yunitscale / plot.yunitdscale - plot.yshift if ylabels else yfrom
+
+			if plot.yscalemode == 1 and yfrom > 0:
+				if plot.ytickmode == 1: yval = pow(ylogbase, plot.ystep * i)
+				if plot.ytickmode == 0: yval = yfrom * pow(ylogbase, ylogmax * yval / yto)
+
+			srangey = abs((yto - yfrom) / yscale * plot.yunitscale / plot.yunitdscale)
+			if plot.ylabelplaces == -1:
+				if srangey < 0.1: snum = f"{yval:.3f}"
+				elif srangey < 1: snum = f"{yval:.2f}"
+				elif srangey < 10: snum = f"{yval:.1f}"
+				else: snum = f"{yval:.0f}"
+			else: snum = numstring(yval, plot.ylabelplaces)
+
+			out.MoveTo(xbase - xylab - plot.yticklength, ybase + ycoord - 2.75)
+			out.WriteLine(f"({snum}) dup stringwidth pop neg 0 rmoveto show")
+
+
+		# Draw Axis Labels
+
+		if plot.xtitle != "":
+			out.MoveTo(xbase + xplot / 2, ybase - plot.xlabelgap)
+			out.WriteLine(f"({plot.xtitle}) dup stringwidth pop 2 div neg 0 rmoveto show")
+
+		if plot.ytitle != "":
+			out.MoveTo(xbase - plot.ylabelgap, ybase + yplot / 2)
+			out.WriteLine("90 rotate")
+			out.WriteLine(f"({plot.ytitle}) dup stringwidth pop 2 div neg 0 rmoveto show")
+			out.WriteLine("270 rotate")
+
+		if plot.gtitle and plot.label != "":
+			out.MoveTo(xbase + xplot, ybase + yplot - 30)
+			out.WriteLine(f"({plot.label}) dup stringwidth pop neg 0 rmoveto show")
+
+		DiagWrite("EPS Written OK\n")
+
+		if ofp is None: out.Close()
+
+
 
 	def MultiCell(self):
 
@@ -100,6 +369,7 @@ class GraphWindow3:
 		mod.SetCell(oldindex, plot)
 		out.Close()
 
+
 	def MultiEPS(self):
 
 		mod = self.mod
@@ -145,6 +415,7 @@ class GraphWindow3:
 			if panelcomm[i] == "net": mainwin.scalebox.GraphCommand(ID_net)
 
 		out.Close()
+
 
 	def PrintEPS(self, xb=-1, yb=-1, ofp=None):
 

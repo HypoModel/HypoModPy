@@ -306,6 +306,7 @@ class HypoMain(MainFrame):
         self.prefs["viewwidth"] = 400
         self.prefs["viewheight"] = 600
         self.prefs["modpath"] = self.mainpath
+        self.prefs["outpath"] = self.mainpath
 
         self.SetMinSize(wx.Size(500, 400))
 
@@ -316,6 +317,7 @@ class HypoMain(MainFrame):
         self.numdraw = self.prefs["numdraw"]
         self.numgraphs = self.prefs["numgraphs"]
         self.modpath = self.prefs["modpath"]
+        self.outpath = self.prefs["outpath"]
 
         # Layout
         mainsizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -333,7 +335,7 @@ class HypoMain(MainFrame):
         self.UserMenu()
         self.SetTitle("HypoMod")
 
-        # Mod Init
+        # Mod Init - temporary, before implementing proper module registry
         if modname == "Osmo":
             from OsmoModPy.osmomod import OsmoMod
             self.mod = OsmoMod(self, "osmomod", modname)
@@ -345,6 +347,10 @@ class HypoMain(MainFrame):
         if modname == "Agent":
             from AgentModPy.agentmod import AgentMod
             self.mod = AgentMod(self, "agentmod", modname)
+
+        if modname == "Ghrelin":
+            from GhrelinModPy.ghrelinmod import GhrelinMod
+            self.mod = GhrelinMod(self, "ghrelinmod", modname)
 
         # Project Init
         self.project = Project(self, "default", self.modpath)
@@ -566,6 +572,7 @@ class HypoMain(MainFrame):
     def HypoStore(self):
         self.prefs["numdraw"] = self.numdraw
         self.prefs["modpath"] = self.modpath
+        self.prefs["outpath"] = self.outpath
 
         outfile = TextFile(self.initpath + "/hypoprefs.ini")
         outfile.Open('w')

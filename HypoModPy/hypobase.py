@@ -75,12 +75,41 @@ class TextFile():
         self.file.close()
 
 	# Postscript Writing
-	#void MoveTo(double x, double y);
-	#void LineTo(double x, double y);
-	#void DrawLine(double xf, double yf, double xt, double yt);
-	#void DrawText(wxString, double x, double y);
-	#void DrawEllipse(double x, double y, double width, double height);
-	#void SetColour(wxString);
+
+    def MoveTo(self, x, y):
+        self.WriteLine(f"{x:.2f} pu {y:.2f} pu moveto")
+
+    def LineTo(self, x, y):
+        self.WriteLine(f"{x:.2f} pu {y:.2f} pu lineto")
+
+    def DrawLine(self, xf, yf, xt, yt):
+        self.WriteLine(f"{xf:.2f} pu {yf:.2f} pu moveto")
+        self.WriteLine(f"{xt:.2f} pu {yt:.2f} pu lineto")
+
+    def DrawText(self, text, x, y):
+        self.WriteLine(f"{x:.2f} pu {y:.2f} pu moveto")
+        self.WriteLine(f"({text}) show")
+
+
+    # DrawEllipse - draws an ellipse with centre (x,y) and width and height (w,h) using a set of bezier curves
+    #
+    # Algorithm based on http://redgrittybrick.org/ellipse.html by G. Adam Stanislav
+    # and refined (adjusted kappa value) using https://www.tinaja.com/glib/ellipse4.pdf by Don Lancaster
+
+    def DrawEllipse(self, x, y, w, h):
+        kappa = 0.551784
+        wk = w * kappa
+        hk = h * kappa
+
+        self.WriteLine(f"{x:.2f} pu {y+h:.2f} pu moveto")
+        self.WriteLine(f"{x+wk:.4f} {y+h:.4f} {x+w:.4f} {y+hk:.4f} {x+w:.4f} {y:.4f} curveto")
+        self.WriteLine(f"{x+w:.4f} {y-hk:.4f} {x+wk:.4f} {y-h:.4f} {x:.4f} {y-h:.4f} curveto")
+        self.WriteLine(f"{x-wk:.4f} {y-h:.4f} {x-w:.4f} {y-hk:.4f} {x-w:.4f} {y:.4f} curveto")
+        self.WriteLine(f"{x-w:.4f} {y+hk:.4f} {x-wk:.4f} {y+h:.4f} {x:.4f} {y+h:.4f} curveto")
+
+    def SetColour(self, colour):
+        self.WriteLine(f"{colour} setrgbcolor")
+
 
 
 def DistXY(p1, p2):
@@ -140,6 +169,7 @@ def CheckFloat(string):
         return float(string)
     except ValueError:
         return False
+    
 
 
 

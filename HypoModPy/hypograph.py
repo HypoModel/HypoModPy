@@ -1,8 +1,9 @@
 
 import wx
-from math import log, isinf, isnan
+from math import log, isinf, isnan 
 from HypoModPy.hypotools import *
 from HypoModPy.hypoparams import *
+from HypoModPy.hypoprint import GraphEPS
 import math
 
 
@@ -34,7 +35,7 @@ class GraphDisp():
 
 
 
-class GraphPanel(wx.Panel):
+class GraphPanel(GraphEPS, wx.Panel):
     def __init__(self, parent, index, size):
         wx.Panel.__init__(self, parent, wx.ID_ANY, wx.DefaultPosition, size)
         self.numdisps = 0
