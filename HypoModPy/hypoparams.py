@@ -230,7 +230,7 @@ class ParamSet:
     def AddText(self, tag, label, initval, labelwidth=-1, textwidth=-1):
         if labelwidth < 0: labelwidth = self.text_labelwidth
         if textwidth < 0: textwidth = self.text_numwidth
-        self.pcons[tag] = ParamCon(self.panel, 'textcon', tag, label, initval, labelwidth, textwidth)     # text
+        self.pcons[tag] = ParamCon(self.panel, 'textcon', tag, label, initval, labelwidth=labelwidth, datawidth=textwidth)     # text
         return self.pcons[tag]
 
     

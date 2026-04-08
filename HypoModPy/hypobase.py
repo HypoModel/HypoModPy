@@ -210,3 +210,6 @@ ID_Delete = wx.NewIdRef()
 
 # Check IDs
 ID_ClipMode = wx.NewIdRef()
+
+# Other IDs
+ID_Font = wx.NewIdRef()
