@@ -5,11 +5,11 @@ import sys
 import wx
 from pubsub import pub
 
-from HypoModPy.hypobase import GetSystem
+from HypoModPy.hypobase import *
 from HypoModPy.hypotools import TextFile, ToolSet, DiagBox, ToolPanel, DiagWrite, SetDiagBoxTarget
 from HypoModPy.hypograph import GraphDisp, GraphPanel
 from HypoModPy.hyposcale import ScaleBox
-from HypoModPy.hypoparams import ParamCon, ID_ModBrowse
+from HypoModPy.hypoparams import ParamCon
 from HypoModPy.hypodat import PlotDat
 from HypoModPy.hypoproject import Project
 
@@ -254,7 +254,15 @@ class SystemPanel(wx.Dialog):
         modpathbox.Add(self.modpathcon, 0, wx.ALIGN_CENTER_VERTICAL)
         modpathbox.Add(pathButton, 0, wx.ALIGN_CENTER_VERTICAL)
 
+        outpathbox = wx.BoxSizer(wx.HORIZONTAL)
+        self.outpathcon = ParamCon(panel, "textcon", "outpath", "Output Path", mainwin.outpath, labelwidth=50, datawidth=320)
+        pathButton = wx.Button(panel, ID_OutBrowse, "Browse", wx.DefaultPosition, wx.Size(50, 25))
+        pathButton.Bind(wx.EVT_BUTTON, self.OnBrowse)
+        outpathbox.Add(self.outpathcon, 0, wx.ALIGN_CENTER_VERTICAL)
+        outpathbox.Add(pathButton, 0, wx.ALIGN_CENTER_VERTICAL)
+
         pathbox.Add(modpathbox, 1)
+        pathbox.Add(outpathbox, 1)
         panelbox.Add(pathbox, 0)
         panel.SetSizer(panelbox)
         panel.Layout()
@@ -277,9 +285,14 @@ class SystemPanel(wx.Dialog):
             dialog = wx.DirDialog(self, "Choose a directory", self.mainwin.modpath, 0, wx.DefaultPosition)
             if dialog.ShowModal() == wx.ID_OK: self.modpathcon.SetText(dialog.GetPath())
 
+        if event.GetId() == ID_OutBrowse:
+            dialog = wx.DirDialog(self, "Choose a directory", self.mainwin.outpath, 0, wx.DefaultPosition)
+            if dialog.ShowModal() == wx.ID_OK: self.outpathcon.SetText(dialog.GetPath())
+
 
     def OnEnter(self, event):
         self.mainwin.modpath = self.modpathcon.GetText()
+        self.mainwin.outpath = self.outpathcon.GetText()
         #mainwin->GraphPanelsUpdate();
 
 

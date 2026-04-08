@@ -84,11 +84,26 @@ class GraphPanel(GraphEPS, wx.Panel):
         self.Bind(wx.EVT_MENU, self.OnGraphRemove, ID_GraphRemove)
         self.Bind(wx.EVT_MENU, self.OnPlotCon, ID_PlotPanel)
         self.Bind(wx.EVT_MENU, self.OnGridOutput, ID_Output)
+        self.Bind(wx.EVT_MENU, self.OnGraphEPS, ID_GraphEPS)
+        #self.Bind(wx.EVT_MENU, self.OnMultiEPS, ID_MultiEPS)
+        #self.Bind(wx.EVT_MENU, self.OnMultiCell, ID_MultiCell)
 
 
         self.Bind(wx.EVT_MOTION, self.OnMouseMove)
         self.Bind(wx.EVT_LEFT_DOWN, self.OnLeftDown)
         self.Bind(wx.EVT_LEFT_UP, self.OnLeftUp)
+
+
+    def OnGraphEPS(self, event):
+        self.WriteEPS()
+        
+    
+    def OnMultiEPS(self, event):
+         self.MultiEPS()
+
+    
+    def OnMultiCell(self, event):
+        self.MultiCell()
 
 
     def OnGridOutput(self, event):
@@ -318,7 +333,7 @@ class GraphPanel(GraphEPS, wx.Panel):
             plotset = mod.plotbase.setstore[settag]
             if not plotset.submenu:
                 menuitem = wx.MenuItem(menuPlot, wx.ID_ANY, plotset.label, "", wx.ITEM_CHECK)
-                DiagWrite(f"right click {settag}\n")
+                #DiagWrite(f"right click {settag}\n")
 #ifndef OSX
                 #menuitem->SetBitmaps(radio_on, radio_off)
 #endif
