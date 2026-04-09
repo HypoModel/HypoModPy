@@ -1,4 +1,9 @@
 
+import gc
+import gc
+from hmac import new
+
+from matplotlib.pyplot import plot
 import wx
 from math import log, isinf, isnan 
 from HypoModPy.hypotools import *
@@ -38,6 +43,9 @@ class GraphDisp():
 class GraphPanel(GraphEPS, wx.Panel):
     def __init__(self, parent, index, size):
         wx.Panel.__init__(self, parent, wx.ID_ANY, wx.DefaultPosition, size)
+
+        DiagWrite("GraphPanel init\n")
+
         self.numdisps = 0
         self.frontdisp = 0
         self.dispset = []
@@ -599,8 +607,12 @@ class GraphPanel(GraphEPS, wx.Panel):
                 gc.DrawText(plot.label, xbase + xplot - textsize[0], 30 + 15 * gplot + 15 * gdisp)
 
                 # Set plot colour
-                gc.SetPen(wx.Pen(self.colourpen[plot.colour]))
+                #gc.SetPen(wx.Pen(self.colourpen[plot.colour]))
+                #gc.SetPen(wx.Pen(plot.strokecolour))
                 #DiagWrite(f"OnPaint() name {plot.label}  colour {plot.colour}\n")
+                if not plot.strokecolour.IsOk():
+                    plot.strokecolour = self.colourpen["black"]
+                gc.SetPen(wx.Pen(plot.strokecolour))
 
                 # Set drawing scales
                 xto /= plot.binsize
@@ -814,8 +826,10 @@ class PlotCon(ToolBox):
     def __init__(self, graphpanel, title):
         ostype = GetSystem()
         if ostype == "Windows": boxheight = 700
-        else: boxheight = 650
+        else: boxheight = 700
         ToolBox.__init__(self, graphpanel.mainwin, "PlotCon", title, wx.Point(0, 0), wx.Size(320, boxheight), type)
+
+        DiagWrite("PlotCon init\n")
 
         self.graphpanel = graphpanel
         
@@ -823,6 +837,7 @@ class PlotCon(ToolBox):
         buttonheight = 23
         boxfont = wx.Font(wx.FontInfo(8).FaceName("Tahoma"))
         confont = wx.Font(wx.FontInfo(12).FaceName("Tahoma"))
+        buttonfont = wx.Font(wx.FontInfo(10).FaceName("Tahoma").Bold())
         pad = 3
         radpad = 3
 
@@ -953,11 +968,11 @@ class PlotCon(ToolBox):
         samplebox = wx.BoxSizer(wx.HORIZONTAL)
         self.paramset.AddNum("xsample", "XSample", self.plot.xsample, 0)
         samplebox.Add(self.paramset.GetCon("xsample"), 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL)
-        clipcheck = wx.CheckBox(self.panel, ID_ClipMode, "Clip")
-        clipcheck.SetFont(confont)
-        clipcheck.SetValue(self.plot.clipmode)
+        self.clipcheck = wx.CheckBox(self.panel, ID_ClipMode, "Clip")
+        self.clipcheck.SetFont(confont)
+        self.clipcheck.SetValue(self.plot.clipmode)
         samplebox.AddSpacer(40)
-        samplebox.Add(clipcheck, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL)
+        samplebox.Add(self.clipcheck, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL)
         samplebox.AddSpacer(25)
         self.LayoutSkip()
 
@@ -975,6 +990,28 @@ class PlotCon(ToolBox):
         fontbox.Add(self.paramset.GetCon("labelfontsize"), 0, wx.ALIGN_CENTER_HORIZONTAL | wx.ALIGN_CENTER_VERTICAL)
         self.LayoutSkip()
 
+        # Line Stroke and Colour
+        self.linecheck = wx.CheckBox(self.panel, ID_Line, "")
+        self.linecheck.SetFont(confont)
+        self.linecheck.SetValue(self.plot.linemode)
+        #self.strokepicker = wx.ColourPickerCtrl(self.panel, wx.ID_ANY, self.plot.strokecolour, wx.DefaultPosition, wx.Size(130, 130))
+        self.strokebutton = wx.BitmapButton(self.panel, ID_StrokeColour, self.MakeColourBitmap(self.plot.strokecolour, 28, 10), wx.DefaultPosition, wx.Size(36, -1))
+        #self.UpdateStrokeButton()
+        self.paramset.AddNum("plotstroke", "Stroke", self.plot.plotstroke, 2)
+        strokebox = wx.BoxSizer(wx.HORIZONTAL)
+        strokebox.Add(self.paramset.GetCon("plotstroke"), 0, wx.ALIGN_CENTRE_HORIZONTAL | wx.ALIGN_CENTRE_VERTICAL | wx.ALL, 0)
+        self.LayoutSkip()
+        strokebox.Add(self.linecheck, 0, wx.ALIGN_CENTRE_HORIZONTAL | wx.ALIGN_CENTRE_VERTICAL | wx.ALL, 5)
+        #strokebox.Add(self.strokepicker)
+        strokebox.Add(self.strokebutton, 0, wx.ALIGN_CENTRE_HORIZONTAL | wx.ALIGN_CENTRE_VERTICAL | wx.ALL, 5)
+
+        # Axes Synch
+        self.synchbutton = wx.Button(self.panel, ID_Sync, "Synch X Axes", wx.DefaultPosition, wx.Size(80, 30))
+        self.synchbutton.SetFont(buttonfont)
+        synchbox = wx.BoxSizer(wx.HORIZONTAL)
+        synchbox.Add(self.synchbutton, 0, wx.ALIGN_CENTRE_HORIZONTAL | wx.ALIGN_CENTRE_VERTICAL | wx.ALL, 0)
+
+        # Titles and Labels
         self.paramset.text_labelwidth = 50
         self.paramset.AddText("label", "Name", self.plot.label, textwidth=150)
         self.paramset.AddText("xtitle", "X Label", self.plot.xtitle, textwidth=150)
@@ -982,9 +1019,9 @@ class PlotCon(ToolBox):
         labelparams = self.ParamLayout(1)
 
         buttonbox = wx.BoxSizer(wx.HORIZONTAL)
-        okButton = wx.Button(self.panel, wx.ID_OK, "Ok", wx.DefaultPosition, wx.Size(65, 30))
-        printButton = wx.Button(self.panel, ID_Print, "Export EPS", wx.DefaultPosition, wx.Size(65, 30))
-        closeButton = wx.Button(self.panel, wx.ID_CANCEL, "Close", wx.DefaultPosition, wx.Size(65, 30))
+        okButton = wx.Button(self.panel, wx.ID_OK, "Ok", wx.DefaultPosition, wx.Size(60, 30))
+        printButton = wx.Button(self.panel, ID_Print, "Export EPS", wx.DefaultPosition, wx.Size(60, 30))
+        closeButton = wx.Button(self.panel, wx.ID_CANCEL, "Close", wx.DefaultPosition, wx.Size(60, 30))
         buttonbox.Add(okButton, 1)
         buttonbox.Add(printButton, 1, wx.LEFT, 5)
         buttonbox.Add(closeButton, 1, wx.LEFT, 5)
@@ -1001,6 +1038,10 @@ class PlotCon(ToolBox):
         self.mainbox.AddSpacer(5)
         self.mainbox.Add(fontbox, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 5)
         self.mainbox.AddStretchSpacer()
+        self.mainbox.Add(strokebox, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 0)
+        self.mainbox.AddStretchSpacer()
+        self.mainbox.Add(synchbox, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 0)
+        self.mainbox.AddStretchSpacer()
         self.mainbox.Add(labelparams, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 0)
         self.mainbox.AddStretchSpacer()
         self.mainbox.Add(buttonbox, 0, wx.ALIGN_CENTRE | wx.TOP | wx.BOTTOM, 5)
@@ -1013,14 +1054,39 @@ class PlotCon(ToolBox):
         self.Bind(wx.EVT_BUTTON, self.OnOK, id=wx.ID_OK)
         self.Bind(wx.EVT_BUTTON, self.OnCancel, id=wx.ID_CANCEL)
         self.Bind(wx.EVT_BUTTON, self.OnPrint, id=ID_Print)
+        self.Bind(wx.EVT_BUTTON, self.OnStrokeColour, id=ID_StrokeColour)
         self.Bind(wx.EVT_TEXT_ENTER, self.OnOK)
         self.Bind(wx.EVT_SIZE, self.OnSize)
         self.Bind(wx.EVT_CLOSE, self.OnClose)
         self.Bind(wx.EVT_SPIN, self.OnSpin)
 
         self.panel.Layout()
-        self.Raise()
-        self.Show()
+
+
+    def UpdateStrokeButton(self, colour):
+        self.strokebutton.SetBitmapLabel(self.MakeColourBitmap(colour, 28, 10))
+        self.panel.Layout()
+
+    
+    def MakeColourBitmap(self, colour, width=28, height=18):
+        bmp = wx.Bitmap(width, height)
+        dc = wx.MemoryDC(bmp)
+        dc.SetPen(wx.Pen(wx.BLACK, 1))
+        dc.SetBrush(wx.Brush(colour))
+        dc.DrawRectangle(0, 0, width, height)
+        dc.SelectObject(wx.NullBitmap)
+        return bmp
+
+
+    def OnStrokeColour(self, event):
+        DiagWrite("PlotCon OnStrokeColour\n")
+        colourdata = wx.ColourData()
+        colourdata.SetColour(self.plot.strokecolour)
+        dlg = wx.ColourDialog(self.panel, colourdata)
+        if dlg.ShowModal() == wx.ID_OK:
+            self.plot.strokecolour = dlg.GetColourData().GetColour()
+            self.UpdateStrokeButton(self.plot.strokecolour)
+        self.graphpanel.Refresh()
 
 
     def OnCancel(self, event):
@@ -1068,10 +1134,27 @@ class PlotCon(ToolBox):
             setplot.xplot = self.plot.xplot
             setplot.yplot = self.plot.yplot    
 
+
+    def XSynch(self):
+        mainwin = self.graphpanel.mainwin
+        for i in range(mainwin.numdraw):
+            plot = mainwin.panelset[i].GetFrontPlot()
+            plot.xlabels = self.plot.xlabels
+            plot.xstep = self.plot.xstep
+            plot.xplot = self.plot.xplot
+            plot.xshift = self.plot.xshift
+            plot.xunitscale = self.plot.xunitscale
+            plot.xunitdscale = self.plot.xunitdscale
+            plot.xscalemode = self.plot.xscalemode
+            plot.xlabelmode = self.plot.xlabelmode
+            plot.xtickmode = self.plot.xtickmode
+            plot.xtitle = self.plot.xtitle
+        mainwin.scalebox.GraphUpdateAll()
     
     def OnSynch(self, event):
-        self.SynchLayers()
-        self.SynchPlotSize()
+        #self.SynchLayers()
+        #self.SynchPlotSize()
+        self.XSynch()
 
 
     def OnSize(self, event):
@@ -1151,7 +1234,7 @@ class PlotCon(ToolBox):
         self.plot.xsample = int(params["xsample"])
         self.plot.xunitscale = params["xscale"]
         self.plot.xunitdscale = params["xdscale"]
-        #self.plot.plotstroke = params["plotstroke"]
+        self.plot.plotstroke = params["plotstroke"]
         self.plot.xlabelgap = params["xlabelgap"]
         self.plot.ylabelgap = params["ylabelgap"]
         self.plot.xlabelplaces = int(params["xlabelplaces"])
@@ -1165,14 +1248,14 @@ class PlotCon(ToolBox):
         self.plot.barwidth = int(params["barwidth"])
         self.plot.bargap = int(params["bargap"])
 
-        #self.plot.linemode = linecheck.GetValue()
-        #self.plot.clipmode = clipcheck.GetValue()
-        ##self.plot.scattermode = scattercheck->GetValue();
-        #self.plot.fillmode = fillcheck.GetValue()
+        self.plot.linemode = int(self.linecheck.GetValue())
+        #self.plot.clipmode = self.clipcheck.GetValue()
+        ##self.plot.scattermode = self.scattercheck->GetValue();
+        #self.plot.fillmode = self.fillcheck.GetValue()
 
-        #self.plot.fillstroke = fillstrokecheck.GetValue()
-        #self.plot.strokecolour = strokepicker.GetColour()
-        #self.plot.fillcolour = fillpicker.GetColour()
+        #self.plot.fillstroke = self.fillstrokecheck.GetValue()
+        #self.plot.strokecolour = self.strokepicker.GetColour()
+        #self.plot.fillcolour = self.fillpicker.GetColour()
         #self.plot.colour = custom
 
         self.plot.label = self.paramset.GetCon("label").GetText()
@@ -1200,7 +1283,7 @@ class PlotCon(ToolBox):
         setplot.xunitdscale = params["xdscale"]
         setplot.yunitscale = params["yscale"]
         setplot.yunitdscale = params["ydscale"]
-        #setplot.plotstroke = params["plotstroke"]
+        setplot.plotstroke = params["plotstroke"]
         setplot.xlabelgap = params["xlabelgap"]
         setplot.ylabelgap = params["ylabelgap"]
         setplot.xlabelplaces = params["xlabelplaces"]
@@ -1210,7 +1293,7 @@ class PlotCon(ToolBox):
         setplot.barwidth = params["barwidth"]
         setplot.bargap = params["bargap"]
 
-        #setplot.linemode = self.linecheck.GetValue()
+        setplot.linemode = self.linecheck.GetValue()
         #setplot.clipmode = self.clipcheck.GetValue()
         #setplot.scattermode = self.scattercheck.GetValue()
         #setplot.fillmode = self.fillcheck.GetValue()
@@ -1327,6 +1410,7 @@ class PlotCon(ToolBox):
         self.yaxisrad[self.plot.yaxis].SetValue(True)
 
         #self.strokepicker.SetColour(self.plot.strokecolour)
+        self.UpdateStrokeButton(self.plot.strokecolour)
         #self.fillpicker.SetColour(self.plot.fillcolour)
 
         #self.typechoice.SetSelection(self.typeset.GetIndex(self.plot.type))

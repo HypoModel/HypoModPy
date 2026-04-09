@@ -141,7 +141,9 @@ def ParseInt(readline, chartag = None):
     if chartag: readline = readline.partition(chartag)[2]         # NULL tag just reads next int
     readline = readline.strip()
     numstring = readline.partition(' ')[0]
-    numdat = int(float(numstring))
+    if numstring == 'True': numdat = 1      # Allow boolean values to be read as integers (corrupted file may have True/False instead of 1/0)
+    elif numstring == 'False': numdat = 0
+    else: numdat = int(float(numstring))
     readline = readline.partition(' ')[2]
     return (numdat, readline)
 
@@ -188,6 +190,7 @@ ID_Overlay = wx.NewIdRef()
 ID_Pos = wx.NewIdRef()
 ID_Overlay2 = wx.NewIdRef()
 ID_Pos2 = wx.NewIdRef()
+ID_StrokeColour = wx.NewIdRef()
 
 # Menu IDs
 ID_GraphEPS = wx.NewIdRef()
@@ -210,6 +213,7 @@ ID_Delete = wx.NewIdRef()
 
 # Check IDs
 ID_ClipMode = wx.NewIdRef()
+ID_Line = wx.NewIdRef()
 
 # Other IDs
 ID_Font = wx.NewIdRef()
