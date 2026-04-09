@@ -213,3 +213,4 @@ ID_ClipMode = wx.NewIdRef()
 
 # Other IDs
 ID_Font = wx.NewIdRef()
+ID_Type = wx.NewIdRef()

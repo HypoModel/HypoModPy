@@ -71,7 +71,6 @@ class pdata(np.ndarray):
 
 
     
-
 class PlotSet():
     def __init__(self):
         self.plottags = []
@@ -112,20 +111,21 @@ class PlotSet():
             if self.plotcodes[tag] == self.modesum: plottag = tag    # ChatGPT bug pick up and suggested fix 4/3/26
 
         return plottag
-        
 
+
+
+  
 class PlotDat():
     def __init__(self, data = pdata(0), xf = 0, xt = 500, yf = 0, yt = 1000, label = "", type = None, binsize = 1, colour = "red", xs = 1, xd = 0):
 
-        self.xscale = xs
+        self.xscale = xs    # scales the x-axis data for plotting, e.g. to convert from time in seconds to time in minutes use xs = 60. This is separate from xunitscale which is used to scale the x-axis units for labelling, e.g. to convert from time in seconds to time in minutes use xunitscale = 60. This allows the x-axis data to be plotted in seconds but labelled in minutes, which is useful for common time axis synchronisation of different datasets with different time units.
         self.xdis = xd
         self.spikedata = None
 
-        self.xdata = None
-        self.xcount = 0
+        self.xdata = None   # link to x value data array, used for data with explicit x values, e.g. for scatter plots, otherwise x values are generated from xf, xt and binsize
+        self.xcount = 0     # associated x value count
         self.ycount = 0
-        self.data = data
-
+        self.data = data    # link to y value data array, typically a pdata array, but can be any array-like structure with numeric data and support for len() and indexing, e.g. a numpy array or list
         self.type = type
         self.samprate = 1
         self.scattermode = 0
@@ -138,37 +138,29 @@ class PlotDat():
         self.xmax = xt
         self.yfrom = yf
         self.yto = yt
-        self.label = label
+        self.label = label  # main graph label, used for legend and graph title, can be empty string if not used
         self.colour = colour
         self.binsize = binsize
 
         self.oversync = True
-        self.barwidth = 10
+        self.barwidth = 10  # used for bar plots, not currently implemented
         self.bargap = 10
 
         self.Default()
-
-
-    def SyncAxes(self, source):
-        self.xfrom = source.xfrom
-        self.xto = source.xto
-        self.yfrom = source.yfrom
-        self.yto = source.yto
 
 
     def Default(self):
 
         self.xtitle = "X"
         self.ytitle = "Y"
-        self.gtitle = 1
 
         self.xaxis = 1
         self.yaxis = 1
 
         self.yscale = 1
 
-        self.xlabels = 0
-        self.ylabels = 0
+        self.xlabels = 10
+        self.ylabels = 5
         self.xstep = 0
         self.ystep = 0
 
@@ -202,7 +194,7 @@ class PlotDat():
         self.negscale = 0   # check purpose
         self.synchx = 1     # toggle to allow x-axis synchronisation, typically used for common time axis
 
-        self.plotstroke = 0.5
+        self.plotstroke = 1 #0.5   # stroke line width in points (only used for EPS, not screen)
         self.strokecolour = wx.Colour(0, 0, 0)
         self.fillcolour = wx.Colour(255, 255, 255)
 
@@ -211,7 +203,7 @@ class PlotDat():
         self.xsample = 1
 
         self.xlabelgap = 30  #40
-        self.ylabelgap = 30  #20 #30
+        self.ylabelgap = 20  #20 #30
         self.labelfontsize = 10
         self.tickfontsize = 10
         self.clipmode = 0
@@ -225,25 +217,139 @@ class PlotDat():
         self.fillstroke = 0
 
 
+    def SyncAxes(self, source):
+        self.xfrom = source.xfrom
+        self.xto = source.xto
+        self.yfrom = source.yfrom
+        self.yto = source.yto
+
+
     def GetData(self, xval): 
         data = -1
         xindex = xval / self.binsize
         data = self.data[xindex]
         return data
+    
+
+    """ 
+    
+    PlotDat - plot object, used to store plot parameters and data links
+
+    StoreDat (tag string) - generate a string encoding PlotCon controlled drawing parameters for text file storage
+
+    * Additional parameters are always added at the end to preserve backwards compatibility with old plot store files *
+
+    tag - plot tag
+
+    xfrom - x-axis from
+
+    xto - x-axis to
+
+    yfrom - y-axis from
+
+    yto - y-axis to
+
+    xlabels - number of x-axis ticks and labels
+
+    xstep - x-axis tick and label step size
+
+    xtickmode - x-axis tick mode (0 = off, 1 = count, 2 = step)  (off only turns off ticks not labels)
+
+    ylabels - number of y-axis ticks and labels
+
+    ystep - y-axis tick and label step size
+
+    ytickmode - y-axis tick mode (0 = off, 1 = count, 2 = step)  (off only turns off ticks not labels)
+
+    colour - stroke colour index (default index 9 is used for custom colour specified by rgb)
+
+    strokecolourtext - string encoded rgb stroke colour
+
+    xshift - x-axis label value shift (usually used to shift data to start from 0) 
+
+    xunitscale - modifier for scaling up x-axis units (default 1 for no scaling)
+
+    plotstroke - stroke line width in points (only used for EPS. not screen)
+
+    storetitle - label (main graph label) reencoded with spaces replaced by underscores for store file
+
+    storextitle - xtitle (x-axis title) reencoded with spaces replaced by underscores for store file
+
+    storeytitle - ytitle (y-axis title) reencoded with spaces replaced by underscores for store file
+
+    xplot - x plot size (pixels for screen, points for EPS)
+
+    yplot - y plot size (pixels for screen, points for EPS)
+
+    labelfontsize - axes labels font size (only used for EPS)
+
+    clipmode - clip plot to graph are specified by xplot and yplot, 0 off, 1 on (only used for EPS)
+
+    type - plot type, see above
+
+    xunitdscale - modifier for scaling down x-axis units (default 1 for no scaling)
+
+    xsample - downscales number of datapoints plotted to reduce plot resolution, e.g. 10000 points reduced to 1000 using xsample 10 (only used for EPS)
+
+    barwidth - bar width for type 9 bar plot
+
+    bargap - bar gap for type 9 bar plot
+
+    yunitscale - modifier for scaling up y-axis units (default 1 for no scaling)
+
+    xlabelplaces - number of decimals for x-axis tick labels, -1 for automatic
+    
+    ylabelplaces - number of decimals for y-axis tick labels, -1 for automatic
+    
+    xlabelmode - x-axis label mode, 0 for none, 1 for all (default), 2 for ends only
+    
+    ylabelmode - y-axis label mode, 0 for none, 1 for all (default), 2 for ends only
+    
+    xscalemode - x-axis scale mode, 0 for linear (default), 1 for log (no base control yet, specified in code)
+    
+    yscalemode - y-axis scale mode, 0 for linear (default), 1 for log (no base control yet, specified in code)
+    
+    xaxis - x-axis line, 0 off, 1 on
+    
+    yaxis - y-axis line, 0 off, 1 on
+    
+    yunitdscale - modifier for scaling down y-axis units (default 1 for no scaling)
+
+    xlabelgap - gap between x-axis and x-axis labels (default 30)
+
+    ylabelgap - gap between y-axis and y-axis labels (default 30)
+
+    labelfont - label font, 0 default Helvetica, 1 Arial, 2 Times New Roman (only used for EPS)
+
+    scattersize - scatter point size (only used for EPS)
+
+    fillcolourtext - string encoded rgb fill colour
+
+    fillmode - fill mode, 0 off, 1 on (only used for EPS)
+
+    fillstroke - fill stroke mode, 0 off, 1 on (only used for EPS)
+
+    linemode - line mode, 0 off, 1 on (only used for EPS)
+
+    scattermode - scatter mode, 0 off, 1 on (only used for EPS)
+
+    xstart - start point for x-axis values (default 0) - not used currently, but could be used to shift x-axis values for plotting, e.g. for time axis to start from 0
+    
+    """
 
 
     def StoreDat(self, tag):
         if self.label != "": storetitle = self.label         # replace spaces with underscores for textfile storing
         else: storetitle = " "
-        storetitle.replace(" ", "_")
+        storetitle = storetitle.replace(" ", "_")
 
         if self.xtitle != "": storextitle = self.xtitle
         else: storextitle = " "
-        storextitle.replace(" ", "_")
+        storextitle = storextitle.replace(" ", "_")
 
         if self.ytitle != "": storeytitle = self.ytitle
         else: storeytitle = " "
-        storeytitle.replace(" ", "_")
+        storeytitle = storeytitle.replace(" ", "_")
     
         strokecolourtext = self.strokecolour.GetAsString(wx.C2S_CSS_SYNTAX)
         fillcolourtext = self.fillcolour.GetAsString(wx.C2S_CSS_SYNTAX)
@@ -278,15 +384,16 @@ class PlotDat():
         self.xshift, readline = ParseFloat(readline, 's')
         self.xunitscale, readline = ParseFloat(readline, 'u')
         self.plotstroke, readline = ParseFloat(readline, 's')
-        self.gtitle, readline = ParseString(readline, 'e')
-        self.gtitle.replace("_", " ")
+        
+        self.label, readline = ParseString(readline, 'e')
+        self.label = self.label.replace("_", " ")
 
         self.xtitle, readline = ParseString(readline, 'g')
-        self.xtitle.replace("_", " ")
+        self.xtitle = self.xtitle.replace("_", " ")
         if self.xtitle == " ": self.xtitle = ""
 
         self.ytitle, readline = ParseString(readline, 'g')
-        self.ytitle.replace("_", " ")
+        self.ytitle = self.ytitle.replace("_", " ")
         if self.ytitle == " ": self.ytitle = ""
 
         self.xplot, readline = ParseFloat(readline, 'p')

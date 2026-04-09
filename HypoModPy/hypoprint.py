@@ -101,6 +101,15 @@ class GraphEPS:
 				xdis = plot.xdis
 				xsample = plot.xsample
 
+				xsample = plot.xsample
+				if xsample < 1: xsample = 1
+
+				exportsample = xsample
+				maxsegments = 4000
+				if (xto - xfrom) / exportsample > maxsegments: 
+					exportsample = int((xto - xfrom) / maxsegments) + 1	 # increase sample rate to limit number of segments in EPS output, otherwise some EPS viewers have trouble rendering the file
+					DiagWrite(f"EPS xsample {xsample} auto increased to {exportsample} for {plot.label}\n")
+
 				if plot.xscalemode == 1 and xfrom > 0: xlogmax = log(xto / xfrom) / log(xlogbase)
 				else: xlogmax = 0
 				if plot.yscalemode == 1 and yfrom > 0: ylogmax = log(yto / yfrom) / log(ylogbase)
@@ -157,8 +166,8 @@ class GraphEPS:
 					oldx = xbase
 					oldy = ybase + yrange * (yval - yfrom)      # TODO proper start coordinates
 
-					for i in range(1, int((xto - xfrom) / xsample) + 1):
-						xindex = int(i * xsample + xfrom)
+					for i in range(1, int((xto - xfrom) / exportsample) + 1):
+						xindex = int(i * exportsample + xfrom)
 						if xindex >= len(plot.data): break
 
 						xpos = (xindex - xfrom) * xrange
@@ -264,7 +273,9 @@ class GraphEPS:
 			out.WriteLine(f"({snum}) dup stringwidth pop 2 div neg 0 rmoveto show")
 			out.WriteLine("stroke")
 
-		xylab = 8
+		xylab = 3
+		ylabeladjust = plot.labelfontsize * 0.35	# adjust for font height, not exact but should be close enough, was 2.75
+		maxylabelwidth = 0
 
 		for i in range(0, ylabels + 1):
 			if plot.ylabelmode == 0: break
@@ -289,8 +300,11 @@ class GraphEPS:
 				else: snum = f"{yval:.0f}"
 			else: snum = numstring(yval, plot.ylabelplaces)
 
-			out.MoveTo(xbase - xylab - plot.yticklength, ybase + ycoord - 2.75)
+			out.MoveTo(xbase - xylab - plot.yticklength, ybase + ycoord - ylabeladjust)
 			out.WriteLine(f"({snum}) dup stringwidth pop neg 0 rmoveto show")
+
+			ylabelwidth = len(snum) * plot.labelfontsize * 0.55
+			if ylabelwidth > maxylabelwidth: maxylabelwidth = ylabelwidth
 
 
 		# Draw Axis Labels
@@ -300,14 +314,17 @@ class GraphEPS:
 			out.WriteLine(f"({plot.xtitle}) dup stringwidth pop 2 div neg 0 rmoveto show")
 
 		if plot.ytitle != "":
-			out.MoveTo(xbase - plot.ylabelgap, ybase + yplot / 2)
+			out.MoveTo(xbase - plot.ylabelgap - maxylabelwidth, ybase + yplot / 2)
 			out.WriteLine("90 rotate")
 			out.WriteLine(f"({plot.ytitle}) dup stringwidth pop 2 div neg 0 rmoveto show")
 			out.WriteLine("270 rotate")
 
-		if plot.gtitle and plot.label != "":
+		if plot.label != "":
 			out.MoveTo(xbase + xplot, ybase + yplot - 30)
 			out.WriteLine(f"({plot.label}) dup stringwidth pop neg 0 rmoveto show")
+
+
+		
 
 		DiagWrite(f"EPS Written OK {filepath}\n")
 
@@ -731,7 +748,6 @@ class GraphEPS:
 		if mod.diagbox: mod.diagbox.textbox.AppendText("EPS Written OK\n")
 
 		if ofp is None: out.Close()
-
 
 
 	def PrintEPS2(self, xb=-1, yb=-1, ofp=None):

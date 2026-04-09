@@ -446,7 +446,7 @@ class HypoMain(MainFrame):
         xplot = gspacex - 55
         
         gspacey = graphsize.y - self.numdraw * 55 - 5
-        yplot = gspacey / self.numdraw
+        yplot = int(gspacey / self.numdraw)
 
         snum = f"newsizeX {newsize.x} graphsizeX {graphsize.x} newsizeY {newsize.y} graphsizeY {graphsize.y} yplot {yplot:.0f}"
         self.SetStatusText(snum)
