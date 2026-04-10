@@ -4,6 +4,7 @@ import numpy as np
 import wx
 from pathlib import Path
 from pubsub import pub
+import subprocess
 
 #from hypotools import *
 
@@ -21,7 +22,6 @@ studentmode = 1
 #modpathwin = "C:/Users/Duncan/Model"
 
 
-
 def GetSystem():
     oslabel = wx.GetOsDescription()
     if oslabel.startswith("Windows"): return 'Windows'
@@ -30,9 +30,19 @@ def GetSystem():
     return 0
 
 
-def DiagWrite(text):
-    pub.sendMessage("diagbox", message=text)
+DiagEventType = wx.NewEventType()
+EVT_DIAG = wx.PyEventBinder(DiagEventType, 1)
 
+class DiagEvent(wx.PyCommandEvent):
+    def __init__(self, text=""):
+        super().__init__(DiagEventType)
+        self.text = text
+
+
+
+# def DiagWrite(text):
+#     #pub.sendMessage("diagbox", message=text)
+#     test = 1
 
 
 class TextFile():
@@ -66,12 +76,41 @@ class TextFile():
         self.file.close()
 
 	# Postscript Writing
-	#void MoveTo(double x, double y);
-	#void LineTo(double x, double y);
-	#void DrawLine(double xf, double yf, double xt, double yt);
-	#void DrawText(wxString, double x, double y);
-	#void DrawEllipse(double x, double y, double width, double height);
-	#void SetColour(wxString);
+
+    def MoveTo(self, x, y):
+        self.WriteLine(f"{x:.2f} pu {y:.2f} pu moveto")
+
+    def LineTo(self, x, y):
+        self.WriteLine(f"{x:.2f} pu {y:.2f} pu lineto")
+
+    def DrawLine(self, xf, yf, xt, yt):
+        self.WriteLine(f"{xf:.2f} pu {yf:.2f} pu moveto")
+        self.WriteLine(f"{xt:.2f} pu {yt:.2f} pu lineto")
+
+    def DrawText(self, text, x, y):
+        self.WriteLine(f"{x:.2f} pu {y:.2f} pu moveto")
+        self.WriteLine(f"({text}) show")
+
+
+    # DrawEllipse - draws an ellipse with centre (x,y) and width and height (w,h) using a set of bezier curves
+    #
+    # Algorithm based on http://redgrittybrick.org/ellipse.html by G. Adam Stanislav
+    # and refined (adjusted kappa value) using https://www.tinaja.com/glib/ellipse4.pdf by Don Lancaster
+
+    def DrawEllipse(self, x, y, w, h):
+        kappa = 0.551784
+        wk = w * kappa
+        hk = h * kappa
+
+        self.WriteLine(f"{x:.2f} pu {y+h:.2f} pu moveto")
+        self.WriteLine(f"{x+wk:.4f} {y+h:.4f} {x+w:.4f} {y+hk:.4f} {x+w:.4f} {y:.4f} curveto")
+        self.WriteLine(f"{x+w:.4f} {y-hk:.4f} {x+wk:.4f} {y-h:.4f} {x:.4f} {y-h:.4f} curveto")
+        self.WriteLine(f"{x-wk:.4f} {y-h:.4f} {x-w:.4f} {y-hk:.4f} {x-w:.4f} {y:.4f} curveto")
+        self.WriteLine(f"{x-w:.4f} {y+hk:.4f} {x-wk:.4f} {y+h:.4f} {x:.4f} {y+h:.4f} curveto")
+
+    def SetColour(self, colour):
+        self.WriteLine(f"{colour} setrgbcolor")
+
 
 
 def DistXY(p1, p2):
@@ -103,7 +142,9 @@ def ParseInt(readline, chartag = None):
     if chartag: readline = readline.partition(chartag)[2]         # NULL tag just reads next int
     readline = readline.strip()
     numstring = readline.partition(' ')[0]
-    numdat = int(float(numstring))
+    if numstring == 'True': numdat = 1      # Allow boolean values to be read as integers (corrupted file may have True/False instead of 1/0)
+    elif numstring == 'False': numdat = 0
+    else: numdat = int(float(numstring))
     readline = readline.partition(' ')[2]
     return (numdat, readline)
 
@@ -131,6 +172,36 @@ def CheckFloat(string):
         return float(string)
     except ValueError:
         return False
+    
+
+def EPSToPNG_Transparent(epsfile, pngfile, dpi=300):
+	cmd = [
+		"gs",
+		"-dSAFER",
+		"-dBATCH",
+		"-dNOPAUSE",
+		"-sDEVICE=pngalpha",
+		f"-r{dpi}",
+		f"-sOutputFile={pngfile}",
+		epsfile,
+	]
+	subprocess.run(cmd, check=True)
+
+
+def EPSToPNG(epsfile, pngfile, dpi=300):
+	cmd = [
+		"gs",
+		"-dSAFER",
+		"-dBATCH",
+		"-dNOPAUSE",
+		"-dEPSCrop",
+		"-sDEVICE=png16m",
+		f"-r{dpi}",
+		f"-sOutputFile={pngfile}",
+		epsfile,
+	]
+	subprocess.run(cmd, check=True)
+    
 
 
 
@@ -142,12 +213,14 @@ ID_Run = wx.NewIdRef()
 ID_AutoRun = wx.NewIdRef()
 ID_Default = wx.NewIdRef()
 ID_ModBrowse = wx.NewIdRef()
+ID_OutBrowse = wx.NewIdRef()
 ID_Print = wx.NewIdRef()
 ID_Neuron = wx.NewIdRef()
 ID_Overlay = wx.NewIdRef()
 ID_Pos = wx.NewIdRef()
 ID_Overlay2 = wx.NewIdRef()
 ID_Pos2 = wx.NewIdRef()
+ID_StrokeColour = wx.NewIdRef()
 
 # Menu IDs
 ID_GraphEPS = wx.NewIdRef()
@@ -167,6 +240,13 @@ ID_Insert = wx.NewIdRef()
 ID_Bold = wx.NewIdRef()
 ID_PlotPanel = wx.NewIdRef()
 ID_Delete = wx.NewIdRef()
+ID_GraphPNG = wx.NewIdRef()
+ID_MultiPNG = wx.NewIdRef()
 
 # Check IDs
 ID_ClipMode = wx.NewIdRef()
+ID_Line = wx.NewIdRef()
+
+# Other IDs
+ID_Font = wx.NewIdRef()
+ID_Type = wx.NewIdRef()

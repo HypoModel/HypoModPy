@@ -21,11 +21,12 @@ class ModThreadEvent(wx.PyCommandEvent):
 
 # Mod Class
 class Mod(wx.EvtHandler):
-    def __init__(self, mainwin, tag):
+    def __init__(self, mainwin, tag, label="", type=""):
         wx.EvtHandler.__init__(self)
 
         self.mainwin = mainwin
         self.tag = tag
+        self.label = label
         self.type = type
         self.graphload = False
         self.runflag = False
@@ -35,6 +36,14 @@ class Mod(wx.EvtHandler):
 
         self.plotbase = PlotBase(mainwin)
         self.settags = []
+
+        if mainwin.modpath != "": self.path = mainwin.modpath + "/" + self.label
+        else: self.path = self.label
+
+        if os.path.exists(self.path) == False: 
+            os.mkdir(self.path)
+
+        self.mainwin = mainwin
 
         self.Bind(EVT_MODTHREAD_COMPLETE, self.OnModThreadComplete)
         self.Bind(EVT_MODTHREAD_PROGRESS, self.OnModThreadProgress)
@@ -74,8 +83,9 @@ class Mod(wx.EvtHandler):
     
 
     def AddTool(self, toolbox):
-        self.modtools[toolbox.boxtag] = toolbox
+        self.modtools[toolbox.tag] = toolbox
         self.mainwin.toolset.AddBox(toolbox)  
+        print("AddTool", toolbox.tag, toolbox.boxtag)
       
 
     def ModStore(self):
@@ -88,7 +98,7 @@ class Mod(wx.EvtHandler):
 
         for box in self.modtools.values():
             outfile.WriteLine("{} {} {} {} {} {}".format(box.tag, box.mpos.x, box.mpos.y, box.size.x, box.size.y, box.IsShown()))
-            if box.storetag != None: box.storetag.HistStore()
+            if box.storetag is not None: box.storetag.HistStore()
 
         outfile.Close()
         print("ModStore OK")
@@ -138,10 +148,10 @@ class Mod(wx.EvtHandler):
 
 
 class ModThread(Thread):
-    def __init__(self, box, mainwin):
+    def __init__(self, params, mainwin):
         Thread.__init__(self)
 
-        self.modbox = box
+        #self.modbox = box
         self.mainwin = mainwin
         self.diag = False
 

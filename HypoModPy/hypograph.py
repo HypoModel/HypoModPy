@@ -1,8 +1,14 @@
 
+import gc
+import gc
+from hmac import new
+
+from matplotlib.pyplot import plot
 import wx
-from math import log, isinf, isnan
+from math import log, isinf, isnan 
 from HypoModPy.hypotools import *
 from HypoModPy.hypoparams import *
+from HypoModPy.hypoprint import GraphEPS
 import math
 
 
@@ -34,9 +40,12 @@ class GraphDisp():
 
 
 
-class GraphPanel(wx.Panel):
+class GraphPanel(GraphEPS, wx.Panel):
     def __init__(self, parent, index, size):
         wx.Panel.__init__(self, parent, wx.ID_ANY, wx.DefaultPosition, size)
+
+        DiagWrite("GraphPanel init\n")
+
         self.numdisps = 0
         self.frontdisp = 0
         self.dispset = []
@@ -83,11 +92,33 @@ class GraphPanel(wx.Panel):
         self.Bind(wx.EVT_MENU, self.OnGraphRemove, ID_GraphRemove)
         self.Bind(wx.EVT_MENU, self.OnPlotCon, ID_PlotPanel)
         self.Bind(wx.EVT_MENU, self.OnGridOutput, ID_Output)
+        self.Bind(wx.EVT_MENU, self.OnGraphEPS, ID_GraphEPS)
+        self.Bind(wx.EVT_MENU, self.OnMultiEPS, ID_MultiEPS)
+        #self.Bind(wx.EVT_MENU, self.OnMultiCell, ID_MultiCell)
+        self.Bind(wx.EVT_MENU, self.OnGraphPNG, ID_GraphPNG)
+        self.Bind(wx.EVT_MENU, self.OnMultiPNG, ID_MultiPNG)
 
 
         self.Bind(wx.EVT_MOTION, self.OnMouseMove)
         self.Bind(wx.EVT_LEFT_DOWN, self.OnLeftDown)
         self.Bind(wx.EVT_LEFT_UP, self.OnLeftUp)
+
+
+    def Update(self):
+        self.ScrollUpdate()
+        self.Refresh()
+
+
+    def OnGraphEPS(self, event):
+        self.WriteEPS()
+        
+    
+    def OnMultiEPS(self, event):
+         self.MultiEPS()
+
+    
+    def OnMultiCell(self, event):
+        self.MultiCell()
 
 
     def OnGridOutput(self, event):
@@ -128,9 +159,9 @@ class GraphPanel(wx.Panel):
         #self.CaptureMouse()
         self.anchorpos = pos
         if self.anchorpos.x < self.xbase: self.anchorpos.x = self.xbase
-        if self.anchorpos.x > self.xbase + self.xplot: self.anchorpos.x = self.xbase + self.xplot
+        if self.anchorpos.x > self.xbase + self.xplot: self.anchorpos.x = int(self.xbase + self.xplot)
         if self.anchorpos.y < self.ybase: self.anchorpos.y = self.ybase
-        if self.anchorpos.y > self.ybase + self.yplot: self.anchorpos.y = self.ybase + self.yplot
+        if self.anchorpos.y > self.ybase + self.yplot: self.anchorpos.y = int(self.ybase + self.yplot)
 
 
     def OnMouseMove(self, event):
@@ -138,6 +169,7 @@ class GraphPanel(wx.Panel):
 
         if self.mainwin.hypoflags["xypos"]:
             plot = self.GetFrontPlot()
+            if plot is None: return
 
             # 27/11/20 fixed scaling using adjusted axis unit scales, still need to fix for measure
 
@@ -201,7 +233,7 @@ class GraphPanel(wx.Panel):
 
     def ScrollUpdate(self, xmax=0):
         plot = self.GetFrontPlot()
-        if not plot: return
+        if plot is None: return
         if not any(plot.data):
             #mod->diagbox->Write("plot " + plot.gname + " no data\n")
             #return
@@ -272,6 +304,7 @@ class GraphPanel(wx.Panel):
 
     def GetFrontPlot(self):
         if len(self.dispset) == 0: return None
+        if len(self.dispset[0].plots) == 0: return None
         else: return self.dispset[0].plots[0]
 
 
@@ -295,26 +328,28 @@ class GraphPanel(wx.Panel):
         if not basicmode:
             if studentmode:
                 menuPlot.Append(ID_GraphEPS, "Export EPS")
+                menuPlot.Append(ID_MultiEPS, "Multi EPS")
                 menuPlot.Append(ID_PlotPanel, "Plot Panel")
-                menuPlot.Append(ID_UnZoom, "Zoom Undo")
                 menuPlot.Append(ID_GraphRemove, "Delete Graph")
                 menuPlot.Append(ID_Output, "Grid Output")
                 menuPlot.AppendSeparator()
             else:
-                #menuPlot->Append(ID_GraphRemove, "Delete Graph")
+                menuPlot.Append(ID_GraphPNG, "Export PNG")
+                menuPlot.Append(ID_MultiPNG, "Multi PNG")
                 menuPlot.Append(ID_GraphEPS, "Export EPS")
                 menuPlot.Append(ID_MultiEPS, "Multi EPS")
                 menuPlot.Append(ID_MultiCell, "Multi Cell")
                 menuPlot.Append(ID_Scale, "Plot Panel")
                 menuPlot.Append(ID_UnZoom, "Zoom Undo")
-                #menuPlot->Append(ID_Test, "Test")
+                menuPlot.Append(ID_GraphRemove, "Delete Graph")
                 menuPlot.Append(ID_Output, "Grid Output")
                 menuPlot.AppendSeparator()
     
         for settag in mod.plotbase.setstore:
             plotset = mod.plotbase.setstore[settag]
             if not plotset.submenu:
-                menuitem = wx.MenuItem(menuPlot, wx.ID_ANY, settag, "", wx.ITEM_CHECK)
+                menuitem = wx.MenuItem(menuPlot, wx.ID_ANY, plotset.label, "", wx.ITEM_CHECK)
+                #DiagWrite(f"right click {settag}\n")
 #ifndef OSX
                 #menuitem->SetBitmaps(radio_on, radio_off)
 #endif
@@ -326,14 +361,15 @@ class GraphPanel(wx.Panel):
                 #menuPlot->AppendRadioItem(1000 + i, graphset->name)
             else:
                 subPlot = wx.Menu()
-                for plottag in plotset.plottags:
-                    menuitem = wx.MenuItem(subPlot, wx.ID_ANY, plottag, "", wx.ITEM_CHECK)
+                for plot in plotset:
+                    menuitem = wx.MenuItem(subPlot, wx.ID_ANY, plot.label, "", wx.ITEM_CHECK)
+                    DiagWrite(f"right click {plot.label}\n")
 #ifndef OSX
                     #menuitem->SetBitmaps(radio_on, radio_off)
 #endif
                     subPlot.Append(menuitem)
                     menuitem.Check(False)
-                    self.menuIdPlotMap[menuitem.GetId()] = plottag
+                    self.menuIdPlotMap[menuitem.GetId()] = plot.plottag
                     self.Bind(wx.EVT_MENU, self.OnGraphSelectPlot, menuitem)
 
                 #subPlot->AppendRadioItem(2000 + graphset->gindex[j], graphset->GetPlot(j)->gname)
@@ -404,6 +440,59 @@ class GraphPanel(wx.Panel):
         self.mainwin.scalebox.ScaleUpdate()
 
 
+    def OnGraphPNG(self, event):
+        filetag = self.mainwin.mod.modbox.storetag.GetValue()
+        filepath = self.mainwin.outpath + "/" + filetag + "-" + self.GetFrontPlot.label + ".png"
+        self.WriteBitmap(filepath)
+
+
+    def OnMultiPNG(self, event):
+        filetag = self.mainwin.mod.modbox.storetag.GetValue()
+        filepath = self.mainwin.outpath + "/" + filetag + "-" + "multi" + ".png"
+        self.WriteGraphBitmap(filepath)
+    
+
+    def WriteBitmap(self, filepath):
+        bmp = wx.Bitmap(int(self.xplot + self.xbase + 20), int(self.yplot + self.ybase + 20))
+        dc = wx.MemoryDC(bmp)
+        dc.SetBackground(wx.Brush(wx.WHITE))
+        dc.Clear()
+
+        self.DrawToDC(dc)
+
+        dc.SelectObject(wx.NullBitmap)
+        bmp.SaveFile(filepath, wx.BITMAP_TYPE_PNG)
+
+
+    def WriteGraphBitmap(self, filepath):
+        xmargin = 20
+        ymargin = 20
+        panelgap = 20
+
+        panelset = self.mainwin.panelset
+
+        width = int(panelset[0].xbase + panelset[0].xplot + 40)
+        height = ymargin
+
+        for panel in panelset:
+            height += int(panel.ybase + panel.yplot + 40)
+            height += panelgap
+
+        bmp = wx.Bitmap(width, height)
+        dc = wx.MemoryDC(bmp)
+        dc.SetBackground(wx.Brush(wx.WHITE))
+        dc.Clear()
+
+        yoff = 0
+        for panel in panelset:
+            panel.DrawToDC(dc, xmargin, yoff)
+            yoff += int(panel.ybase + panel.yplot + 40)
+            yoff += panelgap
+
+        dc.SelectObject(wx.NullBitmap)
+        bmp.SaveFile(filepath, wx.BITMAP_TYPE_PNG)
+
+
     def PaintBackground(self, dc):
         backgroundColour = self.GetBackgroundColour()
         #if backgroundColour.Ok() == False: backgroundColour = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DFACE)
@@ -416,10 +505,12 @@ class GraphPanel(wx.Panel):
 
 
     def OnPaint(self, event):
-
-        #dc = wx.PaintDC(self)
         dc = wx.BufferedPaintDC(self)
         self.PaintBackground(dc)
+        self.DrawToDC(dc)
+
+
+    def DrawToDC(self, dc, xoff=0, yoff=0):
         gc = wx.GraphicsContext.Create(dc)
 
         drawdiag = True
@@ -434,8 +525,8 @@ class GraphPanel(wx.Panel):
 
         xplot = self.xplot
         yplot = self.yplot
-        xbase = self.xbase
-        ybase = self.ybase
+        xbase = self.xbase + xoff
+        ybase = self.ybase + yoff
 
         #DiagWrite("graph paint\n")
 
@@ -453,7 +544,14 @@ class GraphPanel(wx.Panel):
                 xto = plot.xto * plot.xscale
                 yfrom = plot.yfrom * plot.yscale
                 yto = plot.yto * plot.yscale
-                    
+
+                if plot.xlabels == 0: plot.xlabels = 10
+                if plot.ylabels == 0: plot.ylabels = 5
+                if plot.xstep == 0: plot.xstep = (xto - xfrom) / plot.xlabels
+                if plot.ystep == 0: plot.ystep = (yto - yfrom) / plot.ylabels
+                xlabels = int(plot.xlabels)
+                ylabels = int(plot.ylabels)
+
                 gc.SetPen(wx.BLACK_PEN)
                 gc.SetFont(self.textfont, self.colourpen['black'])
                 
@@ -564,11 +662,15 @@ class GraphPanel(wx.Panel):
                 # Plot Label
                 if self.yplot < 150: gc.SetFont(self.textfont, self.colourpen['black'])
                 textsize = gc.GetTextExtent(plot.label)
-                gc.DrawText(plot.label, xbase + xplot - textsize[0], 30 + 15 * gplot + 15 * gdisp)
+                gc.DrawText(plot.label, xbase + xplot - textsize[0], ybase + 20 + 15 * gplot + 15 * gdisp)
 
                 # Set plot colour
-                gc.SetPen(wx.Pen(self.colourpen[plot.colour]))
+                #gc.SetPen(wx.Pen(self.colourpen[plot.colour]))
+                #gc.SetPen(wx.Pen(plot.strokecolour))
                 #DiagWrite(f"OnPaint() name {plot.label}  colour {plot.colour}\n")
+                if not plot.strokecolour.IsOk():
+                    plot.strokecolour = self.colourpen["black"]
+                gc.SetPen(wx.Pen(plot.strokecolour))
 
                 # Set drawing scales
                 xto /= plot.binsize
@@ -680,7 +782,7 @@ class GraphPanel(wx.Panel):
                                 #mainwin->diagbox->Write(text.Format("xcount %d  xremain %d  portion %.2f  yremain %.2f\n", xcount, xremain, portion, yremain))
                                 #gc.StrokeLine(oldx, oldy, xplot + xbase + xoffset, oldy - yremain * portion)
                                 #path.MoveToPoint(oldx, oldy)
-                                path.AddLineToPoint(xplot + xbase + xoffset, int(oldy - yremain * portion))
+                                path.AddLineToPoint(int(xplot + xbase + xoffset), int(oldy - yremain * portion))
 
                             oldx = int(i * xrange + xbase + xoffset)
                             oldy = int(yplot + ybase - ypos)
@@ -779,53 +881,42 @@ class GraphPanel(wx.Panel):
 
 
 class PlotCon(ToolBox):
-    def __init__(self, plotpanel, title):
-        #wx.Dialog.__init__(plotpanel.mainwin, -1, title, wx.DefaultPosition, wx.Size(325, 930), 
-        #                   wx.FRAME_FLOAT_ON_PARENT | wx.FRAME_TOOL_WINDOW | wx.CAPTION | wx.SYSTEM_MENU | wx.CLOSE_BOX | wx.RESIZE_BORDER)
-        
-        #super(PlotCon, self).__init__(None, -1, title, wx.DefaultPosition, wx.Size(320, 600), 
-        #                              wx.FRAME_FLOAT_ON_PARENT | wx.FRAME_TOOL_WINDOW | wx.CAPTION | wx.SYSTEM_MENU | wx.CLOSE_BOX | wx.RESIZE_BORDER)
-        
+    def __init__(self, graphpanel, title):
         ostype = GetSystem()
         if ostype == "Windows": boxheight = 700
-        else: boxheight = 600
-        ToolBox.__init__(self, plotpanel.mainwin, "PlotCon", title, wx.Point(0, 0), wx.Size(320, boxheight), type)
+        else: boxheight = 700
+        ToolBox.__init__(self, graphpanel.mainwin, "PlotCon", title, wx.Point(0, 0), wx.Size(320, boxheight), type)
 
-        #ToolBox.__init__(self, parent, "DiagBox", title, pos, size)
+        DiagWrite("PlotCon init\n")
+
+        self.graphpanel = graphpanel
         
-        self.plotpanel = plotpanel
-        
-        autosynch = False
+        self.autosynch = False
         buttonheight = 23
         boxfont = wx.Font(wx.FontInfo(8).FaceName("Tahoma"))
-        confont = wx.Font(wx.FontInfo(8).FaceName("Tahoma"))
-        fontset = plotpanel.mainwin.fontset
+        confont = wx.Font(wx.FontInfo(12).FaceName("Tahoma"))
+        buttonfont = wx.Font(wx.FontInfo(10).FaceName("Tahoma").Bold())
         pad = 3
         radpad = 3
 
-        #panel = ToolPanel(self, wx.DefaultPosition, wx.DefaultSize)
-        #panel.SetFont(boxfont)
-        #mainbox = wx.BoxSizer(wx.VERTICAL)
-        #panel.SetSizer(mainbox)
-
+        self.fontset = graphpanel.mainwin.fontset
         self.paramset = ParamSet(self.panel)
-        parambox = wx.BoxSizer(wx.HORIZONTAL)
 
-        labelwidth = 40
-        numwidth = 50
-        if ostype == 'Mac': labelwidth = 50
-        self.plot = plotpanel.GetFrontPlot()
-        self.paramset.AddNum("xlabels", "X Count", self.plot.xlabels, 0, labelwidth, numwidth)
-        self.paramset.AddNum("xstep", "X Step", self.plot.xstep, 2, labelwidth, numwidth)
-        self.paramset.AddNum("ylabels", "Y Count", self.plot.ylabels, 0, labelwidth, numwidth)
-        self.paramset.AddNum("ystep", "Y Step", self.plot.ystep, 2, labelwidth, numwidth)
+        self.paramset.num_labelwidth = 40
+        self.paramset.num_numwidth = 50
+        if ostype == 'Mac': self.paramset.num_labelwidth = 50
+        self.plot = graphpanel.GetFrontPlot()
+        self.paramset.AddNum("xlabels", "X Count", self.plot.xlabels, 0)
+        self.paramset.AddNum("xstep", "X Step", self.plot.xstep, 2)
+        self.paramset.AddNum("ylabels", "Y Count", self.plot.ylabels, 0)
+        self.paramset.AddNum("ystep", "Y Step", self.plot.ystep, 2)
         tickparams = self.ParamLayout(2)
 
         xtickradbox = wx.StaticBoxSizer(wx.VERTICAL, self.panel, "X Ticks")
         self.xtickrad = []
-        self.xtickrad.append(wx.RadioButton(self.panel, 0, "None", wx.DefaultPosition, wx.DefaultSize, wx.RB_GROUP))
-        self.xtickrad.append(wx.RadioButton(self.panel, 1, "Count"))
-        self.xtickrad.append(wx.RadioButton(self.panel, 2, "Step"))
+        self.xtickrad.append(wx.RadioButton(self.panel, wx.ID_ANY, "None", wx.DefaultPosition, wx.DefaultSize, wx.RB_GROUP))
+        self.xtickrad.append(wx.RadioButton(self.panel, wx.ID_ANY, "Count"))
+        self.xtickrad.append(wx.RadioButton(self.panel, wx.ID_ANY, "Step"))
         xtickradbox.Add(self.xtickrad[0], 1, wx.TOP | wx.BOTTOM, pad)
         xtickradbox.Add(self.xtickrad[1], 1, wx.TOP | wx.BOTTOM, pad)
         xtickradbox.Add(self.xtickrad[2], 1, wx.TOP | wx.BOTTOM, pad)
@@ -833,9 +924,9 @@ class PlotCon(ToolBox):
 
         xlabradbox = wx.StaticBoxSizer(wx.VERTICAL, self.panel, "X Labels")
         self.xlabrad  = []
-        self.xlabrad.append(wx.RadioButton(self.panel, 100, "None", wx.DefaultPosition, wx.DefaultSize, wx.RB_GROUP))
-        self.xlabrad.append(wx.RadioButton(self.panel, 101, "All"))
-        self.xlabrad.append(wx.RadioButton(self.panel, 102, "Ends"))
+        self.xlabrad.append(wx.RadioButton(self.panel, wx.ID_ANY, "None", wx.DefaultPosition, wx.DefaultSize, wx.RB_GROUP))
+        self.xlabrad.append(wx.RadioButton(self.panel, wx.ID_ANY, "All"))
+        self.xlabrad.append(wx.RadioButton(self.panel, wx.ID_ANY, "Ends"))
         xlabradbox.Add(self.xlabrad[0], 1, wx.TOP | wx.BOTTOM, pad)
         xlabradbox.Add(self.xlabrad[1], 1, wx.TOP | wx.BOTTOM, pad)
         xlabradbox.Add(self.xlabrad[2], 1, wx.TOP | wx.BOTTOM, pad)
@@ -844,9 +935,9 @@ class PlotCon(ToolBox):
 
         ytickradbox = wx.StaticBoxSizer(wx.VERTICAL, self.panel, "Y Ticks")
         self.ytickrad = []
-        self.ytickrad.append(wx.RadioButton(self.panel, 3, "None", wx.DefaultPosition, wx.DefaultSize, wx.RB_GROUP))
-        self.ytickrad.append(wx.RadioButton(self.panel, 4, "Count"))
-        self.ytickrad.append(wx.RadioButton(self.panel, 5, "Step"))
+        self.ytickrad.append(wx.RadioButton(self.panel, wx.ID_ANY, "None", wx.DefaultPosition, wx.DefaultSize, wx.RB_GROUP))
+        self.ytickrad.append(wx.RadioButton(self.panel, wx.ID_ANY, "Count"))
+        self.ytickrad.append(wx.RadioButton(self.panel, wx.ID_ANY, "Step"))
         ytickradbox.Add(self.ytickrad[0], 1, wx.TOP | wx.BOTTOM, pad)
         ytickradbox.Add(self.ytickrad[1], 1, wx.TOP | wx.BOTTOM, pad)
         ytickradbox.Add(self.ytickrad[2], 1, wx.TOP | wx.BOTTOM, pad)
@@ -854,9 +945,9 @@ class PlotCon(ToolBox):
 
         ylabradbox = wx.StaticBoxSizer(wx.VERTICAL, self.panel, "Y Labels")
         self.ylabrad  = []
-        self.ylabrad.append(wx.RadioButton(self.panel, 200, "None", wx.DefaultPosition, wx.DefaultSize, wx.RB_GROUP))
-        self.ylabrad.append(wx.RadioButton(self.panel, 201, "All"))
-        self.ylabrad.append(wx.RadioButton(self.panel, 202, "Ends"))
+        self.ylabrad.append(wx.RadioButton(self.panel, wx.ID_ANY, "None", wx.DefaultPosition, wx.DefaultSize, wx.RB_GROUP))
+        self.ylabrad.append(wx.RadioButton(self.panel, wx.ID_ANY, "All"))
+        self.ylabrad.append(wx.RadioButton(self.panel, wx.ID_ANY, "Ends"))
         ylabradbox.Add(self.ylabrad[0], 1, wx.TOP | wx.BOTTOM, pad)
         ylabradbox.Add(self.ylabrad[1], 1, wx.TOP | wx.BOTTOM, pad)
         ylabradbox.Add(self.ylabrad[2], 1, wx.TOP | wx.BOTTOM, pad)
@@ -872,16 +963,16 @@ class PlotCon(ToolBox):
         # Scale mode controls
         xscalemodebox = wx.StaticBoxSizer(wx.VERTICAL, self.panel, "X Scale")
         self.xscalerad = []
-        self.xscalerad.append(wx.RadioButton(self.panel, 10, "Linear", wx.DefaultPosition, wx.DefaultSize, wx.RB_GROUP))
-        self.xscalerad.append(wx.RadioButton(self.panel, 11, "Log"))
+        self.xscalerad.append(wx.RadioButton(self.panel, wx.ID_ANY, "Linear", wx.DefaultPosition, wx.DefaultSize, wx.RB_GROUP))
+        self.xscalerad.append(wx.RadioButton(self.panel, wx.ID_ANY, "Log"))
         xscalemodebox.Add(self.xscalerad[0], 1, wx.TOP | wx.BOTTOM, pad)
         xscalemodebox.Add(self.xscalerad[1], 1, wx.TOP | wx.BOTTOM, pad)
         self.xscalerad[self.plot.xscalemode].SetValue(True)
 
         yscalemodebox = wx.StaticBoxSizer(wx.VERTICAL, self.panel, "Y Scale")
         self.yscalerad = []
-        self.yscalerad.append(wx.RadioButton(self.panel, 12, "Linear", wx.DefaultPosition, wx.DefaultSize, wx.RB_GROUP))
-        self.yscalerad.append(wx.RadioButton(self.panel, 13, "Log"))
+        self.yscalerad.append(wx.RadioButton(self.panel, wx.ID_ANY, "Linear", wx.DefaultPosition, wx.DefaultSize, wx.RB_GROUP))
+        self.yscalerad.append(wx.RadioButton(self.panel, wx.ID_ANY, "Log"))
         yscalemodebox.Add(self.yscalerad[0], 1, wx.TOP | wx.BOTTOM, pad)
         yscalemodebox.Add(self.yscalerad[1], 1, wx.TOP | wx.BOTTOM, pad)
         self.yscalerad[self.plot.yscalemode].SetValue(True)
@@ -889,16 +980,16 @@ class PlotCon(ToolBox):
         # Axis mode controls
         xaxisbox = wx.StaticBoxSizer(wx.VERTICAL, self.panel, "X Axis")
         self.xaxisrad = []
-        self.xaxisrad.append(wx.RadioButton(self.panel, 300, "Off", wx.DefaultPosition, wx.DefaultSize, wx.RB_GROUP))
-        self.xaxisrad.append(wx.RadioButton(self.panel, 301, "On"))
+        self.xaxisrad.append(wx.RadioButton(self.panel, wx.ID_ANY, "Off", wx.DefaultPosition, wx.DefaultSize, wx.RB_GROUP))
+        self.xaxisrad.append(wx.RadioButton(self.panel, wx.ID_ANY, "On"))
         xaxisbox.Add(self.xaxisrad[0], 1, wx.TOP | wx.BOTTOM, pad)
         xaxisbox.Add(self.xaxisrad[1], 1, wx.TOP | wx.BOTTOM, pad)
         self.xaxisrad[self.plot.xaxis].SetValue(True)
 
         yaxisbox = wx.StaticBoxSizer(wx.VERTICAL, self.panel, "Y Axis")
         self.yaxisrad = []
-        self.yaxisrad.append(wx.RadioButton(self.panel, 400, "Off", wx.DefaultPosition, wx.DefaultSize, wx.RB_GROUP))
-        self.yaxisrad.append(wx.RadioButton(self.panel, 401, "On"))
+        self.yaxisrad.append(wx.RadioButton(self.panel, wx.ID_ANY, "Off", wx.DefaultPosition, wx.DefaultSize, wx.RB_GROUP))
+        self.yaxisrad.append(wx.RadioButton(self.panel, wx.ID_ANY, "On"))
         yaxisbox.Add(self.yaxisrad[0], 1, wx.TOP | wx.BOTTOM, pad)
         yaxisbox.Add(self.yaxisrad[1], 1, wx.TOP | wx.BOTTOM, pad)
         self.yaxisrad[self.plot.yaxis].SetValue(True)
@@ -909,23 +1000,22 @@ class PlotCon(ToolBox):
         scalemoderadbox.Add(yscalemodebox, 1, wx.ALL, radpad)
         scalemoderadbox.Add(yaxisbox, 1, wx.ALL, radpad)
 
-        numwidth = 50
-        self.paramset.AddNum("xshift", "XShift", self.plot.xshift, 2, labelwidth, numwidth)
-        self.paramset.AddNum("xscale", "XScale", self.plot.xunitscale, 4, labelwidth, numwidth)
-        self.paramset.AddNum("xdscale", "XDScale", self.plot.xunitdscale, 1, labelwidth, numwidth)
-        self.paramset.AddNum("xplot", "Width", self.plot.xplot, 0, labelwidth, numwidth)
-        #self.paramset.AddNum("xlogbase", "XLogB", self.plot.xlogbase, 4, labelwidth, numwidth)
-        self.paramset.AddNum("xlabelgap", "X Gap", self.plot.xlabelgap, 0, labelwidth, numwidth)
-        self.paramset.AddNum("xlabelplaces", "X Places", self.plot.xlabelplaces, 0, labelwidth, numwidth)
-        self.paramset.AddNum("barwidth", "Bar Wid", self.plot.barwidth, 0, labelwidth, numwidth)
-        self.paramset.AddNum("yshift", "YShift", self.plot.yshift, 2, labelwidth, numwidth)
-        self.paramset.AddNum("yscale", "YScale", self.plot.yunitscale, 4, labelwidth, numwidth)
-        self.paramset.AddNum("ydscale", "YDScale", self.plot.yunitdscale, 1, labelwidth, numwidth)
-        self.paramset.AddNum("yplot", "Height", self.plot.yplot, 0, labelwidth, numwidth)
-        #self.paramset.AddNum("ylogbase", "YLogB", self.plot.ylogbase, 4, labelwidth, numwidth)
-        self.paramset.AddNum("ylabelgap", "Y Gap", self.plot.ylabelgap, 0, labelwidth, numwidth)
-        self.paramset.AddNum("ylabelplaces", "Y Places", self.plot.ylabelplaces, 0, labelwidth, numwidth)
-        self.paramset.AddNum("bargap", "Bar Gap", self.plot.bargap, 0, labelwidth, numwidth)
+        self.paramset.AddNum("xshift", "XShift", self.plot.xshift, 2)
+        self.paramset.AddNum("xscale", "XScale", self.plot.xunitscale, 4)
+        self.paramset.AddNum("xdscale", "XDScale", self.plot.xunitdscale, 1)
+        self.paramset.AddNum("xplot", "Width", self.plot.xplot, 0)
+        #self.paramset.AddNum("xlogbase", "XLogB", self.plot.xlogbase, 4)
+        self.paramset.AddNum("xlabelgap", "X Gap", self.plot.xlabelgap, 0)
+        self.paramset.AddNum("xlabelplaces", "X Places", self.plot.xlabelplaces, 0)
+        self.paramset.AddNum("barwidth", "Bar Wid", self.plot.barwidth, 0)
+        self.paramset.AddNum("yshift", "YShift", self.plot.yshift, 2)
+        self.paramset.AddNum("yscale", "YScale", self.plot.yunitscale, 4)
+        self.paramset.AddNum("ydscale", "YDScale", self.plot.yunitdscale, 1)
+        self.paramset.AddNum("yplot", "Height", self.plot.yplot, 0)
+        #self.paramset.AddNum("ylogbase", "YLogB", self.plot.ylogbase, 4)
+        self.paramset.AddNum("ylabelgap", "Y Gap", self.plot.ylabelgap, 0)
+        self.paramset.AddNum("ylabelplaces", "Y Places", self.plot.ylabelplaces, 0)
+        self.paramset.AddNum("bargap", "Bar Gap", self.plot.bargap, 0)
         plotparams = self.ParamLayout(2)
 
         self.paramset.GetCon("xshift").SetMinMax(-100000, 100000)
@@ -934,25 +1024,65 @@ class PlotCon(ToolBox):
         self.paramset.GetCon("ylabelplaces").SetMinMax(-1, 100)
 
         samplebox = wx.BoxSizer(wx.HORIZONTAL)
-        self.paramset.AddNum("xsample", "XSample", self.plot.xsample, 0, labelwidth, numwidth)
+        self.paramset.AddNum("xsample", "XSample", self.plot.xsample, 0)
         samplebox.Add(self.paramset.GetCon("xsample"), 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL)
-        clipcheck = wx.CheckBox(self.panel, ID_ClipMode, "Clip")
-        clipcheck.SetFont(confont)
-        clipcheck.SetValue(self.plot.clipmode)
+        self.clipcheck = wx.CheckBox(self.panel, ID_ClipMode, "Clip")
+        self.clipcheck.SetFont(confont)
+        self.clipcheck.SetValue(self.plot.clipmode)
         samplebox.AddSpacer(40)
-        samplebox.Add(clipcheck, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL)
+        samplebox.Add(self.clipcheck, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL)
         samplebox.AddSpacer(25)
-        self.paramset.currlay += 1
+        self.LayoutSkip()
 
-        self.paramset.AddText("label", "Name", self.plot.label, labelwidth)
-        self.paramset.AddText("xtitle", "X Label", self.plot.xtitle, labelwidth)
-        self.paramset.AddText("ytitle", "Y Label", self.plot.ytitle, labelwidth)
+        # Font Selector
+        self.fontchoice = wx.Choice(self.panel, ID_Font, wx.DefaultPosition, wx.Size(100, -1), choices=self.fontset)
+        self.fontchoice.SetSelection(self.plot.labelfont)
+        fontbox = wx.BoxSizer(wx.HORIZONTAL)
+        fontlabel = wx.StaticText(self.panel, wx.ID_ANY, "Font")
+        fontlabel.SetFont(confont)
+        fontbox.Add(fontlabel, 0, wx.ALIGN_CENTER_HORIZONTAL | wx.ALIGN_CENTER_VERTICAL | wx.ALL, 5)
+        fontbox.AddSpacer(5)
+        fontbox.Add(self.fontchoice, 0, wx.ALIGN_CENTER_HORIZONTAL | wx.ALIGN_CENTER_VERTICAL)
+        fontbox.AddSpacer(5)
+        self.paramset.AddNum("labelfontsize", "Size", self.plot.labelfontsize, 2, 25)
+        fontbox.Add(self.paramset.GetCon("labelfontsize"), 0, wx.ALIGN_CENTER_HORIZONTAL | wx.ALIGN_CENTER_VERTICAL)
+        self.LayoutSkip()
+
+        # Line Stroke and Colour
+        self.linecheck = wx.CheckBox(self.panel, ID_Line, "")
+        self.linecheck.SetFont(confont)
+        self.linecheck.SetValue(self.plot.linemode)
+        #self.strokepicker = wx.ColourPickerCtrl(self.panel, wx.ID_ANY, self.plot.strokecolour, wx.DefaultPosition, wx.Size(130, 130))
+        self.strokebutton = wx.BitmapButton(self.panel, ID_StrokeColour, self.MakeColourBitmap(self.plot.strokecolour, 28, 10), wx.DefaultPosition, wx.Size(36, -1))
+        #self.UpdateStrokeButton()
+        self.paramset.AddNum("plotstroke", "Stroke", self.plot.plotstroke, 2)
+        strokebox = wx.BoxSizer(wx.HORIZONTAL)
+        strokebox.Add(self.paramset.GetCon("plotstroke"), 0, wx.ALIGN_CENTRE_HORIZONTAL | wx.ALIGN_CENTRE_VERTICAL | wx.ALL, 0)
+        self.LayoutSkip()
+        strokebox.Add(self.linecheck, 0, wx.ALIGN_CENTRE_HORIZONTAL | wx.ALIGN_CENTRE_VERTICAL | wx.ALL, 5)
+        #strokebox.Add(self.strokepicker)
+        strokebox.Add(self.strokebutton, 0, wx.ALIGN_CENTRE_HORIZONTAL | wx.ALIGN_CENTRE_VERTICAL | wx.ALL, 5)
+
+        # Panel Synch
+        self.paramset.AddNum("panelgap", "Panel Gap", self.plot.panelgap, 0, labelwidth=60)
+        synchbox = wx.BoxSizer(wx.HORIZONTAL)
+        synchbox.Add(self.paramset.GetCon("panelgap"), 0, wx.ALIGN_CENTRE_HORIZONTAL | wx.ALIGN_CENTRE_VERTICAL | wx.ALL, 0)
+        self.LayoutSkip()
+        self.synchbutton = wx.Button(self.panel, ID_Sync, "Synch Panels", wx.DefaultPosition, wx.Size(80, 30))
+        self.synchbutton.SetFont(buttonfont)
+        synchbox.Add(self.synchbutton, 0, wx.ALIGN_CENTRE_HORIZONTAL | wx.ALIGN_CENTRE_VERTICAL | wx.ALL, 0)
+
+        # Titles and Labels
+        self.paramset.text_labelwidth = 50
+        self.paramset.AddText("label", "Name", self.plot.label, textwidth=150)
+        self.paramset.AddText("xtitle", "X Label", self.plot.xtitle, textwidth=150)
+        self.paramset.AddText("ytitle", "Y Label", self.plot.ytitle, textwidth=150)
         labelparams = self.ParamLayout(1)
 
         buttonbox = wx.BoxSizer(wx.HORIZONTAL)
-        okButton = wx.Button(self.panel, wx.ID_OK, "Ok", wx.DefaultPosition, wx.Size(65, 30))
-        printButton = wx.Button(self.panel, ID_Print, "Export EPS", wx.DefaultPosition, wx.Size(65, 30))
-        closeButton = wx.Button(self.panel, wx.ID_CANCEL, "Close", wx.DefaultPosition, wx.Size(65, 30))
+        okButton = wx.Button(self.panel, wx.ID_OK, "Ok", wx.DefaultPosition, wx.Size(60, 30))
+        printButton = wx.Button(self.panel, ID_Print, "Export EPS", wx.DefaultPosition, wx.Size(60, 30))
+        closeButton = wx.Button(self.panel, wx.ID_CANCEL, "Close", wx.DefaultPosition, wx.Size(60, 30))
         buttonbox.Add(okButton, 1)
         buttonbox.Add(printButton, 1, wx.LEFT, 5)
         buttonbox.Add(closeButton, 1, wx.LEFT, 5)
@@ -967,61 +1097,229 @@ class PlotCon(ToolBox):
         self.mainbox.Add(plotparams, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 0)
         self.mainbox.Add(samplebox, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 0)
         self.mainbox.AddSpacer(5)
+        self.mainbox.Add(fontbox, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 5)
+        self.mainbox.AddStretchSpacer()
+        self.mainbox.Add(strokebox, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 0)
+        self.mainbox.AddStretchSpacer()
+        self.mainbox.Add(synchbox, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 0)
         self.mainbox.AddStretchSpacer()
         self.mainbox.Add(labelparams, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 0)
         self.mainbox.AddStretchSpacer()
         self.mainbox.Add(buttonbox, 0, wx.ALIGN_CENTRE | wx.TOP | wx.BOTTOM, 5)
         #mainbox->Add(statusbox, 0, wxEXPAND);
 
+        self.Bind(wx.EVT_CHOICE, self.OnChoice)
+        self.Bind(wx.EVT_CHECKBOX, self.OnCheck)
+        self.Bind(wx.EVT_RADIOBUTTON, self.OnRadio)
+        self.Bind(wx.EVT_BUTTON, self.OnSynch, id=ID_Sync)
+        self.Bind(wx.EVT_BUTTON, self.OnOK, id=wx.ID_OK)
+        self.Bind(wx.EVT_BUTTON, self.OnCancel, id=wx.ID_CANCEL)
+        self.Bind(wx.EVT_BUTTON, self.OnPrint, id=ID_Print)
+        self.Bind(wx.EVT_BUTTON, self.OnStrokeColour, id=ID_StrokeColour)
+        self.Bind(wx.EVT_TEXT_ENTER, self.OnOK)
+        self.Bind(wx.EVT_SIZE, self.OnSize)
+        self.Bind(wx.EVT_CLOSE, self.OnClose)
+        self.Bind(wx.EVT_SPIN, self.OnSpin)
+
         self.panel.Layout()
-        self.Raise()
-        self.Show()
 
 
-    def SetGraph(self, newplotpanel = None):
+    def UpdateStrokeButton(self, colour):
+        self.strokebutton.SetBitmapLabel(self.MakeColourBitmap(colour, 28, 10))
+        self.panel.Layout()
+
+    
+    def MakeColourBitmap(self, colour, width=28, height=18):
+        bmp = wx.Bitmap(width, height)
+        dc = wx.MemoryDC(bmp)
+        dc.SetPen(wx.Pen(wx.BLACK, 1))
+        dc.SetBrush(wx.Brush(colour))
+        dc.DrawRectangle(0, 0, width, height)
+        dc.SelectObject(wx.NullBitmap)
+        return bmp
+
+
+    def OnStrokeColour(self, event):
+        DiagWrite("PlotCon OnStrokeColour\n")
+        colourdata = wx.ColourData()
+        colourdata.SetColour(self.plot.strokecolour)
+        dlg = wx.ColourDialog(self.panel, colourdata)
+        if dlg.ShowModal() == wx.ID_OK:
+            self.plot.strokecolour = dlg.GetColourData().GetColour()
+            self.UpdateStrokeButton(self.plot.strokecolour)
+        self.graphpanel.Refresh()
+
+
+    def OnCancel(self, event):
+        self.Close()
+
+
+    def OnClose(self, event):
+        DiagWrite("Axis box close\n")
+        self.graphpanel.mainwin.plotcon = None
+        self.Destroy()
+
+
+    def OnSpin(self, event):
+        layer = self.paramset.GetValue("plotlayer")
+
+        graphdisp = self.graphpanel.dispset[0]
+        if layer < 0:
+            layer = 0
+
+        if layer > graphdisp.numplots - 1:
+            self.paramset.GetCon("plotlayer").SetValue(graphdisp.numplots - 1)
+        else:
+            self.SetParams()   # read and store params for previous plot
+            self.plot = graphdisp.plots[layer]
+            DiagWrite(f"Layer {layer} plot {self.plot.label}\n")
+            self.SetControls()   # update params for new plot
+
+        # self.graphpanel.mainwin.plotbox.SetLayer(layer)
+
+
+    def SynchLayers(self):
+        graphdisp = self.graphpanel.dispset[0]
+
+        # for i in range(graphdisp.numplots): self.SetParamsCopy(graphdisp.plots[i])
+        for i in range(graphdisp.numplots): self.SetParamsCopyAxes(graphdisp.plots[i])
+
+        graphdisp.XYSynch(self.plot)
+        self.graphpanel.UpdateScroll()
+
+
+    def SynchPlotSize(self):
+        mainwin = self.graphpanel.mainwin
+        for i in range(mainwin.numdraw):
+            setplot = mainwin.panelset[i].GetFrontPlot()
+            setplot.xplot = self.plot.xplot
+            setplot.yplot = self.plot.yplot    
+
+
+    def XSynch(self):
+        mainwin = self.graphpanel.mainwin
+        for i in range(mainwin.numdraw):
+            plot = mainwin.panelset[i].GetFrontPlot()
+            plot.xlabels = self.plot.xlabels
+            plot.xstep = self.plot.xstep
+            plot.xplot = self.plot.xplot
+            plot.yplot = self.plot.yplot
+            plot.xshift = self.plot.xshift
+            plot.xunitscale = self.plot.xunitscale
+            plot.xunitdscale = self.plot.xunitdscale
+            plot.xscalemode = self.plot.xscalemode
+            plot.xlabelmode = self.plot.xlabelmode
+            plot.xtickmode = self.plot.xtickmode
+            plot.xtitle = self.plot.xtitle
+        mainwin.scalebox.GraphUpdateAll()
+    
+    def OnSynch(self, event):
+        #self.SynchLayers()
+        #self.SynchPlotSize()
+        self.XSynch()
+
+
+    def OnSize(self, event):
+        newsize = self.GetSize()
+        snum = f"Box Size X {newsize.x} Y {newsize.y}"
+        self.graphpanel.mainwin.SetStatusText(snum)
+        event.Skip()
+
+
+    def OnCheck(self, event):
+        self.OnOK(event)
+
+
+    def OnChoice(self, event):
+        selection = 0
+
+        if event.GetId() == ID_Type:
+            selection = self.typechoice.GetSelection()
+            self.plot.type = self.typeset.GetType(selection)
+            if self.plot.plotdata:
+                self.plot.plotdata.gtype = self.plot.type
+
+            self.graphpanel.UpdateScroll()
+
+            DiagWrite(self.typeset.List())
+            DiagWrite(f"Choice Select {selection} Type {self.typeset.GetType(selection)}\n")
+
+        if event.GetId() == ID_Font:
+            selection = self.fontchoice.GetSelection()
+            self.plot.labelfont = selection
+            DiagWrite(f"Choice Select {selection} Font {selection}\n")
+
+
+    def GetRadioValue(self, radlist):
+        for i, button in enumerate(radlist):
+            if button.GetValue():
+                return i
+        return 0
+    
+
+    def OnRadio(self, event):
+        self.plot.xtickmode = self.GetRadioValue(self.xtickrad)
+        self.plot.ytickmode = self.GetRadioValue(self.ytickrad)
+        self.plot.xscalemode = self.GetRadioValue(self.xscalerad)
+        self.plot.yscalemode = self.GetRadioValue(self.yscalerad)
+        self.plot.xlabelmode = self.GetRadioValue(self.xlabrad)
+        self.plot.ylabelmode = self.GetRadioValue(self.ylabrad)
+        self.plot.xaxis = self.GetRadioValue(self.xaxisrad)
+        self.plot.yaxis = self.GetRadioValue(self.yaxisrad)
+
+        self.OnOK(event)
+
+
+    def OnPrint(self, event):
+        self.OnOK(event)
+        self.graphpanel.WriteEPS()
+
+
+    def SetGraph(self, newgraphpanel = None):
         self.SetParams()	# read and store params for previous plot
-        if newplotpanel: self.plotpanel = newplotpanel    # default newgraphwin = None for updating panel without changing graph window
-        self.plot = self.plotpanel.GetFrontPlot()
+        if newgraphpanel: self.graphpanel = newgraphpanel    # default newgraphwin = None for updating panel without changing graph window
+        self.plot = self.graphpanel.GetFrontPlot()
         self.SetControls()  # load new plot params and set controls
 
 
     def SetParams(self, setplot = None):
-        
         params = self.paramset.GetParams()
         if setplot: self.plot = setplot
 
-        self.plot.xlabels = params["xlabels"]
-        self.plot.ylabels = params["ylabels"]
+        self.plot.xlabels = int(params["xlabels"])
+        self.plot.ylabels = int(params["ylabels"])
         self.plot.xstep = params["xstep"]
         self.plot.ystep = params["ystep"]
         self.plot.xplot = params["xplot"]
         self.plot.yplot = params["yplot"]
         self.plot.xshift = params["xshift"]
-        self.plot.xsample = params["xsample"]
+        self.plot.xsample = int(params["xsample"])
         self.plot.xunitscale = params["xscale"]
         self.plot.xunitdscale = params["xdscale"]
-        #self.plot.plotstroke = params["plotstroke"]
+        self.plot.plotstroke = params["plotstroke"]
         self.plot.xlabelgap = params["xlabelgap"]
         self.plot.ylabelgap = params["ylabelgap"]
-        self.plot.xlabelplaces = params["xlabelplaces"]
-        self.plot.ylabelplaces = params["ylabelplaces"]
-        #self.plot.labelfontsize = params["labelfontsize"]
+        self.plot.xlabelplaces = int(params["xlabelplaces"])
+        self.plot.ylabelplaces = int(params["ylabelplaces"])
+        self.plot.labelfontsize = int(params["labelfontsize"])
         #self.plot.scattersize = params["scattersize"]
         self.plot.yunitscale = params["yscale"]
         self.plot.yunitdscale = params["ydscale"]
         self.plot.yshift = params["yshift"]
 
-        self.plot.barwidth = params["barwidth"]
-        self.plot.bargap = params["bargap"]
+        self.plot.barwidth = int(params["barwidth"])
+        self.plot.bargap = int(params["bargap"])
 
-        #self.plot.linemode = linecheck.GetValue()
-        #self.plot.clipmode = clipcheck.GetValue()
-        ##self.plot.scattermode = scattercheck->GetValue();
-        #self.plot.fillmode = fillcheck.GetValue()
+        self.plot.panelgap = int(params["panelgap"])
 
-        #self.plot.fillstroke = fillstrokecheck.GetValue()
-        #self.plot.strokecolour = strokepicker.GetColour()
-        #self.plot.fillcolour = fillpicker.GetColour()
+        self.plot.linemode = int(self.linecheck.GetValue())
+        #self.plot.clipmode = self.clipcheck.GetValue()
+        ##self.plot.scattermode = self.scattercheck->GetValue();
+        #self.plot.fillmode = self.fillcheck.GetValue()
+
+        #self.plot.fillstroke = self.fillstrokecheck.GetValue()
+        #self.plot.strokecolour = self.strokepicker.GetColour()
+        #self.plot.fillcolour = self.fillpicker.GetColour()
         #self.plot.colour = custom
 
         self.plot.label = self.paramset.GetCon("label").GetText()
@@ -1030,6 +1328,106 @@ class PlotCon(ToolBox):
 
         #self.plot.xlogbase = params["xlogbase"]
         #self.plot.ylogbase = params["ylogbase"]
+
+
+    # SetParamsCopy copies panel parameters to another PlotDat plot on the same GraphPanel (used for overlay)
+    def SetParamsCopy(self, setplot):
+        params = self.paramset.GetParams()
+
+        setplot.xlabels = params["xlabels"]
+        setplot.ylabels = params["ylabels"]
+        setplot.xstep = params["xstep"]
+        setplot.ystep = params["ystep"]
+        setplot.xplot = params["xplot"]
+        setplot.yplot = params["yplot"]
+        setplot.xshift = params["xshift"]
+        setplot.yshift = params["yshift"]
+        setplot.xsample = params["xsample"]
+        setplot.xunitscale = params["xscale"]
+        setplot.xunitdscale = params["xdscale"]
+        setplot.yunitscale = params["yscale"]
+        setplot.yunitdscale = params["ydscale"]
+        setplot.plotstroke = params["plotstroke"]
+        setplot.xlabelgap = params["xlabelgap"]
+        setplot.ylabelgap = params["ylabelgap"]
+        setplot.xlabelplaces = params["xlabelplaces"]
+        setplot.ylabelplaces = params["ylabelplaces"]
+        setplot.labelfontsize = params["labelfontsize"]
+        #setplot.scattersize = params["scattersize"]
+        setplot.barwidth = params["barwidth"]
+        setplot.bargap = params["bargap"]
+
+        setplot.linemode = self.linecheck.GetValue()
+        #setplot.clipmode = self.clipcheck.GetValue()
+        #setplot.scattermode = self.scattercheck.GetValue()
+        #setplot.fillmode = self.fillcheck.GetValue()
+        #setplot.fillstroke = self.fillstrokecheck.GetValue()
+
+        setplot.xtitle = self.paramset.GetCon("xtitle").GetText()
+        setplot.ytitle = self.paramset.GetCon("ytitle").GetText()
+
+        setplot.xtickmode = self.plot.xtickmode
+        setplot.ytickmode = self.plot.ytickmode
+
+        setplot.xlabelmode = self.plot.xlabelmode
+        setplot.ylabelmode = self.plot.ylabelmode
+
+        setplot.xaxis = self.plot.xaxis
+        setplot.yaxis = self.plot.yaxis
+
+        setplot.xscalemode = self.plot.xscalemode
+        setplot.yscalemode = self.plot.yscalemode
+
+        #setplot.xlogbase = self.plot.xlogbase
+        #setplot.ylogbase = self.plot.ylogbase
+
+        setplot.labelfont = self.plot.labelfont
+
+
+    def SetParamsCopyAxes(self, setplot):
+        params = self.paramset.GetParams()
+
+        setplot.xlabels = params["xlabels"]
+        setplot.ylabels = params["ylabels"]
+        setplot.xstep = params["xstep"]
+        setplot.ystep = params["ystep"]
+        setplot.xplot = params["xplot"]
+        setplot.yplot = params["yplot"]
+        setplot.xshift = params["xshift"]
+        setplot.yshift = params["yshift"]
+        setplot.xsample = params["xsample"]
+        setplot.xunitscale = params["xscale"]
+        setplot.xunitdscale = params["xdscale"]
+        setplot.yunitscale = params["yscale"]
+        setplot.yunitdscale = params["ydscale"]
+        setplot.xlabelgap = params["xlabelgap"]
+        setplot.ylabelgap = params["ylabelgap"]
+        setplot.xlabelplaces = params["xlabelplaces"]
+        setplot.ylabelplaces = params["ylabelplaces"]
+        setplot.labelfontsize = params["labelfontsize"]
+
+        setplot.barwidth = params["barwidth"]
+        setplot.bargap = params["bargap"]
+
+        setplot.xtitle = self.paramset.GetCon("xtitle").GetText()
+        setplot.ytitle = self.paramset.GetCon("ytitle").GetText()
+
+        setplot.xtickmode = self.plot.xtickmode
+        setplot.ytickmode = self.plot.ytickmode
+
+        setplot.xlabelmode = self.plot.xlabelmode
+        setplot.ylabelmode = self.plot.ylabelmode
+
+        setplot.xaxis = self.plot.xaxis
+        setplot.yaxis = self.plot.yaxis
+
+        setplot.xscalemode = self.plot.xscalemode
+        setplot.yscalemode = self.plot.yscalemode
+
+        # setplot.xlogbase = self.plot.xlogbase
+        # setplot.ylogbase = self.plot.ylogbase
+
+        setplot.labelfont = self.plot.labelfont
 
 
     def SetControls(self):
@@ -1052,12 +1450,17 @@ class PlotCon(ToolBox):
         self.paramset.GetCon("ylabelgap").SetValue(self.plot.ylabelgap)
         self.paramset.GetCon("xlabelplaces").SetValue(self.plot.xlabelplaces)
         self.paramset.GetCon("ylabelplaces").SetValue(self.plot.ylabelplaces)
-        #self.paramset.GetCon("plotstroke").SetValue(self.plot.plotstroke)
-        #self.paramset.GetCon("labelfontsize").SetValue(self.plot.labelfontsize)
+        self.paramset.GetCon("plotstroke").SetValue(self.plot.plotstroke)
+        self.paramset.GetCon("labelfontsize").SetValue(self.plot.labelfontsize)
         #self.paramset.GetCon("scattersize").SetValue(self.plot.scattersize)
         self.paramset.GetCon("yscale").SetValue(self.plot.yunitscale)
         self.paramset.GetCon("ydscale").SetValue(self.plot.yunitdscale)
         self.paramset.GetCon("yshift").SetValue(self.plot.yshift)
+
+        self.paramset.GetCon("barwidth").SetValue(self.plot.barwidth)
+        self.paramset.GetCon("bargap").SetValue(self.plot.bargap)
+
+        self.paramset.GetCon("panelgap").SetValue(self.plot.panelgap)
 
         #self.clipcheck.SetValue(self.plot.clipmode)
         #self.linecheck.SetValue(self.plot.linemode)
@@ -1076,10 +1479,19 @@ class PlotCon(ToolBox):
         self.yaxisrad[self.plot.yaxis].SetValue(True)
 
         #self.strokepicker.SetColour(self.plot.strokecolour)
+        self.UpdateStrokeButton(self.plot.strokecolour)
         #self.fillpicker.SetColour(self.plot.fillcolour)
 
         #self.typechoice.SetSelection(self.typeset.GetIndex(self.plot.type))
-        #self.fontchoice.SetSelection(self.fontset.GetIndex(self.plot.labelfont))
+        self.fontchoice.SetSelection(self.plot.labelfont)
+
+
+    def OnOK(self, event):
+        if self.autosynch:
+            self.SynchLayers()
+
+        self.SetParams()
+        self.graphpanel.Update()
 
 
     def ParamLayout(self, numcols = 1):    
@@ -1087,27 +1499,72 @@ class PlotCon(ToolBox):
         
         colsize = 0
         box = wx.BoxSizer(wx.HORIZONTAL)
-        numparams = self.paramset.NumParams() - self.paramset.currlay
-
-        if numcols == 1: colsize = numparams
-        if numcols >= 2: colsize = int((numparams + 1) / numcols) 
-
-        #print(colsize)
+        pcons = list(self.paramset.pcons.values())
 
         pstart = self.paramset.currlay
+        
+        while pstart < len(pcons) and pcons[pstart].GetContainingSizer() is not None:
+            pstart += 1
+            DiagWrite(f"ParamLayout, bad currlay, incrementing {pstart}\n")
+
+        numparams = len(pcons) - pstart
+        if numparams <= 0: return box
+
+        if numcols <= 1: colsize = numparams
+        if numcols >= 2: colsize = int((numparams + numcols - 1) / numcols)
+
+        colstart = pstart
+
         for col in range(numcols):
-            if col == numcols-1: pstop = self.paramset.currlay + numparams
-            else: pstop = self.paramset.currlay + colsize * (col+1)
+            if col == numcols-1: colstop = pstart + numparams
+            else: colstop = pstart + colsize * (col+1)
             #print(f"col {col} pstart {pstart} pstop {pstop}")
             vbox = wx.BoxSizer(wx.VERTICAL)
             vbox.AddSpacer(5)
-            for pindex in range(pstart, pstop):
-                vbox.Add(list(self.paramset.pcons.values())[pindex], 1, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.RIGHT|wx.LEFT, 5)
+            for pindex in range(colstart, colstop):
+                vbox.Add(pcons[pindex], 1, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.RIGHT|wx.LEFT, 5)
                 vbox.AddSpacer(5)
             box.Add(vbox, 0)
-            pstart = pstop
+            colstart = colstop
 
         self.paramset.currlay = self.paramset.NumParams()
         return box
+    
+
+    """  def ParamLayout(self, numcols=1):
+           pcons = list(self.paramset.pcons.values())
+        box = wx.BoxSizer(wx.HORIZONTAL)
+
+        start = self.paramset.currlay
+        if start < 0: start = 0
+        if start > len(pcons): start = len(pcons)
+
+        numparams = len(pcons) - start
+
+        if numcols <= 1: colsize = numparams
+        else: colsize = (numparams + numcols - 1) // numcols
+
+        pstart = start
+
+        for col in range(numcols):
+            if col == numcols - 1: pstop = start + numparams
+            else: pstop = min(start + colsize * (col + 1), start + numparams)
+
+            if pstart >= pstop: break
+
+            vbox = wx.BoxSizer(wx.VERTICAL)
+            vbox.AddSpacer(5)
+
+            for pindex in range(pstart, pstop):
+                vbox.Add(pcons[pindex], 1, wx.ALIGN_CENTRE_HORIZONTAL | wx.ALIGN_CENTRE_VERTICAL | wx.RIGHT | wx.LEFT, 5)
+                vbox.AddSpacer(5)
+
+            box.Add(vbox, 0)
+            pstart = pstop
+
+        self.paramset.currlay = len(pcons)
+        return box """
 
 
+    def LayoutSkip(self, numskip = 1):
+        self.paramset.currlay += numskip

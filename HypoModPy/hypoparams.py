@@ -19,6 +19,7 @@ class ParamCon(wx.Control):
         self.panel = panel
         self.pad = panel.controlborder
         self.cycle = False
+        self.oldvalue = initval
 
         self.diagmode = False
 
@@ -46,14 +47,14 @@ class ParamCon(wx.Control):
         self.sizer = wx.BoxSizer(wx.HORIZONTAL)
 
         if labeltext == "":
-            label = None
+            self.label = None
             self.labelwidth = 0
         else:
-            label = ToolText(self, panel.parent, tag, labeltext, wx.DefaultPosition, wx.Size(labelwidth, -1), wx.ALIGN_CENTRE)
-            label.SetFont(textfont)
+            self.label = ToolText(self, panel.parent, tag, labeltext, wx.DefaultPosition, wx.Size(labelwidth, -1), wx.ALIGN_CENTRE)
+            self.label.SetFont(textfont)
 
         #if ostype == 'Mac' and labelwidth < 40: label.SetFont(smalltextfont)
-        self.sizer.Add(label, 0, wx.ALIGN_CENTER_VERTICAL|wx.RIGHT, pad)
+        self.sizer.Add(self.label, 0, wx.ALIGN_CENTER_VERTICAL|wx.RIGHT, pad)
 
         #if type == "textcon": print(f"ParamCon init: {initval}")
 
@@ -75,6 +76,7 @@ class ParamCon(wx.Control):
         self.Layout()
 
         self.Bind(wx.EVT_TEXT_ENTER, self.OnEnter)
+        self.numbox.Bind(wx.EVT_SET_FOCUS, self.OnTextFocus)
 
 
     def AddButton(self, label, id, width):
@@ -85,6 +87,11 @@ class ParamCon(wx.Control):
         #self.SetInitialSize(wx.DefaultSize)
         self.Layout()
         return self.button
+    
+
+    def OnTextFocus(self, event):
+        self.numbox.SetInsertionPointEnd()
+        event.Skip()
     
 
     def DoGetBestSize(self):
@@ -140,14 +147,14 @@ class ParamCon(wx.Control):
 
 
     def OnSpin(self, event):
-        if not self.panel.toolbox == None:
+        if self.panel.toolbox is not None:
             if self.diagmode: pub.sendMessage("diagbox", message="tool spin click\n")
             self.panel.toolbox.SpinClick(self.tag)
         event.Skip()
 
     
     def OnEnter(self, event):
-        if not self.panel.toolbox == None:
+        if self.panel.toolbox is not None:
             pub.sendMessage("diagbox", message="tool box enter\n")
             self.panel.toolbox.BoxEnter(self.tag)
         event.Skip()
@@ -229,7 +236,7 @@ class ParamSet:
     def AddText(self, tag, label, initval, labelwidth=-1, textwidth=-1):
         if labelwidth < 0: labelwidth = self.text_labelwidth
         if textwidth < 0: textwidth = self.text_numwidth
-        self.pcons[tag] = ParamCon(self.panel, 'textcon', tag, label, initval, labelwidth, textwidth)     # text
+        self.pcons[tag] = ParamCon(self.panel, 'textcon', tag, label, initval, labelwidth=labelwidth, datawidth=textwidth)     # text
         return self.pcons[tag]
 
     
@@ -282,6 +289,7 @@ class ParamBox(ToolBox):
         #defstore = false;
         self.diag = 0   # diagnostic mode
         self.mainwin = model.mainwin  # main window link
+        self.ostype = GetSystem()
 
         # modmode = 0;
         
@@ -341,7 +349,7 @@ class ParamBox(ToolBox):
         if os.path.exists(parampath) == False: 
             os.mkdir(parampath)
 
-        if self.storetag != None:
+        if self.storetag is not None:
             if filetag == "": filetag = self.storetag.GetValue()
             else: self.storetag.SetValue(filetag)
 
@@ -349,7 +357,7 @@ class ParamBox(ToolBox):
         filepath = parampath + "/" + filetag + "-" + self.boxtag + "param.dat";
 
         # Param file history
-        if self.storetag != None and filetag != "default": 
+        if self.storetag is not None and filetag != "default": 
             tagpos = self.storetag.FindString(filetag)
             if tagpos != wx.NOT_FOUND: self.storetag.Delete(tagpos)
             self.storetag.Insert(filetag, 0)
@@ -358,7 +366,7 @@ class ParamBox(ToolBox):
         # Overwrite Warning
         paramfile = TextFile(filepath)
         if paramfile.Exists() and newtag and self.redtag != filetag: 
-            if self.storetag != None:
+            if self.storetag is not None:
                 self.storetag.SetForegroundColour(self.redpen)
                 self.storetag.SetValue("")
                 self.storetag.SetValue(filetag)
@@ -367,7 +375,7 @@ class ParamBox(ToolBox):
 
         # Clear Overwrite Warning
         self.redtag = ""
-        if self.storetag != None:
+        if self.storetag is not None:
             self.storetag.SetForegroundColour(self.blackpen)
             self.storetag.SetValue("")
             self.storetag.SetValue(filetag)
@@ -386,14 +394,12 @@ class ParamBox(ToolBox):
         paramfile.WriteLine("")
         for flagtag in self.flagtags.values():
             outline = f"{self.modflags[flagtag]}"
-            #outline = "%.0f".format(self.modflags[flagtag])
             paramfile.WriteLine(flagtag + " " + outline)
 
         # Write Check Values
         paramfile.WriteLine("")
         for checktag in self.checktags.values():
             outline = f"{self.modflags[checktag]}"
-            #outline = "%.0f".format(self.modflags[checktag])
             paramfile.WriteLine(checktag + " " + outline)
   
         # Close File
@@ -409,7 +415,7 @@ class ParamBox(ToolBox):
         parampath = self.mod.path + "/Params"
 
         # Param data file
-        if self.storetag != None:
+        if self.storetag is not None:
             if filetag == "": filetag = self.storetag.GetValue()
             elif filetag != "default": self.storetag.SetValue(filetag)
 
@@ -422,7 +428,7 @@ class ParamBox(ToolBox):
             return
 
         # Param file history
-        if self.storetag != None and filetag != "default": 
+        if self.storetag is not None and filetag != "default": 
             tagpos = self.storetag.FindString(filetag)
             if tagpos != wx.NOT_FOUND: self.storetag.Delete(tagpos)
             self.storetag.Insert(filetag, 0)
@@ -430,7 +436,7 @@ class ParamBox(ToolBox):
 
         # Clear Overwrite Warning
         self.redtag = ""
-        if self.storetag != None:
+        if self.storetag is not None:
             self.storetag.SetForegroundColour(self.blackpen)
             self.storetag.SetValue("")
             self.storetag.SetValue(filetag)
@@ -491,20 +497,20 @@ class ParamBox(ToolBox):
 
 
     def GetParams(self, pstore = None):
-        if pstore == None: pstore = self.modparams
+        if pstore is None: pstore = self.modparams
         for con in self.paramset.pcons.values():
             value = con.GetValue()
             if value < con.min:
                 value = con.oldvalue
                 con.SetValue(value)
-                if con.label != None:
+                if con.label is not None:
                     self.SetStatus("Parameter \'{}\' out of range".format(con.label.GetLabel()))
                     self.DiagWrite("Parameter \'{}\' out of range, min {:.2f} max {:.2f}\n".format(con.label.GetLabel(), con.min, con.max))
 
             if value > con.max:
                 value = con.oldvalue
                 con.SetValue(value)
-                if con.label != None:
+                if con.label is not None:
                     self.SetStatus("Parameter {} out of range".format(con.label.GetLabel()))
 
             pstore[con.tag] = value
@@ -527,6 +533,12 @@ class ParamBox(ToolBox):
             else: self.AddButton(ID_Default, "RESET", 70, runbox)
 	
         return runbox
+    
+
+    def SetCount(self, value):
+        if self.runcount is not None:
+            self.runcount.SetLabel(f"{value} %")
+            #DiagWrite(f"Set count, value {value}\n\n")
 
 
     def InitMenu(self, type = "menu_model"):
@@ -545,10 +557,6 @@ class ParamBox(ToolBox):
             menuBar.Append(self.menuMode, "Mode")
 
         self.SetMenuBar(menuBar)
-
-
-    def SetCount(self, count):
-        self.runcount.SetLabel("{} %%".format(count))
        
 
     def AddPanelButton(self, id, label, toolbox):
@@ -558,6 +566,7 @@ class ParamBox(ToolBox):
         self.panelrefs[id] = toolbox
         button = self.AddButton(id, label, self.buttonwidth, self.buttonbox)
         button.Bind(wx.EVT_BUTTON, self.OnPanel)
+        self.panelbuttoncount += 1
        
 
     def OnPanel(self, event):
@@ -568,7 +577,7 @@ class ParamBox(ToolBox):
 
 
     """ def AddFlag(self, id, flagtag, flagtext, state = False, menu = None):
-        if menu == None: menu = self.menuModel
+        if menu is None: menu = self.menuModel
         self.modflags[flagtag] = state
         self.flagtags[id] = flagtag
         self.flagIDs[flagtag] = id
@@ -681,11 +690,11 @@ class ParamBox(ToolBox):
 
 
     def SetStatus(self, text):
-        if self.status != None: self.status.SetLabel(text)
+        if self.status is not None: self.status.SetLabel(text)
 
 
     def WriteVDU(self, text):
-        if self.vdu != None: self.vdu.AppendText(text)
+        if self.vdu is not None: self.vdu.AppendText(text)
 
 
     def VBox(self, num):
@@ -724,11 +733,11 @@ class ParamBox(ToolBox):
 
 
     def StoreBox(self, label="", storepanel=None):
-        if self.storetag == None: return
+        if self.storetag is None: return
         paramfilebox = wx.BoxSizer(wx.HORIZONTAL)
         parambuttons = wx.BoxSizer(wx.HORIZONTAL)
 
-        if storepanel == None: storepanel = self.panel
+        if storepanel is None: storepanel = self.panel
         if self.activepanel != self.panel: self.storetag.Reparent(self.activepanel)
 
         if label != "": self.storetag.SetLabel(label)

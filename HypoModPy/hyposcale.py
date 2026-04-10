@@ -109,7 +109,7 @@ class ScaleBox(ToolPanel):
     def OnOverlay(self, event):
         #DiagWrite("OnOverlay()\n")
         overlay = self.overset[event.GetId()]
-        if overlay == None:
+        if overlay is None:
             DiagWrite("ScaleBox overlay ID not found\n")
             return
  
@@ -408,7 +408,7 @@ class ScaleBox(ToolPanel):
         filebox = wx.BoxSizer(wx.VERTICAL)
         buttons = wx.BoxSizer(wx.HORIZONTAL)
         
-        self.storetag = TagBox(self, label, wx.Size(80, -1), "scalebox", self.mainwin.modpath)
+        self.storetag = TagBox(self, label, wx.Size(80, -1), "scalebox", self.mod.path)
         self.storetag.SetFont(self.confont)
 
         if self.ostype == 'Mac': buttonwidth = 36

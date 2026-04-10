@@ -1,25 +1,17 @@
 
-
-#from HypoModPy.hypobase import *
-#from HypoModPy.hypotools import *
-#from HypoModPy.hypograph import *
-#from HypoModPy.hyposcale import *
-#from HypoModPy.hypoparams import *
-
 import os
 import sys
 
 import wx
 from pubsub import pub
 
-from HypoModPy.hypobase import GetSystem, DiagWrite
-from HypoModPy.hypotools import TextFile, ToolSet, DiagBox, ToolPanel
+from HypoModPy.hypobase import *
+from HypoModPy.hypotools import TextFile, ToolSet, DiagBox, ToolPanel, DiagWrite, SetDiagBoxTarget
 from HypoModPy.hypograph import GraphDisp, GraphPanel
 from HypoModPy.hyposcale import ScaleBox
-from HypoModPy.hypoparams import ParamCon, ID_ModBrowse
+from HypoModPy.hypoparams import ParamCon
 from HypoModPy.hypodat import PlotDat
-
-
+from HypoModPy.hypoproject import Project
 
 
 NSApp = None
@@ -46,6 +38,7 @@ class MainFrame(wx.Frame):
 
         # Initialise ToolBoxes
         self.diagbox = DiagBox(self, "Diagnostic", wx.Point(0, 0), wx.Size(400, 500))
+        SetDiagBoxTarget(self.diagbox)
         self.diagbox.Write('Diagnostic Box OK\n')
         self.gridbox = None
         self.plotcon = None
@@ -228,13 +221,6 @@ class MainFrame(wx.Frame):
         event.Skip()
 
 
-    # def OnIconize(self, event):
-    #     iconized = event.IsIconized()
-    #     event.Skip()
-    #     if not iconized: wx.CallAfter(self.RestoreFromMinimize)
-    #     self.diagbox.Write('Icon Event\n')
-
-
     def OnIconize(self, event):
         iconized = event.IsIconized()
 
@@ -247,21 +233,7 @@ class MainFrame(wx.Frame):
                         tool.box.Show(True)
                         tool.box.SetPosition(self.GetPosition(), self.GetSize())
 
-        #event.Skip()
-
     
-    # def RestoreFromMinimize(self):
-    #     if self.IsIconized():
-    #         self.Restore()
-    #     self.Raise()
-    #     for tool in self.toolset.tools.values():
-    #         if tool.box and tool.visible:
-    #             tool.box.Show(True)
-    #             tool.box.SetPosition(self.GetPosition(), self.GetSize())
-    #     if hasattr(self, "systempanel") and self.systempanel and self.systempanel.IsShown():
-    #         self.systempanel.Raise()
-
-
 
 class SystemPanel(wx.Dialog):
     def __init__(self, mainwin, title):
@@ -282,7 +254,15 @@ class SystemPanel(wx.Dialog):
         modpathbox.Add(self.modpathcon, 0, wx.ALIGN_CENTER_VERTICAL)
         modpathbox.Add(pathButton, 0, wx.ALIGN_CENTER_VERTICAL)
 
+        outpathbox = wx.BoxSizer(wx.HORIZONTAL)
+        self.outpathcon = ParamCon(panel, "textcon", "outpath", "Output Path", mainwin.outpath, labelwidth=50, datawidth=320)
+        pathButton = wx.Button(panel, ID_OutBrowse, "Browse", wx.DefaultPosition, wx.Size(50, 25))
+        pathButton.Bind(wx.EVT_BUTTON, self.OnBrowse)
+        outpathbox.Add(self.outpathcon, 0, wx.ALIGN_CENTER_VERTICAL)
+        outpathbox.Add(pathButton, 0, wx.ALIGN_CENTER_VERTICAL)
+
         pathbox.Add(modpathbox, 1)
+        pathbox.Add(outpathbox, 1)
         panelbox.Add(pathbox, 0)
         panel.SetSizer(panelbox)
         panel.Layout()
@@ -305,9 +285,14 @@ class SystemPanel(wx.Dialog):
             dialog = wx.DirDialog(self, "Choose a directory", self.mainwin.modpath, 0, wx.DefaultPosition)
             if dialog.ShowModal() == wx.ID_OK: self.modpathcon.SetText(dialog.GetPath())
 
+        if event.GetId() == ID_OutBrowse:
+            dialog = wx.DirDialog(self, "Choose a directory", self.mainwin.outpath, 0, wx.DefaultPosition)
+            if dialog.ShowModal() == wx.ID_OK: self.outpathcon.SetText(dialog.GetPath())
+
 
     def OnEnter(self, event):
         self.mainwin.modpath = self.modpathcon.GetText()
+        self.mainwin.outpath = self.outpathcon.GetText()
         #mainwin->GraphPanelsUpdate();
 
 
@@ -334,8 +319,10 @@ class HypoMain(MainFrame):
         self.prefs["viewwidth"] = 400
         self.prefs["viewheight"] = 600
         self.prefs["modpath"] = self.mainpath
+        self.prefs["outpath"] = self.mainpath
 
         self.SetMinSize(wx.Size(500, 400))
+
 
         # Load Prefs
         self.HypoLoad()
@@ -343,6 +330,7 @@ class HypoMain(MainFrame):
         self.numdraw = self.prefs["numdraw"]
         self.numgraphs = self.prefs["numgraphs"]
         self.modpath = self.prefs["modpath"]
+        self.outpath = self.prefs["outpath"]
 
         # Layout
         mainsizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -360,7 +348,29 @@ class HypoMain(MainFrame):
         self.UserMenu()
         self.SetTitle("HypoMod")
 
-        # Graph Disps
+        # Mod Init - temporary, before implementing proper module registry
+        if modname == "Osmo":
+            from OsmoModPy.osmomod import OsmoMod
+            self.mod = OsmoMod(self, "osmomod", modname)
+
+        if modname == "Spike":
+            from SpikeModPy.spikemod import SpikeMod
+            self.mod = SpikeMod(self, "spikemod", modname)
+
+        if modname == "Agent":
+            from AgentModPy.agentmod import AgentMod
+            self.mod = AgentMod(self, "agentmod", modname)
+
+        if modname == "Ghrelin":
+            from GhrelinModPy.ghrelinmod import GhrelinMod
+            self.mod = GhrelinMod(self, "ghrelinmod", modname)
+
+        # Project Init
+        self.project = Project(self, "default", self.modpath)
+        self.project.SetMainMod(self.mod)
+        self.project.Init("default", self.mod)
+
+         # Graph Disps
         self.dispset = []
         for i in range(self.numgraphs):
             self.dispset.append(GraphDisp())
@@ -375,21 +385,8 @@ class HypoMain(MainFrame):
             self.panelset.append(graphpanel)
             self.graphsizer.Add(graphpanel, 1, wx.EXPAND)
 
-        # Mod Init
-        if modname == "Osmo":
-            from OsmoModPy.osmomod import OsmoMod
-            self.mod = OsmoMod(self, "osmomod")
-
-        if modname == "Spike":
-            from SpikeModPy.spikemod import SpikeMod
-            self.mod = SpikeMod(self, "spikemod")
-
-        if modname == "Agent":
-            from AgentModPy.agentmod import AgentMod
-            self.mod = AgentMod(self, "agentmod")
-
         self.mod.DefaultPlots()
-        
+
         # Scale Box
         self.scalebox = ScaleBox(self, wx.Size(self.scalewidth, -1), self.numdraw)
         if self.mod.graphload: self.scalebox.GLoad()
@@ -449,7 +446,7 @@ class HypoMain(MainFrame):
         xplot = gspacex - 55
         
         gspacey = graphsize.y - self.numdraw * 55 - 5
-        yplot = gspacey / self.numdraw
+        yplot = int(gspacey / self.numdraw)
 
         snum = f"newsizeX {newsize.x} graphsizeX {graphsize.x} newsizeY {newsize.y} graphsizeY {graphsize.y} yplot {yplot:.0f}"
         self.SetStatusText(snum)
@@ -578,7 +575,7 @@ class HypoMain(MainFrame):
         self.scalebox.storetag.HistStore()
         #if(project.mod): 
         #    project.Store()
-        if(self.mod != None):
+        if(self.mod is not None):
             self.mod.ModStore()
             self.mod.modbox.Close()
             #self.mod.Destroy()
@@ -588,6 +585,7 @@ class HypoMain(MainFrame):
     def HypoStore(self):
         self.prefs["numdraw"] = self.numdraw
         self.prefs["modpath"] = self.modpath
+        self.prefs["outpath"] = self.outpath
 
         outfile = TextFile(self.initpath + "/hypoprefs.ini")
         outfile.Open('w')
