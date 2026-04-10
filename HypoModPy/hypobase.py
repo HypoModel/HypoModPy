@@ -4,6 +4,7 @@ import numpy as np
 import wx
 from pathlib import Path
 from pubsub import pub
+import subprocess
 
 #from hypotools import *
 
@@ -173,6 +174,35 @@ def CheckFloat(string):
         return False
     
 
+def EPSToPNG_Transparent(epsfile, pngfile, dpi=300):
+	cmd = [
+		"gs",
+		"-dSAFER",
+		"-dBATCH",
+		"-dNOPAUSE",
+		"-sDEVICE=pngalpha",
+		f"-r{dpi}",
+		f"-sOutputFile={pngfile}",
+		epsfile,
+	]
+	subprocess.run(cmd, check=True)
+
+
+def EPSToPNG(epsfile, pngfile, dpi=300):
+	cmd = [
+		"gs",
+		"-dSAFER",
+		"-dBATCH",
+		"-dNOPAUSE",
+		"-dEPSCrop",
+		"-sDEVICE=png16m",
+		f"-r{dpi}",
+		f"-sOutputFile={pngfile}",
+		epsfile,
+	]
+	subprocess.run(cmd, check=True)
+    
+
 
 
 # Button IDs
@@ -210,6 +240,8 @@ ID_Insert = wx.NewIdRef()
 ID_Bold = wx.NewIdRef()
 ID_PlotPanel = wx.NewIdRef()
 ID_Delete = wx.NewIdRef()
+ID_GraphPNG = wx.NewIdRef()
+ID_MultiPNG = wx.NewIdRef()
 
 # Check IDs
 ID_ClipMode = wx.NewIdRef()

@@ -198,8 +198,8 @@ class PlotDat():
         self.strokecolour = wx.Colour(0, 0, 0)
         self.fillcolour = wx.Colour(255, 255, 255)
 
-        self.xplot = 500
-        self.yplot = 200
+        self.xplot = 300
+        self.yplot = 150
         self.xsample = 1
 
         self.xlabelgap = 30  #40
@@ -215,6 +215,8 @@ class PlotDat():
         self.labelfont = 0   #default Helvetica
         self.fillmode = 1
         self.fillstroke = 0
+
+        self.panelgap = 40  # gap between panels for multi panel EPS export
 
 
     def SyncAxes(self, source):

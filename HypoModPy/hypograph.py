@@ -93,8 +93,10 @@ class GraphPanel(GraphEPS, wx.Panel):
         self.Bind(wx.EVT_MENU, self.OnPlotCon, ID_PlotPanel)
         self.Bind(wx.EVT_MENU, self.OnGridOutput, ID_Output)
         self.Bind(wx.EVT_MENU, self.OnGraphEPS, ID_GraphEPS)
-        #self.Bind(wx.EVT_MENU, self.OnMultiEPS, ID_MultiEPS)
+        self.Bind(wx.EVT_MENU, self.OnMultiEPS, ID_MultiEPS)
         #self.Bind(wx.EVT_MENU, self.OnMultiCell, ID_MultiCell)
+        self.Bind(wx.EVT_MENU, self.OnGraphPNG, ID_GraphPNG)
+        self.Bind(wx.EVT_MENU, self.OnMultiPNG, ID_MultiPNG)
 
 
         self.Bind(wx.EVT_MOTION, self.OnMouseMove)
@@ -326,19 +328,20 @@ class GraphPanel(GraphEPS, wx.Panel):
         if not basicmode:
             if studentmode:
                 menuPlot.Append(ID_GraphEPS, "Export EPS")
+                menuPlot.Append(ID_MultiEPS, "Multi EPS")
                 menuPlot.Append(ID_PlotPanel, "Plot Panel")
-                menuPlot.Append(ID_UnZoom, "Zoom Undo")
                 menuPlot.Append(ID_GraphRemove, "Delete Graph")
                 menuPlot.Append(ID_Output, "Grid Output")
                 menuPlot.AppendSeparator()
             else:
-                #menuPlot->Append(ID_GraphRemove, "Delete Graph")
+                menuPlot.Append(ID_GraphPNG, "Export PNG")
+                menuPlot.Append(ID_MultiPNG, "Multi PNG")
                 menuPlot.Append(ID_GraphEPS, "Export EPS")
                 menuPlot.Append(ID_MultiEPS, "Multi EPS")
                 menuPlot.Append(ID_MultiCell, "Multi Cell")
                 menuPlot.Append(ID_Scale, "Plot Panel")
                 menuPlot.Append(ID_UnZoom, "Zoom Undo")
-                #menuPlot->Append(ID_Test, "Test")
+                menuPlot.Append(ID_GraphRemove, "Delete Graph")
                 menuPlot.Append(ID_Output, "Grid Output")
                 menuPlot.AppendSeparator()
     
@@ -437,6 +440,59 @@ class GraphPanel(GraphEPS, wx.Panel):
         self.mainwin.scalebox.ScaleUpdate()
 
 
+    def OnGraphPNG(self, event):
+        filetag = self.mainwin.mod.modbox.storetag.GetValue()
+        filepath = self.mainwin.outpath + "/" + filetag + "-" + self.GetFrontPlot.label + ".png"
+        self.WriteBitmap(filepath)
+
+
+    def OnMultiPNG(self, event):
+        filetag = self.mainwin.mod.modbox.storetag.GetValue()
+        filepath = self.mainwin.outpath + "/" + filetag + "-" + "multi" + ".png"
+        self.WriteGraphBitmap(filepath)
+    
+
+    def WriteBitmap(self, filepath):
+        bmp = wx.Bitmap(int(self.xplot + self.xbase + 20), int(self.yplot + self.ybase + 20))
+        dc = wx.MemoryDC(bmp)
+        dc.SetBackground(wx.Brush(wx.WHITE))
+        dc.Clear()
+
+        self.DrawToDC(dc)
+
+        dc.SelectObject(wx.NullBitmap)
+        bmp.SaveFile(filepath, wx.BITMAP_TYPE_PNG)
+
+
+    def WriteGraphBitmap(self, filepath):
+        xmargin = 20
+        ymargin = 20
+        panelgap = 20
+
+        panelset = self.mainwin.panelset
+
+        width = int(panelset[0].xbase + panelset[0].xplot + 40)
+        height = ymargin
+
+        for panel in panelset:
+            height += int(panel.ybase + panel.yplot + 40)
+            height += panelgap
+
+        bmp = wx.Bitmap(width, height)
+        dc = wx.MemoryDC(bmp)
+        dc.SetBackground(wx.Brush(wx.WHITE))
+        dc.Clear()
+
+        yoff = 0
+        for panel in panelset:
+            panel.DrawToDC(dc, xmargin, yoff)
+            yoff += int(panel.ybase + panel.yplot + 40)
+            yoff += panelgap
+
+        dc.SelectObject(wx.NullBitmap)
+        bmp.SaveFile(filepath, wx.BITMAP_TYPE_PNG)
+
+
     def PaintBackground(self, dc):
         backgroundColour = self.GetBackgroundColour()
         #if backgroundColour.Ok() == False: backgroundColour = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DFACE)
@@ -449,10 +505,12 @@ class GraphPanel(GraphEPS, wx.Panel):
 
 
     def OnPaint(self, event):
-
-        #dc = wx.PaintDC(self)
         dc = wx.BufferedPaintDC(self)
         self.PaintBackground(dc)
+        self.DrawToDC(dc)
+
+
+    def DrawToDC(self, dc, xoff=0, yoff=0):
         gc = wx.GraphicsContext.Create(dc)
 
         drawdiag = True
@@ -467,8 +525,8 @@ class GraphPanel(GraphEPS, wx.Panel):
 
         xplot = self.xplot
         yplot = self.yplot
-        xbase = self.xbase
-        ybase = self.ybase
+        xbase = self.xbase + xoff
+        ybase = self.ybase + yoff
 
         #DiagWrite("graph paint\n")
 
@@ -604,7 +662,7 @@ class GraphPanel(GraphEPS, wx.Panel):
                 # Plot Label
                 if self.yplot < 150: gc.SetFont(self.textfont, self.colourpen['black'])
                 textsize = gc.GetTextExtent(plot.label)
-                gc.DrawText(plot.label, xbase + xplot - textsize[0], 30 + 15 * gplot + 15 * gdisp)
+                gc.DrawText(plot.label, xbase + xplot - textsize[0], ybase + 20 + 15 * gplot + 15 * gdisp)
 
                 # Set plot colour
                 #gc.SetPen(wx.Pen(self.colourpen[plot.colour]))
@@ -1005,10 +1063,13 @@ class PlotCon(ToolBox):
         #strokebox.Add(self.strokepicker)
         strokebox.Add(self.strokebutton, 0, wx.ALIGN_CENTRE_HORIZONTAL | wx.ALIGN_CENTRE_VERTICAL | wx.ALL, 5)
 
-        # Axes Synch
-        self.synchbutton = wx.Button(self.panel, ID_Sync, "Synch X Axes", wx.DefaultPosition, wx.Size(80, 30))
-        self.synchbutton.SetFont(buttonfont)
+        # Panel Synch
+        self.paramset.AddNum("panelgap", "Panel Gap", self.plot.panelgap, 0, labelwidth=60)
         synchbox = wx.BoxSizer(wx.HORIZONTAL)
+        synchbox.Add(self.paramset.GetCon("panelgap"), 0, wx.ALIGN_CENTRE_HORIZONTAL | wx.ALIGN_CENTRE_VERTICAL | wx.ALL, 0)
+        self.LayoutSkip()
+        self.synchbutton = wx.Button(self.panel, ID_Sync, "Synch Panels", wx.DefaultPosition, wx.Size(80, 30))
+        self.synchbutton.SetFont(buttonfont)
         synchbox.Add(self.synchbutton, 0, wx.ALIGN_CENTRE_HORIZONTAL | wx.ALIGN_CENTRE_VERTICAL | wx.ALL, 0)
 
         # Titles and Labels
@@ -1142,6 +1203,7 @@ class PlotCon(ToolBox):
             plot.xlabels = self.plot.xlabels
             plot.xstep = self.plot.xstep
             plot.xplot = self.plot.xplot
+            plot.yplot = self.plot.yplot
             plot.xshift = self.plot.xshift
             plot.xunitscale = self.plot.xunitscale
             plot.xunitdscale = self.plot.xunitdscale
@@ -1247,6 +1309,8 @@ class PlotCon(ToolBox):
 
         self.plot.barwidth = int(params["barwidth"])
         self.plot.bargap = int(params["bargap"])
+
+        self.plot.panelgap = int(params["panelgap"])
 
         self.plot.linemode = int(self.linecheck.GetValue())
         #self.plot.clipmode = self.clipcheck.GetValue()
@@ -1386,12 +1450,17 @@ class PlotCon(ToolBox):
         self.paramset.GetCon("ylabelgap").SetValue(self.plot.ylabelgap)
         self.paramset.GetCon("xlabelplaces").SetValue(self.plot.xlabelplaces)
         self.paramset.GetCon("ylabelplaces").SetValue(self.plot.ylabelplaces)
-        #self.paramset.GetCon("plotstroke").SetValue(self.plot.plotstroke)
-        #self.paramset.GetCon("labelfontsize").SetValue(self.plot.labelfontsize)
+        self.paramset.GetCon("plotstroke").SetValue(self.plot.plotstroke)
+        self.paramset.GetCon("labelfontsize").SetValue(self.plot.labelfontsize)
         #self.paramset.GetCon("scattersize").SetValue(self.plot.scattersize)
         self.paramset.GetCon("yscale").SetValue(self.plot.yunitscale)
         self.paramset.GetCon("ydscale").SetValue(self.plot.yunitdscale)
         self.paramset.GetCon("yshift").SetValue(self.plot.yshift)
+
+        self.paramset.GetCon("barwidth").SetValue(self.plot.barwidth)
+        self.paramset.GetCon("bargap").SetValue(self.plot.bargap)
+
+        self.paramset.GetCon("panelgap").SetValue(self.plot.panelgap)
 
         #self.clipcheck.SetValue(self.plot.clipmode)
         #self.linecheck.SetValue(self.plot.linemode)
@@ -1423,35 +1492,78 @@ class PlotCon(ToolBox):
 
         self.SetParams()
         self.graphpanel.Update()
-       
+
 
     def ParamLayout(self, numcols = 1):    
         # paramset.currlay allows repeated use after adding more parameters, for separate layout
         
         colsize = 0
         box = wx.BoxSizer(wx.HORIZONTAL)
-        numparams = self.paramset.NumParams() - self.paramset.currlay
-
-        if numcols == 1: colsize = numparams
-        if numcols >= 2: colsize = int((numparams + 1) / numcols) 
-
-        #print(colsize)
+        pcons = list(self.paramset.pcons.values())
 
         pstart = self.paramset.currlay
+        
+        while pstart < len(pcons) and pcons[pstart].GetContainingSizer() is not None:
+            pstart += 1
+            DiagWrite(f"ParamLayout, bad currlay, incrementing {pstart}\n")
+
+        numparams = len(pcons) - pstart
+        if numparams <= 0: return box
+
+        if numcols <= 1: colsize = numparams
+        if numcols >= 2: colsize = int((numparams + numcols - 1) / numcols)
+
+        colstart = pstart
+
         for col in range(numcols):
-            if col == numcols-1: pstop = self.paramset.currlay + numparams
-            else: pstop = self.paramset.currlay + colsize * (col+1)
+            if col == numcols-1: colstop = pstart + numparams
+            else: colstop = pstart + colsize * (col+1)
             #print(f"col {col} pstart {pstart} pstop {pstop}")
             vbox = wx.BoxSizer(wx.VERTICAL)
             vbox.AddSpacer(5)
-            for pindex in range(pstart, pstop):
-                vbox.Add(list(self.paramset.pcons.values())[pindex], 1, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.RIGHT|wx.LEFT, 5)
+            for pindex in range(colstart, colstop):
+                vbox.Add(pcons[pindex], 1, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.RIGHT|wx.LEFT, 5)
                 vbox.AddSpacer(5)
             box.Add(vbox, 0)
-            pstart = pstop
+            colstart = colstop
 
         self.paramset.currlay = self.paramset.NumParams()
         return box
+    
+
+    """  def ParamLayout(self, numcols=1):
+           pcons = list(self.paramset.pcons.values())
+        box = wx.BoxSizer(wx.HORIZONTAL)
+
+        start = self.paramset.currlay
+        if start < 0: start = 0
+        if start > len(pcons): start = len(pcons)
+
+        numparams = len(pcons) - start
+
+        if numcols <= 1: colsize = numparams
+        else: colsize = (numparams + numcols - 1) // numcols
+
+        pstart = start
+
+        for col in range(numcols):
+            if col == numcols - 1: pstop = start + numparams
+            else: pstop = min(start + colsize * (col + 1), start + numparams)
+
+            if pstart >= pstop: break
+
+            vbox = wx.BoxSizer(wx.VERTICAL)
+            vbox.AddSpacer(5)
+
+            for pindex in range(pstart, pstop):
+                vbox.Add(pcons[pindex], 1, wx.ALIGN_CENTRE_HORIZONTAL | wx.ALIGN_CENTRE_VERTICAL | wx.RIGHT | wx.LEFT, 5)
+                vbox.AddSpacer(5)
+
+            box.Add(vbox, 0)
+            pstart = pstop
+
+        self.paramset.currlay = len(pcons)
+        return box """
 
 
     def LayoutSkip(self, numskip = 1):

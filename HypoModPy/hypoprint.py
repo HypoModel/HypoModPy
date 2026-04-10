@@ -1,17 +1,11 @@
 
-from hashlib import new
+#from hashlib import new
 from math import log, pow
-from xxlimited import new
-from HypoModPy.hypobase import TextFile, numstring
+#from xxlimited import new
+from HypoModPy.hypobase import TextFile, numstring, EPSToPNG
 from HypoModPy.hypotools import DiagWrite
 
-
-class GraphEPS:
-	def __init__(self, mainwin=None):
-		self.mainwin = mainwin
-
-	def WriteEPS(self):
-		pass
+import subprocess
 
 
 class GraphEPS:
@@ -38,9 +32,9 @@ class GraphEPS:
 		return f"{x:.0f}"
 
 
-	def EPSHeader(self, out):
+	def EPSHeader(self, out, xbase=0, ybase=0, xsize=1000, ysize=500):
 		out.WriteLine("%!PS-Adobe-3.0 EPSF-3.0")
-		out.WriteLine("%%BoundingBox: 0 0 1000 500")
+		out.WriteLine(f"%%BoundingBox: {xbase} {ybase} {xsize} {ysize}")
 		out.WriteLine("/pu {1 mul} def")	# pu = plot units, set scaling to points
 		out.WriteLine("0 0 0 setrgbcolor")
 		out.WriteLine("1 setlinecap")
@@ -303,7 +297,7 @@ class GraphEPS:
 			out.MoveTo(xbase - xylab - plot.yticklength, ybase + ycoord - ylabeladjust)
 			out.WriteLine(f"({snum}) dup stringwidth pop neg 0 rmoveto show")
 
-			ylabelwidth = len(snum) * plot.labelfontsize * 0.55
+			ylabelwidth = len(snum) * plot.labelfontsize * 0.5
 			if ylabelwidth > maxylabelwidth: maxylabelwidth = ylabelwidth
 
 
@@ -394,10 +388,10 @@ class GraphEPS:
 
 	def MultiEPS(self):
 
-		mod = self.mod
+		mod = self.mainwin.mod
 		mainwin = self.mainwin
 
-		textgrid = mod.gridbox.layoutgrid
+		""" textgrid = mod.gridbox.layoutgrid
 
 		panelcount = int(textgrid.ReadDouble(0, 0))
 		if not panelcount:
@@ -418,25 +412,36 @@ class GraphEPS:
 				yb[i] = textgrid.ReadDouble(i + 1, 2)
 				panelcomm[i] = ""
 			except:
-				panelcomm[i] = celltext
+				panelcomm[i] = celltext """
+		
+		panelset = mainwin.panelset
+		panelcount = len(panelset)
+		frontplot = panelset[0].GetFrontPlot()
+		panelgap = frontplot.panelgap
+		width = frontplot.xplot + 70
+		height = (frontplot.yplot + 15) * panelcount + panelgap * (panelcount - 1)
+		xbase = 100 - 50
+		ybase = 100 - 40
 
-		filepath = mainwin.outpath
-		filetag = mod.modbox.paramstoretag.GetValue()
-		filename = filepath + "/" + filetag + "-" + "multi" + ".eps"
+		filetag = mod.modbox.storetag.GetValue()
+		filepath = mainwin.outpath + "/" + filetag + "-" + "multi" + ".eps"
 
-		out = TextFile()
-		out.New(filename)
-		self.EPSHeader(out)
-
-		for i in range(panelcount):
-			if panelcomm[i] == "":
-				gwin = mainwin.graphwin[paneldex[i]]
-				gwin.PrintEPS(xb[i], yb[i], out)
-			if panelcomm[i] == "hh": mainwin.scalebox.GraphCommand(ID_histhaz1)
-			if panelcomm[i] == "norm": mainwin.scalebox.GraphCommand(ID_norm)
-			if panelcomm[i] == "net": mainwin.scalebox.GraphCommand(ID_net)
+		out = TextFile(filepath)
+		out.Open('w')
+		self.EPSHeader(out, xbase, ybase, int(xbase + width), int(ybase + height))
+		
+		for i, panel in enumerate(panelset):
+			xb = 100
+			yb = 100 + (panelcount - i - 1) * panel.GetFrontPlot().yplot + (panelcount - i - 1) * panelgap
+			panel.WriteEPS(xb, yb, out)
+			#if panelcomm[i] == "hh": mainwin.scalebox.GraphCommand(ID_histhaz1)
+			#if panelcomm[i] == "norm": mainwin.scalebox.GraphCommand(ID_norm)
+			#if panelcomm[i] == "net": mainwin.scalebox.GraphCommand(ID_net)
 
 		out.Close()
+
+		filepathpng = mainwin.outpath + "/" + filetag + "-" + "multi" + ".png"
+		EPSToPNG(filepath, filepathpng)
 
 
 	def PrintEPSold(self, xb=-1, yb=-1, ofp=None):

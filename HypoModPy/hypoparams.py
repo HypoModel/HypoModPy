@@ -76,6 +76,7 @@ class ParamCon(wx.Control):
         self.Layout()
 
         self.Bind(wx.EVT_TEXT_ENTER, self.OnEnter)
+        self.numbox.Bind(wx.EVT_SET_FOCUS, self.OnTextFocus)
 
 
     def AddButton(self, label, id, width):
@@ -86,6 +87,11 @@ class ParamCon(wx.Control):
         #self.SetInitialSize(wx.DefaultSize)
         self.Layout()
         return self.button
+    
+
+    def OnTextFocus(self, event):
+        self.numbox.SetInsertionPointEnd()
+        event.Skip()
     
 
     def DoGetBestSize(self):
