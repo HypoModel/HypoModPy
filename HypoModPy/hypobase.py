@@ -201,6 +201,23 @@ def EPSToPNG(epsfile, pngfile, dpi=300):
 		epsfile,
 	]
 	subprocess.run(cmd, check=True)
+
+
+def EPSToPNG(epsfile, pngfile, dpi=300):
+	scale = 4
+	cmd = [
+		"gs",
+		"-dSAFER",
+		"-dBATCH",
+		"-dNOPAUSE",
+		"-dEPSCrop",
+		"-sDEVICE=png16m",
+		f"-r{dpi * scale}",
+		f"-dDownScaleFactor={scale}",
+		f"-sOutputFile={pngfile}",
+		epsfile,
+	]
+	subprocess.run(cmd, check=True)   
     
 
 
