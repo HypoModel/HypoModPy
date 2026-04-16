@@ -138,10 +138,12 @@ class ToolBox(wx.Frame):
             self.buttonheight = 25
             self.boxfont = wx.Font(wx.FontInfo(10).FaceName("Tahoma"))
             self.confont = wx.Font(wx.FontInfo(12).FaceName("Tahoma"))
+            self.buttonfont = wx.Font(wx.FontInfo(10).FaceName("Tahoma").Bold())
         else:
             self.buttonheight = 23
             self.boxfont = wx.Font(wx.FontInfo(8).FaceName("Tahoma"))
             self.confont = wx.Font(wx.FontInfo(8).FaceName("Tahoma"))
+            self.buttonfont = wx.Font(wx.FontInfo(8).FaceName("Tahoma").Bold())
 
         self.panel = ToolPanel(self, wx.DefaultPosition, wx.DefaultSize)
         self.panel.SetFont(self.boxfont)
@@ -199,7 +201,7 @@ class ToolBox(wx.Frame):
         if height == 0: height = self.buttonheight
         button = ToolButton(panel, id, label, wx.DefaultPosition, wx.Size(width, height))
         button.SetFont(self.confont)
-        box.Add(button, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.TOP|wx.BOTTOM, pad)
+        box.Add(button, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.TOP | wx.BOTTOM, pad)
         return button
 
 

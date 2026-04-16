@@ -883,7 +883,7 @@ class GraphPanel(GraphEPS, wx.Panel):
 class PlotCon(ToolBox):
     def __init__(self, graphpanel, title):
         ostype = GetSystem()
-        if ostype == "Windows": boxheight = 700
+        if ostype == "Windows": boxheight = 780
         else: boxheight = 700
         ToolBox.__init__(self, graphpanel.mainwin, "PlotCon", title, wx.Point(0, 0), wx.Size(320, boxheight), type)
 
@@ -893,9 +893,9 @@ class PlotCon(ToolBox):
         
         self.autosynch = False
         buttonheight = 23
-        boxfont = wx.Font(wx.FontInfo(8).FaceName("Tahoma"))
-        confont = wx.Font(wx.FontInfo(12).FaceName("Tahoma"))
-        buttonfont = wx.Font(wx.FontInfo(10).FaceName("Tahoma").Bold())
+        #boxfont = wx.Font(wx.FontInfo(8).FaceName("Tahoma"))
+        #confont = wx.Font(wx.FontInfo(12).FaceName("Tahoma"))
+        #buttonfont = wx.Font(wx.FontInfo(10).FaceName("Tahoma").Bold())
         pad = 3
         radpad = 3
 
@@ -1027,7 +1027,7 @@ class PlotCon(ToolBox):
         self.paramset.AddNum("xsample", "XSample", self.plot.xsample, 0)
         samplebox.Add(self.paramset.GetCon("xsample"), 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL)
         self.clipcheck = wx.CheckBox(self.panel, ID_ClipMode, "Clip")
-        self.clipcheck.SetFont(confont)
+        self.clipcheck.SetFont(self.confont)
         self.clipcheck.SetValue(self.plot.clipmode)
         samplebox.AddSpacer(40)
         samplebox.Add(self.clipcheck, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL)
@@ -1039,7 +1039,7 @@ class PlotCon(ToolBox):
         self.fontchoice.SetSelection(self.plot.labelfont)
         fontbox = wx.BoxSizer(wx.HORIZONTAL)
         fontlabel = wx.StaticText(self.panel, wx.ID_ANY, "Font")
-        fontlabel.SetFont(confont)
+        fontlabel.SetFont(self.confont)
         fontbox.Add(fontlabel, 0, wx.ALIGN_CENTER_HORIZONTAL | wx.ALIGN_CENTER_VERTICAL | wx.ALL, 5)
         fontbox.AddSpacer(5)
         fontbox.Add(self.fontchoice, 0, wx.ALIGN_CENTER_HORIZONTAL | wx.ALIGN_CENTER_VERTICAL)
@@ -1050,7 +1050,7 @@ class PlotCon(ToolBox):
 
         # Line Stroke and Colour
         self.linecheck = wx.CheckBox(self.panel, ID_Line, "")
-        self.linecheck.SetFont(confont)
+        self.linecheck.SetFont(self.confont)
         self.linecheck.SetValue(self.plot.linemode)
         #self.strokepicker = wx.ColourPickerCtrl(self.panel, wx.ID_ANY, self.plot.strokecolour, wx.DefaultPosition, wx.Size(130, 130))
         self.strokebutton = wx.BitmapButton(self.panel, ID_StrokeColour, self.MakeColourBitmap(self.plot.strokecolour, 28, 10), wx.DefaultPosition, wx.Size(36, -1))
@@ -1068,9 +1068,8 @@ class PlotCon(ToolBox):
         synchbox = wx.BoxSizer(wx.HORIZONTAL)
         synchbox.Add(self.paramset.GetCon("panelgap"), 0, wx.ALIGN_CENTRE_HORIZONTAL | wx.ALIGN_CENTRE_VERTICAL | wx.ALL, 0)
         self.LayoutSkip()
-        self.synchbutton = wx.Button(self.panel, ID_Sync, "Synch Panels", wx.DefaultPosition, wx.Size(80, 30))
-        self.synchbutton.SetFont(buttonfont)
-        synchbox.Add(self.synchbutton, 0, wx.ALIGN_CENTRE_HORIZONTAL | wx.ALIGN_CENTRE_VERTICAL | wx.ALL, 0)
+        self.syncbutton = self.AddButton(ID_Sync, "Sync Panels", 80, synchbox)
+        
 
         # Titles and Labels
         self.paramset.text_labelwidth = 50
@@ -1080,12 +1079,11 @@ class PlotCon(ToolBox):
         labelparams = self.ParamLayout(1)
 
         buttonbox = wx.BoxSizer(wx.HORIZONTAL)
-        okButton = wx.Button(self.panel, wx.ID_OK, "Ok", wx.DefaultPosition, wx.Size(60, 30))
-        printButton = wx.Button(self.panel, ID_Print, "Export EPS", wx.DefaultPosition, wx.Size(60, 30))
-        closeButton = wx.Button(self.panel, wx.ID_CANCEL, "Close", wx.DefaultPosition, wx.Size(60, 30))
-        buttonbox.Add(okButton, 1)
-        buttonbox.Add(printButton, 1, wx.LEFT, 5)
-        buttonbox.Add(closeButton, 1, wx.LEFT, 5)
+        self.AddButton(wx.ID_OK, "Ok", 60, buttonbox, 2)
+        buttonbox.AddSpacer(5)
+        self.AddButton(wx.ID_PRINT, "Export EPS", 60, buttonbox, 2)
+        buttonbox.AddSpacer(5)
+        self.AddButton(wx.ID_CANCEL, "Close", 60, buttonbox, 2)
 
         self.mainbox.AddSpacer(5)
         self.mainbox.Add(tickparams, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 0)
