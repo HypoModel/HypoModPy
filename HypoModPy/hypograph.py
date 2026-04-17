@@ -3,7 +3,6 @@ import gc
 import gc
 from hmac import new
 
-from matplotlib.pyplot import plot
 import wx
 from math import log, isinf, isnan 
 from HypoModPy.hypotools import *
