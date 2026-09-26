@@ -1,4 +1,8 @@
 
+from xxlimited import new
+
+from xxlimited import new
+
 import wx
 import os
 from HypoModPy.hypobase import *
@@ -77,6 +81,20 @@ class ToolPanel(wx.Panel):
             DiagWrite(f"{tag} pos {pos.x} {pos.y} old {oldpos.x} {oldpos.y} mpos {mpos.x} {mpos.y}\n")
             
         event.Skip()
+
+
+    def ToggleButton(self, label, width, sizer):
+        button = wx.ToggleButton(self, wx.ID_ANY, label, wx.DefaultPosition, wx.Size(width, self.buttonheight), 0)
+        button.SetFont(self.confont)
+        sizer.Add(button, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.TOP|wx.BOTTOM, 1)
+        #if box: button.Bind(wx.EVT_TOGGLEBUTTON, box.OnToggle)
+        #else: button.Bind(wx.EVT_TOGGLEBUTTON, self.OnToggle)
+        return button
+
+
+    def OnToggle(self, event):
+        event.Skip()
+
 
 
 class ToolButton(wx.Button):

@@ -1,7 +1,4 @@
 
-import gc
-import gc
-from hmac import new
 
 import wx
 from math import log, isinf, isnan 
@@ -58,6 +55,9 @@ class GraphPanel(GraphEPS, wx.Panel):
 
         # Plot Mouse Control
         self.anchorpos = wx.Point(0, 0)
+        self.mousedown = wx.Point(0, 0)
+        self.currentpos = wx.Point(0, 0)
+        self.selectband = False
         self.overlay = wx.Overlay()
 
         # Draw Parameters
@@ -136,27 +136,102 @@ class GraphPanel(GraphEPS, wx.Panel):
     def OnLeftUp(self, event):
         if self.mainwin.plotcon: self.mainwin.plotcon.SetGraph(self)
 
+        # Data Selection drag
+
+        pos = event.GetPosition()
+
+        if pos.x - self.mousedown.x > 5:
+            plot = self.GetFrontPlot()
+
+            xdiff = plot.xto - plot.xfrom
+            xscale = xdiff / self.xplot
+            xgraphFrom = (self.mousedown.x - self.xbase) * xscale + plot.xfrom
+            xgraphTo = (pos.x - self.xbase) * xscale + plot.xfrom
+
+            ydiff = plot.yto - plot.yfrom
+            yscale = ydiff / self.yplot
+            ygraphFrom = (self.yplot - self.mousedown.y + self.ybase) * yscale + plot.yfrom
+            ygraphTo = (self.yplot - pos.y + self.ybase) * yscale + plot.yfrom
+
+            # Range check and correct
+            if xgraphFrom > xgraphTo: xgraphFrom, xgraphTo = xgraphTo, xgraphFrom	# reverse range for drag from right to left
+            if ygraphFrom > ygraphTo: ygraphFrom, ygraphTo = ygraphTo, ygraphFrom
+
+            if xgraphFrom < plot.xfrom: xgraphFrom = plot.xfrom		# trim range to current plot (for drag past axes)
+            if xgraphTo > plot.xto: xgraphTo = plot.xto
+            if ygraphFrom < plot.yfrom: ygraphFrom = plot.yfrom
+            if ygraphTo > plot.yto: ygraphTo = plot.yto
+
+            # Zoom Select
+            # if self.mainwin.hypoflags["zoom"]:
+
+            #     plot.oldxfrom = plot.xfrom
+            #     plot.oldxto = plot.xto
+            #     plot.oldyfrom = plot.yfrom
+            #     plot.oldyto = plot.yto
+            #     plot.oldset = True
+
+            #     plot.xfrom = xgraphFrom
+            #     plot.xto = xgraphTo
+            #     plot.yfrom = ygraphFrom
+            #     plot.yto = ygraphTo
+
+            #     self.scalebox.ScaleUpdate()
+
+            # Data Select
+            #self.mod.DataSelect(plot.gname, xgraphFrom, xgraphTo)
+
+            # Diagnostic display
+            xplaces = numplaces(xdiff)
+            yplaces = numplaces(ydiff)
+            snum = (f"LUp x{pos.x} y{pos.y}  drag X "
+                    f"{numstring(xgraphFrom, xplaces)} To {numstring(xgraphTo, xplaces)} "
+                    f"({numstring(xgraphTo - xgraphFrom, xplaces)})   Y "
+                    f"{numstring(ygraphFrom, yplaces)} To {numstring(ygraphTo, yplaces)} "
+                    f"({numstring(ygraphTo - ygraphFrom, yplaces)})   "
+                    f"xfrom {plot.xfrom:.2f} yfrom {plot.yfrom:.2f}")
+
+        else: snum = f"LUp {pos.x}"
+
+        #if self.mainwin.diagnostic: self.mainwin.SetStatusText(snum)
+
+        self.selectband = False
+        
+        if self.HasCapture(): self.ReleaseMouse()
+
+        dc = wx.ClientDC(self)
+        overlaydc = wx.DCOverlay(self.overlay, dc, self.xbase, self.ybase, self.xplot, self.yplot)
+        overlaydc.Clear()
+        del overlaydc
+
+        self.overlay.Reset()
+        self.Refresh()
+        self.Update()
+
 
     def OnLeftDown(self, event):
         pos = event.GetPosition()
-        mousedown = pos
+        self.mousedown = pos
 
         #if(mainwin->neurobox) mainwin->neurobox->SetGraph(this);
 
         plot = self.GetFrontPlot()
         xdiff = plot.xto - plot.xfrom
         xscale = xdiff / self.xplot
-        xgraph = (mousedown.x - self.xbase) * xscale + plot.xfrom
+        xgraph = (self.mousedown.x - self.xbase) * xscale + plot.xfrom
 
         ydiff = plot.yto - plot.yfrom
         yscale = ydiff / self.yplot
-        ygraph = (self.yplot - mousedown.y + self.ybase) * yscale + plot.yfrom
+        ygraph = (self.yplot - self.mousedown.y + self.ybase) * yscale + plot.yfrom
 
         snum = f"LDown X {pos.x} Y {pos.y}  graph {xgraph} {ygraph}"
         #if(mainwin->diagnostic) mainwin->SetStatusText(snum);
 
-        #self.CaptureMouse()
         self.anchorpos = pos
+        self.currentpos = self.anchorpos
+        self.selectband = True
+        self.CaptureMouse()
+
         if self.anchorpos.x < self.xbase: self.anchorpos.x = self.xbase
         if self.anchorpos.x > self.xbase + self.xplot: self.anchorpos.x = int(self.xbase + self.xplot)
         if self.anchorpos.y < self.ybase: self.anchorpos.y = self.ybase
@@ -206,14 +281,35 @@ class GraphPanel(GraphEPS, wx.Panel):
         if currentpos.x > self.xbase + self.xplot - 1: currentpos.x = self.xbase + self.xplot - 1
         if currentpos.x < self.xbase + 1: currentpos.x = self.xbase + 1
        
-        dc = wx.ClientDC(self)
-        overlaydc = wx.DCOverlay(self.overlay, dc)
-        overlaydc.Clear()
+        # dc = wx.ClientDC(self)
+        # overlaydc = wx.DCOverlay(self.overlay, dc)
+        # overlaydc.Clear()
 
-        ctx = wx.GraphicsContext.Create(dc)
-        ctx.SetBrush(wx.Brush(wx.Colour(192,192,255,64)))
-        newrect = wx.Rect(self.anchorpos, currentpos)
-        ctx.DrawRectangle(newrect.x, newrect.y, newrect.width, newrect.height)
+        # ctx = wx.GraphicsContext.Create(dc)
+        # ctx.SetBrush(wx.Brush(wx.Colour(192,192,255,64)))
+        # newrect = wx.Rect(self.anchorpos, currentpos)
+        # ctx.DrawRectangle(newrect.x, newrect.y, newrect.width, newrect.height)
+
+        if self.selectband:
+            self.currentpos = pos
+
+            if self.currentpos.y > self.ybase + self.yplot - 1: self.currentpos.y = self.ybase + self.yplot - 1
+            if self.currentpos.y < self.ybase + 1: self.currentpos.y = self.ybase + 1
+            if self.currentpos.x > self.xbase + self.xplot - 1: self.currentpos.x = self.xbase + self.xplot - 1
+            if self.currentpos.x < self.xbase + 1: self.currentpos.x = self.xbase + 1
+
+            self.anchorpos.y = self.ybase + 1
+            self.currentpos.y = self.ybase + self.yplot - 1
+
+            newrect = wx.Rect(self.anchorpos, self.currentpos)
+            dc = wx.ClientDC(self)
+            overlaydc = wx.DCOverlay(self.overlay, dc, self.xbase, self.ybase, self.xplot, self.yplot)
+            overlaydc.Clear()
+
+            dc.SetPen(wx.TRANSPARENT_PEN)
+            dc.SetBrush(wx.Brush(wx.Colour(120, 160, 255, 64)))
+            dc.DrawRectangle(newrect)
+            del overlaydc
         
 
     def OnGraphRemove(self, event):

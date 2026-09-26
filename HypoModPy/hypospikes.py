@@ -25,6 +25,58 @@ class SpikeDataBox(ParamBox):
         self.mainbox.Add(self.notebook, 1, wx.EXPAND)
 
 
+class SpikeSelect():
+    def __init__(self, panel, index):
+        self.index = index
+        self.panel = panel
+        self.mode = 1
+        self.buttspace = 20
+
+        self.con = wx.StaticBoxSizer(wx.HORIZONTAL, None, f"Selection {index+1}")
+
+        self.addbutton = panel.ToggleButton("Add", 40, self.con)
+        self.addbutton.Bind(wx.EVT_TOGGLEBUTTON, self.OnAddToggle)
+        self.con.AddSpacer(self.buttspace)
+
+        self.subbutton = panel.ToggleButton("Sub", 40, self.con)
+        self.subbutton.Bind(wx.EVT_TOGGLEBUTTON, self.OnSubToggle)
+        self.con.AddSpacer(self.buttspace)
+
+        self.clearbutton = panel.databox.AddButton("Clear", 40, self.con)
+        self.clearbutton.Bind(wx.EVT_BUTTON, self.OnClear)
+        self.con.AddSpacer(self.buttspace)
+
+        self.invertbutton = panel.databox.AddButton(f"Invert", 40, self.con)
+        self.invertbutton.Bind(wx.EVT_BUTTON, self.OnInvert)
+
+        self.spikes = np.zeros(100000, dtype=int)
+
+    def OnAddToggle(self, event):
+        self.mode = 1
+        self.panel.currselect = self.index
+        self.panel.AddSubToggle()
+        self.panel.SelectUpdate()
+
+    def OnSubToggle(self, event):
+        self.mode = 2
+        self.panel.currselect = self.index
+        self.panel.AddSubToggle()
+        self.panel.SelectUpdate()
+
+    def OnClear(self, event):
+        self.spikes.fill(0)
+        self.panel.currselect = self.index
+        self.panel.AddSubToggle()
+        self.panel.SelectUpdate()
+
+    def OnInvert(self, event):
+        self.spikes[:] = (self.index + 1) - self.spikes
+        self.panel.currselect = self.index
+        self.panel.AddSubToggle()
+        self.panel.SelectUpdate()
+
+    
+        
 class SpikeDataPanel(ToolPanel):
     def __init__(self, parent):
         ToolPanel.__init__(self, parent.notebook, wx.DefaultPosition, wx.DefaultSize)
@@ -40,6 +92,10 @@ class SpikeDataPanel(ToolPanel):
         # Panel data
         self.cellcount = 10
         self.cellindex = 0
+
+        # Select switches and stores
+        self.selectcount = 2
+        self.currselect = 0
 
         # Neuron selection
         datwidth = 50
@@ -98,9 +154,96 @@ class SpikeDataPanel(ToolPanel):
         databox.AddSpacer(5)
         databox.Add(datagrid, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 5)
 
-        mainbox.Add(databox, 1, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL)
 
+        # Spike selection
+        self.fromcon = self.databox.paramset.AddNum("from", "From", 0, 0, 30)
+        self.tocon = self.databox.paramset.AddNum("to", "To", 100, 0, 20)
+
+        fromtobox = wx.BoxSizer(wx.HORIZONTAL)
+        fromtobox.Add(self.fromcon, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.RIGHT|wx.LEFT, 5)
+        fromtobox.Add(self.tocon, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.RIGHT|wx.LEFT, 5)
+
+        self.select = []
+        for i in range(self.selectcount): 
+            self.select.append(SpikeSelect(self, i))
+
+        self.select[self.currselect].addbutton.SetValue(True)
+
+        selectconbox = wx.BoxSizer(wx.VERTICAL)
+        selectconbox.Add(fromtobox, 0, wx.ALIGN_CENTRE_HORIZONTAL)
+        selectconbox.AddSpacer(10)
+
+        for i in range(self.selectcount):
+            selectconbox.Add(self.select[i].con, 0)
+            if i < self.selectcount - 1: selectconbox.AddSpacer(10)
+
+        columnbox = wx.BoxSizer(wx.HORIZONTAL)
+        columnbox.AddStretchSpacer()
+        columnbox.Add(databox, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL)
+        columnbox.AddSpacer(20)
+        columnbox.Add(selectconbox, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL)
+
+        mainbox.Add(columnbox, 1, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL)
         self.Layout()
+
+
+    def AddSubToggle(self):
+        for select in self.select:
+            select.addbutton.SetValue(False)
+            select.subbutton.SetValue(False)
+
+        select = self.select[self.currselect]
+        if select.mode == 1: select.addbutton.SetValue(True)
+        if select.mode == 2: select.subbutton.SetValue(True)
+
+
+    def SelectUpdate(self):
+        currdata = self.databox.mod.cellspike
+        if not currdata.spikecount: return    # use spikecount to check for spike data
+        
+        currdata.selectdata.spikes = self.select[self.currselect].spikes
+        if not currdata.colourdata: 
+            currdata.ColourSwitch(2)
+            #mainwin->scalebox->ratedata = 2;
+            #mainwin->scalebox->databutton->SetLabel("Select");
+
+        self.AnalyseSelection()
+        # if(cellmode && neurobox->burstbox) neurobox->burstbox->ExpDataScan(currneuron);
+        # mainwin->scalebox->GraphUpdate();
+
+
+    def SelectAdd(self):
+        currdata = self.databox.mod.cellspike
+        sfrom = self.fromcon.GetValue() * 1000
+        sto = self.tocon.GetValue() * 1000
+        select = self.select[self.currselect]
+
+        for i in range(currdata.spikecount):
+            if currdata.times[i] > sfrom and currdata.times[i] < sto:
+                select.spikes[i] = self.currselect + 1
+
+        self.SelectUpdate()
+
+
+    def SelectSub(self):
+        currdata = self.databox.mod.cellspike
+        sfrom = self.fromcon.GetValue() * 1000
+        sto = self.tocon.GetValue() * 1000
+        select = self.select[self.currselect]
+
+        for i in range(currdata.spikecount):
+            if currdata.times[i] > sfrom and currdata.times[i] < sto:
+                select.spikes[i] = 0
+
+        self.SelectUpdate()
+
+
+    def SetSelectRange(self, fromtime, totime):
+        self.fromcon.SetValue(fromtime)
+        self.tocon.SetValue(totime)
+
+        if self.select[self.currselect].mode == 1: self.SelectAdd()
+        if self.select[self.currselect].mode == 2: self.SelectSub()
 
 
     def SetDataCount(self, count):
