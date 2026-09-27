@@ -179,7 +179,7 @@ class GraphPanel(GraphEPS, wx.Panel):
             #     self.scalebox.ScaleUpdate()
 
             # Data Select
-            #self.mod.DataSelect(plot.gname, xgraphFrom, xgraphTo)
+            self.mainwin.mod.DataSelect(plot.plottag, xgraphFrom, xgraphTo)
 
             # Diagnostic display
             xplaces = numplaces(xdiff)

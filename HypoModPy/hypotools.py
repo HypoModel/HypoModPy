@@ -214,12 +214,12 @@ class ToolBox(wx.Frame):
         return textcon
 
 
-    def AddButton(self, id, label, width, box, pad=1, height=0, panel=None):
+    def AddButton(self, id, label, width, sizer, pad=1, height=0, panel=None):
         if panel is None: panel = self.activepanel
         if height == 0: height = self.buttonheight
         button = ToolButton(panel, id, label, wx.DefaultPosition, wx.Size(width, height))
         button.SetFont(self.confont)
-        box.Add(button, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.TOP | wx.BOTTOM, pad)
+        sizer.Add(button, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.TOP | wx.BOTTOM, pad)
         return button
 
 

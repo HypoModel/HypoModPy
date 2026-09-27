@@ -146,6 +146,10 @@ class Mod(wx.EvtHandler):
         return 0
 
 
+    def DataSelect(self, plottag, xfrom, xto):
+        pass
+
+
 
 class ModThread(Thread):
     def __init__(self, params, mainwin):

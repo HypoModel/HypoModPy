@@ -32,7 +32,7 @@ class SpikeSelect():
         self.mode = 1
         self.buttspace = 20
 
-        self.con = wx.StaticBoxSizer(wx.HORIZONTAL, None, f"Selection {index+1}")
+        self.con = wx.StaticBoxSizer(wx.HORIZONTAL, self.panel, f"Selection {index+1}")
 
         self.addbutton = panel.ToggleButton("Add", 40, self.con)
         self.addbutton.Bind(wx.EVT_TOGGLEBUTTON, self.OnAddToggle)
@@ -42,11 +42,11 @@ class SpikeSelect():
         self.subbutton.Bind(wx.EVT_TOGGLEBUTTON, self.OnSubToggle)
         self.con.AddSpacer(self.buttspace)
 
-        self.clearbutton = panel.databox.AddButton("Clear", 40, self.con)
+        self.clearbutton = panel.databox.AddButton(wx.ID_ANY, "Clear", 40, self.con)
         self.clearbutton.Bind(wx.EVT_BUTTON, self.OnClear)
         self.con.AddSpacer(self.buttspace)
 
-        self.invertbutton = panel.databox.AddButton(f"Invert", 40, self.con)
+        self.invertbutton = panel.databox.AddButton(wx.ID_ANY, "Invert", 40, self.con)
         self.invertbutton.Bind(wx.EVT_BUTTON, self.OnInvert)
 
         self.spikes = np.zeros(100000, dtype=int)
