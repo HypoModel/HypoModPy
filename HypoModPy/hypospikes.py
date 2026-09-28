@@ -200,6 +200,8 @@ class SpikeDataPanel(ToolPanel):
     def SelectUpdate(self):
         currdata = self.databox.mod.cellspike
         if not currdata.spikecount: return    # use spikecount to check for spike data
+
+        if currdata.selectdata is None: return
         
         currdata.selectdata.spikes = self.select[self.currselect].spikes
         if not currdata.colourdata: 
@@ -336,6 +338,10 @@ class SpikeDat():
         # IoD data
         self.IoDdata = pdata(100)
         self.IoDdataX = pdata(100)
+
+        # Burst and select data
+        self.selectdata = None
+        self.burstdata = None
 
         # initialise arrays for spike rate
         self.srate1s = pdata(10000)
@@ -500,3 +506,17 @@ class SpikeDat():
         dispersion = variance / mean        # dispersion
 
         return dispersion
+
+
+class BurstDat():
+    def __init__(self):
+        self.burstcount = 0
+        self.burstspikes = 0
+        self.burstisi = 0
+        self.burstfreq = 0
+        self.burstlength = 0
+        self.burstlengthsd = 0
+        self.burstisiavg = 0
+        self.burstisisd = 0
+
+
