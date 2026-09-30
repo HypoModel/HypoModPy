@@ -1,14 +1,18 @@
 
 import wx.grid
-from HypoModPy.hypobase import *
-from HypoModPy.hypoparams import *
+
 #from wx.lib.sheet import *
 import wx.richtext
 from io import StringIO 
 import wx.py.buffer
 import pyperclip
 import math
-from HypoModPy.hypospikes import *
+import os
+
+from HypoModPy.hypobase import *
+from HypoModPy.hypotools import DiagWrite, ParamBox
+from HypoModPy.hypospikes import NeuroDat
+#from HypoModPy.hypoparams import *
 
 
 class TextGrid(wx.grid.Grid):

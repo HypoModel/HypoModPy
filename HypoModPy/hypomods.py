@@ -1,10 +1,13 @@
 
 import wx
-from HypoModPy.hypoparams import *
-from HypoModPy.hypodat import *
+import os
 from threading import Thread
 from datetime import datetime
 import wx.lib.newevent
+
+from HypoModPy.hypobase import *
+from HypoModPy.hypoparams import ParamSet
+from HypoModPy.hypodat import PlotBase, PlotDat
 
 
 # Custom Thread Event

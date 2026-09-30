@@ -4,10 +4,10 @@ import wx
 import random
 import numpy as np
 
-from HypoModPy.hypomods import *
-from HypoModPy.hypoparams import *
-from HypoModPy.hypodat import *
-from HypoModPy.hypogrid import *
+from HypoModPy.hypobase import *
+from HypoModPy.hypodat import pdata
+from HypoModPy.hypoparams import ParamSet
+from HypoModPy.hypotools import DiagWrite, ToolBox, ParamBox, ToolPanel
 
 
 class SpikeDataBox(ParamBox):
@@ -550,3 +550,53 @@ class BurstDat:
 		self.meanisi = 0
 		self.isivar = 0
 		self.isisd = 0
+
+
+
+class BurstBox(ToolBox):
+    def __init__(self, mainwin, title):
+        super().__init__(mainwin, title)
+
+        self.mainwin = mainwin
+
+        self.paramset = ParamSet(self.panel)
+
+        self.burstpanels = []
+        self.datburst = self.AddBurstPanel("Data")
+
+        # default burst scan parameters
+        maxint = 1500;
+        minspikes = 25;
+        maxspikes = 0;
+        startspike = 0;
+        endspike = 0;
+
+        # panel controls and layout sizers
+
+        self.numwidth = 50
+
+        parambox = wx.BoxSizer(wx.VERTICAL)
+        hbox = wx.BoxSizer(wx.HORIZONTAL)
+        hbox2 = wx.BoxSizer(wx.HORIZONTAL)
+        rightbox = wx.BoxSizer(wx.VERTICAL)
+
+        # All spike data panel
+        self.allspikes = self.NumPanel(self.numwidth)
+        self.allfreq = self.NumPanel(self.numwidth)
+        self.allisimean = self.NumPanel(self.numwidth)
+        self.allisisd = self.NumPanel(self.numwidth)
+
+        if GetSystem() == "Mac": gridwidth = 45
+        else: gridwidth = 30
+
+        datagrid = wx.FlexGridSizer(2, 3, 3)
+        datagrid.Add(self.GridLabel(gridwidth, "Spikes"), 0, wx.ALIGN_CENTRE)
+        datagrid.Add(self.allspikes)
+        datagrid.Add(self.GridLabel(gridwidth, "Freq"), 0, wx.ALIGN_CENTRE)
+        datagrid.Add(self.allfreq)
+        datagrid.Add(self.GridLabel(gridwidth, "Mean"), 0, wx.ALIGN_CENTRE)
+        datagrid.Add(self.allisimean)
+        datagrid.Add(self.GridLabel(gridwidth, "SD"), 0, wx.ALIGN_CENTRE)
+        datagrid.Add(self.allisisd)
+
+        

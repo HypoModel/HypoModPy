@@ -1,11 +1,9 @@
 
-#from hashlib import new
+
 from math import log, pow
-#from xxlimited import new
+
 from HypoModPy.hypobase import TextFile, numstring, EPSToPNG
 from HypoModPy.hypotools import DiagWrite
-
-import subprocess
 
 
 class GraphEPS:

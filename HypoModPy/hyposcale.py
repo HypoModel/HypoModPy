@@ -1,7 +1,8 @@
 
 import wx
-from HypoModPy.hypotools import *
-
+import os
+from HypoModPy.hypobase import *
+from HypoModPy.hypotools import DiagWrite, ToolPanel, ToolButton, TextBox, TagBox
 
 
 class OverDat():
