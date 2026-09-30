@@ -19,9 +19,11 @@ class SpikeDataBox(ParamBox):
         self.notebook = wx.Notebook(self.panel, -1, wx.Point(-1,-1), wx.Size(-1, 400), wx.NB_TOP)
 
         self.cellpanel = SpikeDataPanel(self)
+        self.modpanel = SpikeDataPanel(self)
         #cellpanel->cellmode = true;
         #cellpanel->ratetag = "cellspikes";
         self.notebook.AddPage(self.cellpanel, "Cell")
+        self.notebook.AddPage(self.modpanel, "Model")
         self.mainbox.Add(self.notebook, 1, wx.EXPAND)
 
 
@@ -508,15 +510,43 @@ class SpikeDat():
         return dispersion
 
 
-class BurstDat():
-    def __init__(self):
-        self.burstcount = 0
-        self.burstspikes = 0
-        self.burstisi = 0
-        self.burstfreq = 0
-        self.burstlength = 0
-        self.burstlengthsd = 0
-        self.burstisiavg = 0
-        self.burstisisd = 0
+
+class Burst:
+	def __init__(self):
+		self.start = 0
+		self.end = 0
+		self.count = 0
+		self.time = 0
+		self.numpulse = 0
+		self.pmax = 0
+		self.length = 0
+		self.peak = 0
 
 
+
+class BurstDat:
+	def __init__(self, spikedata=None, select=False):
+		self.spikedata = spikedata
+		self.selectmode = select
+
+		self.times = None
+		self.spikes = None
+
+		self.burstspikes = []
+		self.bustore = []
+
+		self.intraspikes = 0
+		self.numbursts = 0
+
+		self.intratime = 0
+		self.meancount = 0
+		self.meantime = 0
+		self.meanlength = 0
+		self.meansilence = 0
+		self.sdlength = 0
+		self.sdsilence = 0
+
+		self.freq = 0
+		self.meanisi = 0
+		self.isivar = 0
+		self.isisd = 0
