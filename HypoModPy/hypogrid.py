@@ -12,7 +12,7 @@ import os
 from HypoModPy.hypobase import *
 from HypoModPy.hypotools import DiagWrite, ParamBox
 from HypoModPy.hypospikes import NeuroDat
-#from HypoModPy.hypoparams import *
+
 
 
 class TextGrid(wx.grid.Grid):

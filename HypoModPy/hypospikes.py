@@ -553,16 +553,118 @@ class BurstDat:
 
 
 
+
+class PanelCon:
+    def __init__(self, label, tag, con):
+        self.label = label
+        self.tag = tag
+        self.data = None
+        self.con = con
+
+
+class ConSet:
+    def __init__(self):
+        self.datcons = {}
+
+    def Add(self, label, tag, con):
+        self.datcons[tag] = PanelCon(label, tag, con)
+        return self.datcons[tag]
+
+    def GetCon(self, tag):
+        return self.datcons.get(tag)
+
+    def __iter__(self):
+        return iter(self.datcons.values())
+
+
+class BurstPanel:
+    def __init__(self):
+        self.spikedata = None
+        self.intracons = ConSet()
+        self.burstcons = ConSet()
+
+      
+
+# class BurstPanel:
+#     intrarows = [("Spikes", "intraspikes"), 
+#                  ("Freq", "intrafreq"), 
+#                  ("Mean", "intraisimean"), 
+#                  ("SD", "intraisisd")]
+
+#     burstrows = [("Bursts", "numbursts"), 
+#                  ("Mean Spikes", "meanspikes"), 
+#                  ("Mean Length", "meanlength"), 
+#                  ("Length SD", "sdlength"),
+#                  ("Mean Silence", "meansilence"), 
+#                  ("Silence SD", "sdsilence"), 
+#                  ("Activity Q", "actQ"), 
+#                  ("Mode Time", "modetime"),
+#                  ("Mode Rate", "moderate"),
+#                  ("Mean Peak", "meanpeak")]
+
+
+#     def __init__(self):
+#         self.spikedata = None
+#         self.intradata = {}
+#         self.burstdata = {}
+
+
+#     def DataCons(self, datpanel):
+#         numwidth = 50
+
+#         for label, tag in datpanel.intrarows:
+#             datpanel.intradata[tag] = self.NumPanel(numwidth)
+
+#         for label, tag in datpanel.burstrows:
+#             datpanel.burstdata[tag] = self.NumPanel(numwidth)
+
+    
+
+# class BurstPanel:
+#     def __init__(self):
+#         self.spikedata = None
+
+#         self.intrabox = wx.BoxSizer(wx.VERTICAL)
+#         self.burstbox = wx.BoxSizer(wx.VERTICAL)
+
+#         self.numbursts = None
+#         self.meanspikes = None
+#         self.meanlength = None
+#         self.meansilence = None
+#         self.sdlength = None
+#         self.sdsilence = None
+#         self.actQ = None
+#         self.modetime = None
+#         self.moderate = None
+#         self.meanpeak = None
+
+#         self.intraspikes = None
+#         self.intrafreq = None
+#         self.intraisimean = None
+#         self.intraisisd = None
+
+
+# class BurstDataCon:
+#     def __init__(self, label, con):
+#         self.label = label
+#         self.con = con
+
+
+class BurstPanel:
+    def __init__(self):
+        self.spikedata = None
+        self.intracons = ConSet()
+        self.burstcons = ConSet()
+
+
 class BurstBox(ToolBox):
-    def __init__(self, mainwin, title):
-        super().__init__(mainwin, title)
+    def __init__(self, mainwin, tag, title, pos, size):
+        ToolBox.__init__(self, mainwin, tag, title, pos, size)
 
         self.mainwin = mainwin
 
-        self.paramset = ParamSet(self.panel)
-
-        self.burstpanels = []
-        self.datburst = self.AddBurstPanel("Data")
+        self.selfstore = True
+        self.toolpath = mainwin.toolpath
 
         # default burst scan parameters
         maxint = 1500;
@@ -572,9 +674,7 @@ class BurstBox(ToolBox):
         endspike = 0;
 
         # panel controls and layout sizers
-
         self.numwidth = 50
-
         parambox = wx.BoxSizer(wx.VERTICAL)
         hbox = wx.BoxSizer(wx.HORIZONTAL)
         hbox2 = wx.BoxSizer(wx.HORIZONTAL)
@@ -599,4 +699,136 @@ class BurstBox(ToolBox):
         datagrid.Add(self.GridLabel(gridwidth, "SD"), 0, wx.ALIGN_CENTRE)
         datagrid.Add(self.allisisd)
 
-        
+        databox = wx.StaticBoxSizer(wx.VERTICAL, self.panel, "All Data")
+
+        if GetSystem() == "Windows": databox.AddSpacer(5)
+        databox.Add(datagrid, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 2)
+        hbox2.Add(databox, 1, wx.ALIGN_CENTRE_VERTICAL)
+
+        # Burst Scan and Analysis
+        self.paramset.AddNum("maxint", "Max Interval", 1500, 0)
+        self.paramset.AddNum("minspikes", "Min Spikes", 25, 0)
+        self.paramset.AddNum("maxspikes", "Max Spikes", 0, 0)
+        self.paramset.AddNum("startspike", "Start", 0, 0)
+        self.paramset.AddNum("endspike", "End", 0, 0)
+
+        self.ParamLayout()
+
+        parambox.Add(self.pconbox, 0, wx.ALIGN_CENTRE_HORIZONTAL)
+        parambox.AddSpacer(5)
+
+        self.burstpanels = []
+        self.datburst = self.AddBurstPanel()
+
+        intragrid = wx.FlexGridSizer(len(self.burstpanels) + 1, 3, 3)
+        for panelcon in self.datburst.intracons:
+            intragrid.Add(self.GridLabel(gridwidth, panelcon.label), 0, wx.ALIGN_CENTRE)
+            for burstpanel in self.burstpanels:
+                intragrid.Add(burstpanel.intracons.GetCon(panelcon.tag).con, 0, wx.ALIGN_CENTRE)
+
+        intrabox = wx.StaticBoxSizer(wx.VERTICAL, self.panel, "Intra Burst")
+        if GetSystem() == "Windows": intrabox.AddSpacer(5)
+        intrabox.Add(intragrid, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 2)
+
+        burstgrid = wx.FlexGridSizer(len(self.burstpanels) + 1, 3, 5)
+        if GetSystem() == "Mac": gridwidth = 80 
+        else: gridwidth = 65
+        for panelcon in self.datburst.burstcons:
+            burstgrid.Add(self.GridLabel(gridwidth, panelcon.label), 0, wx.ALIGN_CENTRE)
+            for burstpanel in self.burstpanels:
+                burstgrid.Add(burstpanel.burstcons.GetCon(panelcon.tag).con, 0, wx.ALIGN_CENTRE)
+
+        rightbox.Add(burstgrid, 0, wx.ALIGN_CENTRE_HORIZONTAL|wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 5)
+        hbox2.AddSpacer(20)
+        hbox2.Add(intrabox, 1, wx.ALIGN_CENTRE_VERTICAL)
+
+        if GetSystem() == "Mac":
+            self.scanbutton = self.AddButton(wx.ID_ANY, "Burst Scan", 90, parambox)
+
+        else:
+            self.scanbutton = self.AddButton(wx.ID_ANY, "Burst Scan", 70, parambox)
+
+        hbox.Add(parambox, 0, wx.ALL, 0)
+        hbox.AddSpacer(10)
+        hbox.Add(rightbox, 0, wx.ALL, 0)
+
+        if GetSystem() == "Windows": self.mainbox.AddSpacer(3)
+
+        self.mainbox.AddStretchSpacer()
+        self.mainbox.Add(hbox, 1, wx.ALIGN_CENTRE_HORIZONTAL | wx.ALIGN_CENTRE_VERTICAL | wx.ALL, 2)
+        self.mainbox.AddStretchSpacer()
+        self.mainbox.Add(hbox2, 1, wx.ALIGN_CENTRE_HORIZONTAL | wx.ALIGN_CENTRE_VERTICAL | wx.ALL, 2)
+        self.mainbox.AddSpacer(10)
+
+        self.panel.SetSizer(self.mainbox)
+        self.panel.Layout()
+
+        self.scanbutton.Bind(wx.EVT_BUTTON, self.OnScan)
+
+
+    def OnScan(self, event):
+        print("Burst Scan")
+
+
+    def BurstDataPanel(self, datpanel, numwidth=50):
+        datpanel.intracons.Add("Spikes", "intraspikes", self.NumPanel(numwidth))
+        datpanel.intracons.Add("Freq", "intrafreq", self.NumPanel(numwidth))
+        datpanel.intracons.Add("Mean", "intraisimean", self.NumPanel(numwidth))
+        datpanel.intracons.Add("SD", "intraisisd", self.NumPanel(numwidth))
+
+        datpanel.burstcons.Add("Bursts", "numbursts", self.NumPanel(numwidth))
+        datpanel.burstcons.Add("Mean Spikes", "meanspikes", self.NumPanel(numwidth))
+        datpanel.burstcons.Add("Mean Length", "meanlength", self.NumPanel(numwidth))
+        datpanel.burstcons.Add("Length SD", "sdlength", self.NumPanel(numwidth))
+        datpanel.burstcons.Add("Mean Silence", "meansilence", self.NumPanel(numwidth))
+        datpanel.burstcons.Add("Silence SD", "sdsilence", self.NumPanel(numwidth))
+        datpanel.burstcons.Add("Activity Q", "actQ", self.NumPanel(numwidth))
+        datpanel.burstcons.Add("Mode Time", "modetime", self.NumPanel(numwidth))
+        datpanel.burstcons.Add("Mode Rate", "moderate", self.NumPanel(numwidth))
+        datpanel.burstcons.Add("Mean Peak", "meanpeak", self.NumPanel(numwidth))
+
+
+    def AddBurstPanel(self):
+        datpanel = BurstPanel()
+        self.BurstDataPanel(datpanel)
+        self.burstpanels.append(datpanel)
+        return datpanel  
+    
+
+    # def BurstDataGrid(self, rows, gridwidth, vgap):
+    #     intragrid = wx.FlexGridSizer(len(rows), len(self.burstpanels) + 1, vgap, 3)
+
+    #     for label, attr in rows:
+    #         intragrid.Add(self.GridLabel(gridwidth, label), 0, wx.ALIGN_CENTRE)
+
+    #     for datpanel in self.burstpanels:
+    #         intragrid.Add(getattr(datpanel, attr), 0, wx.ALIGN_CENTRE)
+
+    # return intragrid
+
+
+    # def BurstDataPanel(self, datpanel):
+    #     numwidth = 50
+    
+    #     datpanel.numbursts = self.NumPanel(50)
+    #     datpanel.meanspikes = self.NumPanel(50)
+    #     datpanel.meanlength = self.NumPanel(50)
+    #     datpanel.meansilence = self.NumPanel(50)
+    #     datpanel.sdlength = self.NumPanel(50)
+    #     datpanel.sdsilence = self.NumPanel(50)
+    #     datpanel.actQ = self.NumPanel(50)
+    #     datpanel.modetime = self.NumPanel(50)
+    #     datpanel.moderate = self.NumPanel(50)
+    #     datpanel.meanpeak = self.NumPanel(50)
+    
+    #     datpanel.intraspikes = self.NumPanel(numwidth)
+    #     datpanel.intrafreq = self.NumPanel(numwidth)
+    #     datpanel.intraisimean = self.NumPanel(numwidth)
+    #     datpanel.intraisisd = self.NumPanel(numwidth)   
+
+
+    # def AddBurstPanel(self):
+    #     datpanel = BurstPanel()
+    #     self.BurstDataPanel(datpanel)
+    #     self.burstpanels.append(datpanel)
+    #     return datpanel         

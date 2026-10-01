@@ -1,9 +1,6 @@
 
-
 import wx
 from math import log, isinf, isnan 
-#from HypoModPy.hypotools import *
-#from HypoModPy.hypoparams import *
 
 from HypoModPy.hypobase import *
 from HypoModPy.hypotools import DiagWrite, ToolBox, ParamBox, ToolPanel

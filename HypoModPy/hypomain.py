@@ -12,6 +12,7 @@ from HypoModPy.hyposcale import ScaleBox
 from HypoModPy.hypoparams import ParamCon
 from HypoModPy.hypodat import PlotDat
 from HypoModPy.hypoproject import Project
+from HypoModPy.hypospikes import BurstBox
 
 
 NSApp = None
@@ -43,6 +44,7 @@ class MainFrame(wx.Frame):
         self.gridbox = None
         self.plotcon = None
         self.spikedatabox = None
+        self.burstbox = None
 
         # self.respath = rpath;  # defaults to "" for Windows, bundle resource path for OSX
         # #self.mainpath = mpath
@@ -472,11 +474,13 @@ class HypoMain(MainFrame):
         itemDiag = menuTools.Append(wx.ID_ANY, "Diagnostic Box")
         itemGrid = menuTools.Append(wx.ID_ANY, "Data Grid")
         itemAddGraph = menuTools.Append(wx.ID_ANY, "Add Graph")
+        
         #menuTools.Append(ID_Neuro, "Neuro Box")
         #menuTools.Append(ID_Plot, "Plot Box")
         #menuTools.Append(ID_Sound, "Sound Box")
         itemModBox = menuTools.Append(wx.ID_ANY, "Mod Box")
         itemSpikeDataBox = menuTools.Append(wx.ID_ANY, "Spike Data Box")
+        itemBurst = menuTools.Append(wx.ID_ANY, "Burst Box")
         #menuTools.Append(ID_Burst, "Burst Box")
 
         itemOptions = menuSystem.Append(wx.ID_ANY, "Options")
@@ -497,6 +501,7 @@ class HypoMain(MainFrame):
         self.Bind(wx.EVT_MENU, self.OnOptions, itemOptions)
         self.Bind(wx.EVT_MENU, self.OnModBox, itemModBox)
         self.Bind(wx.EVT_MENU, self.OnSpikeDataBox, itemSpikeDataBox)
+        self.Bind(wx.EVT_MENU, self.OnBurstBox, itemBurst)
 
 
     def OnSpikeDataBox(self, event):
@@ -566,6 +571,17 @@ class HypoMain(MainFrame):
     def OnGridBox(self, event):
         if(self.gridbox): self.gridbox.Show()  
         else: self.SetStatusText('No Data Grid available')  
+
+
+    def OnBurstBox(self, event):
+        if not self.burstbox: 
+            if GetSystem() == "Mac": boxsize = (285, 380)
+            else: boxsize = (425, 500)
+
+            self.burstbox = BurstBox(self, "burst", "Burst Analysis", (0, 500), boxsize)
+            self.toolset.AddBox(self.burstbox)
+            
+        self.burstbox.Show(True)
 
 
     def OnClose(self, event):

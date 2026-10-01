@@ -6,8 +6,6 @@ from pathlib import Path
 from pubsub import pub
 import subprocess
 
-#from hypotools import *
-
 
 # Preference Flags
 basicmode = 0

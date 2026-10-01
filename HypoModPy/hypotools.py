@@ -110,6 +110,7 @@ class ToolBox(wx.Frame):
         self.storetag = None
         self.parent = parent
         self.boxtype = type   # 0 - basic panel, 1 - AUI panel
+        self.toolpath = ""
 
         self.blackpen = wx.Colour("#000000")
         self.redpen = wx.Colour("#dd0000")
@@ -244,6 +245,12 @@ class ToolBox(wx.Frame):
         return button
 
 
+    def GridLabel(self, width, label="0"):
+        text = wx.StaticText(self.activepanel, wx.ID_ANY, label, size=(width, -1), style=wx.ALIGN_CENTRE)
+        text.SetFont(self.confont)
+        return text
+
+
     def DiagWrite(self, text):
         pub.sendMessage("diagbox", message=text)
 
@@ -308,6 +315,59 @@ class ToolBox(wx.Frame):
     def OnIconize(self, event):
         DiagWrite("tool iconize call\n")
         event.Skip()
+
+
+    def Store(self):
+        if not self.selfstore: return
+
+        if not os.path.exists(self.toolpath):
+            os.mkdir(self.toolpath)
+
+        filepath = self.toolpath + "/" + self.boxtag + ".dat"
+        toolfile = TextFile(filepath)
+        toolfile.Open('w')
+
+        for con in self.paramset.pcons.values():
+            if con.type != "textcon":
+                value = con.GetValue()
+                self.params[con.tag] = value
+                outline = "{:.8f}".format(value)
+            else:
+                outline = con.GetString()
+
+            toolfile.WriteLine(con.tag + " " + outline)
+
+        toolfile.Close()
+
+
+    def Load(self):
+        filepath = self.toolpath + "/" + self.boxtag + ".dat"
+        toolfile = TextFile(filepath)
+
+        if not toolfile.Exists():
+            return
+
+        toolfile.Open('r')
+
+        for readline in toolfile.ReadLines():
+            readline = readline.strip()
+            if readline == "": continue
+
+            readdata = readline.split(' ', 1)
+            tag = readdata[0]
+            data = readdata[1]
+
+            if self.paramset.Check(tag):
+                con = self.paramset.pcons[tag]
+
+                if con.type != "textcon":
+                    value = float(data)
+                    con.SetValue(value)
+                    self.params[tag] = value
+                else:
+                    con.SetValue(data)
+
+        toolfile.Close()
 
     
 
@@ -708,7 +768,7 @@ class ParamBox(ToolBox):
                 if mode == "param": mode = "flag"
                 elif mode == "flag": mode = "check"
                 continue
-            readdata = readline.split(' ')
+            readdata = readline.split(' ', 1)
             tag = readdata[0]
             data = readdata[1]
 
