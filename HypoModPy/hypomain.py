@@ -414,6 +414,10 @@ class HypoMain(MainFrame):
         self.movetimer = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.OnMoveTimer, self.movetimer)
 
+        # Tool Boxes
+        bursttool = self.toolset.GetTool("burst")
+        if bursttool and bursttool.visible: self.OnBurstBox(None)
+
 
     def SetMenuFlag(self, id, flagtag, flagtext, state, menu):
         self.hypoflags[flagtag] = state

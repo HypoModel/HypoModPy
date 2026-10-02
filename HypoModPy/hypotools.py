@@ -394,6 +394,7 @@ class ToolSet():
             newbox.oldpos = newbox.GetPosition()
             tool.box.SetSize(tool.size)
             tool.box.InitPosition(tool.mpos)
+            tool.box.Show(tool.visible)
         else:
             self.tools[newbox.tag] = ToolDat(newbox.tag, newbox.GetPosition(), newbox.GetSize(), newbox.IsShown(), newbox)
             
@@ -848,21 +849,40 @@ class ParamBox(ToolBox):
         self.SetMenuBar(menuBar)
        
 
-    def AddPanelButton(self, id, label, toolbox):
+    # def AddPanelButton(self, id, label, toolbox):
+    #     if self.panelbuttoncount > 0:
+    #         self.buttonbox.AddSpacer(5)
+    #         self.buttonbox.AddStretchSpacer()
+    #     self.panelrefs[id] = toolbox
+    #     button = self.AddButton(id, label, self.buttonwidth, self.buttonbox)
+    #     button.Bind(wx.EVT_BUTTON, self.OnPanel)
+    #     self.panelbuttoncount += 1
+
+
+    def AddPanelButton(self, id, label, toolbox, handler=None):
         if self.panelbuttoncount > 0:
             self.buttonbox.AddSpacer(5)
             self.buttonbox.AddStretchSpacer()
-        self.panelrefs[id] = toolbox
         button = self.AddButton(id, label, self.buttonwidth, self.buttonbox)
-        button.Bind(wx.EVT_BUTTON, self.OnPanel)
+        
+        if handler is None:
+            self.panelrefs[id] = toolbox
+            button.Bind(wx.EVT_BUTTON, self.OnPanel)
+        else:
+            button.Bind(wx.EVT_BUTTON, handler)
+        
         self.panelbuttoncount += 1
+        
+        return button
        
 
     def OnPanel(self, event):
         id = event.GetId()
         toolbox = self.panelrefs[id]
-        if toolbox.IsShown(): toolbox.Show(False)
-        else: toolbox.Show(True)
+        if not toolbox == None:
+            if toolbox.IsShown(): toolbox.Show(False)
+            else: toolbox.Show(True)
+
 
 
     """ def AddFlag(self, id, flagtag, flagtext, state = False, menu = None):
