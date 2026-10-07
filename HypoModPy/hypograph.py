@@ -303,7 +303,8 @@ class GraphPanel(GraphEPS, wx.Panel):
             self.currentpos.y = self.ybase + self.yplot - 1
 
             newrect = wx.Rect(self.anchorpos, self.currentpos)
-            if GetSystem() == "Windows": self.overlay.SetOpacity(-1)
+            #if GetSystem() == "Windows": self.overlay.SetOpacity(-1)
+            if GetSystem() == "Windows" and hasattr(self.overlay, "SetOpacity"): self.overlay.SetOpacity(-1)
 
             dc = wx.ClientDC(self)
             overlaydc = wx.DCOverlay(self.overlay, dc, self.xbase, self.ybase, self.xplot, self.yplot)
