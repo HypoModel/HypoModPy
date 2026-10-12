@@ -608,7 +608,7 @@ class GridBox(ParamBox):
 
 
     def GridLoad(self, tag = ""):
-        diag = False
+        diag = True
 
         # File path
         gridpath = self.mod.path + "/Grids"
@@ -639,6 +639,8 @@ class GridBox(ParamBox):
             DiagWrite("GridLoad file error\n")
             return
         filetext = infile.ReadLines()
+        infile.Close()
+
         linecount = 0
         numlines = len(filetext)
 
@@ -646,11 +648,13 @@ class GridBox(ParamBox):
 
         for readline in filetext:
             if readline.strip() == "": break
-            readdata = readline.split()
+            readdata = readline.split(maxsplit=3)   # split into 4 parts, so cell data can contain spaces
             # read file version
             if readdata[0] == "gsv": storeversion = int(readdata[1])
+            elif readdata[0] == "num": numgrids = int(readdata[1])
             # read and set grids
-            elif readdata[0] == "g":    
+            elif readdata[0] == "g":
+                readdata = readline.split(maxsplit=5)    
                 tag = readdata[1]
                 numrows = int(readdata[3])
                 numcols = int(readdata[5])
@@ -688,7 +692,7 @@ class GridBox(ParamBox):
         filetext = infile.ReadLines()
 
         for readline in filetext:
-            readdata = readline.split()
+            readdata = readline.split(maxsplit=3)   # split into 4 parts, so cell data can contain spaces
             tag = readdata[1]
             col = int(readdata[3])
             width = int(readdata[4])
