@@ -493,7 +493,7 @@ class SpikeDat():
         # calculate spike rate for binsize
         spikerate.reset()
         for i in range(self.spikecount):
-            if (self.times[i] - timeshift) / binsize < maxbin: spikerate[int(((self.times[i] - timeshift) + 0.5) / binsize)] += 1
+            if(self.times[i] - timeshift) / binsize < maxbin: spikerate[int(((self.times[i] - timeshift) + 0.5) / binsize)] += 1
            
         laststep = int((self.times[self.spikecount - 1] - timeshift) / binsize) - 4
         if laststep > maxbin: laststep = maxbin
